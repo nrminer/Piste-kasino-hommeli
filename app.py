@@ -857,57 +857,188 @@ SETTINGS_DEFAULTS = {
     'point_expiry_days':'365',
 }
 
-# Slot machine themes — each symbol has a weight (higher = more frequent)
+# Slot machine themes — 5 reels × 3 rows, tiered payouts (3/4/5-of-a-kind),
+# wild substitution, free spins on 3+ scatters, progressive jackpot on 5 wilds.
 SLOT_THEMES = {
     'fruits': {
         'symbols': [
-            {'id':'cherry',  'weight':28}, {'id':'lemon',   'weight':23},
-            {'id':'orange',  'weight':18}, {'id':'grape',   'weight':13},
-            {'id':'bell',    'weight':7},  {'id':'star',    'weight':4},
-            {'id':'jackpot', 'weight':2},  {'id':'diamond', 'weight':1},
-            {'id':'scatter', 'weight':6},  # 💰 bonus scatter
+            {'id':'cherry',  'weight':22},
+            {'id':'lemon',   'weight':19},
+            {'id':'orange',  'weight':16},
+            {'id':'grape',   'weight':13},
+            {'id':'bell',    'weight':9},
+            {'id':'star',    'weight':6},
+            {'id':'jackpot', 'weight':3},
+            {'id':'diamond', 'weight':2},
+            {'id':'wild',    'weight':3},   # 🃏 substitutes for any non-scatter
+            {'id':'scatter', 'weight':5},   # 💰 free-spin trigger
         ],
-        'payouts':    {'cherry':2,'lemon':3,'orange':4,'grape':6,'bell':12,'star':20,'jackpot':50,'diamond':150},
-        'free_spins': 8,
-        'fs_mult':    2,
+        'payouts': {
+            'cherry':  [2,   5,   15],
+            'lemon':   [3,   8,   25],
+            'orange':  [4,   12,  40],
+            'grape':   [6,   20,  75],
+            'bell':    [10,  30,  125],
+            'star':    [20,  60,  250],
+            'jackpot': [40,  150, 500],
+            'diamond': [75,  300, 1000],
+            'wild':    [10,  50,  200],
+        },
+        'free_spins': 8, 'fs_mult': 2,
     },
     'egypt': {
         'symbols': [
-            {'id':'scarab',  'weight':28}, {'id':'eye',     'weight':22},
-            {'id':'jar',     'weight':17}, {'id':'eagle',   'weight':11},
-            {'id':'cat',     'weight':8},  {'id':'pharaoh', 'weight':5},
-            {'id':'book',    'weight':3},  {'id':'scatter', 'weight':6},  # 🔮 Ra scatter
+            {'id':'scarab',  'weight':22},
+            {'id':'eye',     'weight':18},
+            {'id':'jar',     'weight':15},
+            {'id':'eagle',   'weight':11},
+            {'id':'cat',     'weight':9},
+            {'id':'pharaoh', 'weight':6},
+            {'id':'book',    'weight':4},
+            {'id':'wild',    'weight':3},   # 𓂀 sphinx
+            {'id':'scatter', 'weight':5},   # 🔮 Ra
         ],
-        'payouts':    {'scarab':2,'eye':3,'jar':5,'eagle':8,'cat':15,'pharaoh':40,'book':125},
-        'free_spins': 10,
-        'fs_mult':    2,
+        'payouts': {
+            'scarab':  [2,   5,   15],
+            'eye':     [3,   8,   25],
+            'jar':     [5,   15,  50],
+            'eagle':   [8,   25,  90],
+            'cat':     [15,  40,  175],
+            'pharaoh': [40,  125, 400],
+            'book':    [80,  250, 800],
+            'wild':    [10,  50,  200],
+        },
+        'free_spins': 10, 'fs_mult': 2,
     },
     'space': {
         'symbols': [
-            {'id':'planet',  'weight':28}, {'id':'comet',   'weight':22},
-            {'id':'alien',   'weight':17}, {'id':'rocket',  'weight':11},
-            {'id':'stars',   'weight':8},  {'id':'moon',    'weight':5},
-            {'id':'gem',     'weight':3},  {'id':'scatter', 'weight':6},  # 🌀 wormhole scatter
+            {'id':'planet', 'weight':22},
+            {'id':'comet',  'weight':18},
+            {'id':'alien',  'weight':15},
+            {'id':'rocket', 'weight':11},
+            {'id':'stars',  'weight':9},
+            {'id':'moon',   'weight':6},
+            {'id':'gem',    'weight':4},
+            {'id':'wild',   'weight':3},    # 👽 substitutes
+            {'id':'scatter','weight':5},    # 🌀 wormhole
         ],
-        'payouts':    {'planet':2,'comet':3,'alien':5,'rocket':8,'stars':15,'moon':40,'gem':125},
-        'free_spins': 8,
-        'fs_mult':    3,  # space has 3× for higher excitement
+        'payouts': {
+            'planet': [2,   5,   15],
+            'comet':  [3,   8,   25],
+            'alien':  [5,   15,  50],
+            'rocket': [8,   25,  90],
+            'stars':  [15,  40,  175],
+            'moon':   [40,  125, 400],
+            'gem':    [80,  250, 800],
+            'wild':   [10,  50,  200],
+        },
+        'free_spins': 8, 'fs_mult': 3,  # space pays 3× during free spins
     },
 }
+
+# 20 paylines for a 5×3 grid. Each line evaluates left-to-right starting at
+# the leftmost reel (col 0); wild substitutes for the target symbol.
 SLOT_PAYLINES = [
-    [(0,0),(1,0),(2,0)],  # top row
-    [(0,1),(1,1),(2,1)],  # middle row
-    [(0,2),(1,2),(2,2)],  # bottom row
-    [(0,0),(1,1),(2,2)],  # diagonal ↘
-    [(0,2),(1,1),(2,0)],  # diagonal ↗
+    [(0,1),(1,1),(2,1),(3,1),(4,1)],  # 1  middle row
+    [(0,0),(1,0),(2,0),(3,0),(4,0)],  # 2  top row
+    [(0,2),(1,2),(2,2),(3,2),(4,2)],  # 3  bottom row
+    [(0,0),(1,1),(2,2),(3,1),(4,0)],  # 4  V
+    [(0,2),(1,1),(2,0),(3,1),(4,2)],  # 5  ^
+    [(0,0),(1,0),(2,1),(3,0),(4,0)],  # 6  top-dip
+    [(0,2),(1,2),(2,1),(3,2),(4,2)],  # 7  bottom-bump
+    [(0,1),(1,0),(2,0),(3,0),(4,1)],  # 8  hat
+    [(0,1),(1,2),(2,2),(3,2),(4,1)],  # 9  bowl
+    [(0,0),(1,1),(2,1),(3,1),(4,0)],  # 10 bridge top
+    [(0,2),(1,1),(2,1),(3,1),(4,2)],  # 11 bridge bottom
+    [(0,1),(1,0),(2,1),(3,2),(4,1)],  # 12 wave down
+    [(0,1),(1,2),(2,1),(3,0),(4,1)],  # 13 wave up
+    [(0,0),(1,2),(2,0),(3,2),(4,0)],  # 14 zigzag top
+    [(0,2),(1,0),(2,2),(3,0),(4,2)],  # 15 zigzag bot
+    [(0,1),(1,1),(2,0),(3,1),(4,1)],  # 16 spike up
+    [(0,1),(1,1),(2,2),(3,1),(4,1)],  # 17 spike down
+    [(0,0),(1,0),(2,2),(3,0),(4,0)],  # 18 drop top
+    [(0,2),(1,2),(2,0),(3,2),(4,2)],  # 19 drop bot
+    [(0,0),(1,2),(2,2),(3,2),(4,0)],  # 20 long arc
 ]
 
-def _slot_spin(theme_id, include_scatter=True):
-    theme   = SLOT_THEMES.get(theme_id, SLOT_THEMES['fruits'])
-    syms    = theme['symbols'] if include_scatter else [s for s in theme['symbols'] if s['id'] != 'scatter']
+# Progressive jackpot — 1 % of every bet feeds the pool. 5 wilds across the
+# middle row (payline 1) awards the entire pool to the player and resets.
+JACKPOT_INITIAL  = 5000
+JACKPOT_RAKE_PCT = 0.01
+JACKPOT_KEY      = 'jackpot_pool'
+
+def _slot_spin(theme_id, include_scatter=True, include_wild=True):
+    """Generate a 5×3 grid: grid[col][row] for col 0..4, row 0..2."""
+    theme = SLOT_THEMES.get(theme_id, SLOT_THEMES['fruits'])
+    syms  = theme['symbols']
+    if not include_scatter:
+        syms = [s for s in syms if s['id'] != 'scatter']
+    if not include_wild:
+        syms = [s for s in syms if s['id'] != 'wild']
     ids     = [s['id'] for s in syms]
     weights = [s['weight'] for s in syms]
-    return [[random.choices(ids, weights=weights)[0] for _ in range(3)] for _ in range(3)]
+    return [[random.choices(ids, weights=weights)[0] for _ in range(3)] for _ in range(5)]
+
+
+def _slot_eval_line(cells):
+    """Longest left-aligned match. wild substitutes; scatter breaks the line."""
+    if not cells or cells[0] == 'scatter':
+        return None, 0
+    target = None
+    length = 0
+    for c in cells:
+        if c == 'scatter':
+            break
+        if c == 'wild':
+            length += 1
+            continue
+        if target is None:
+            target = c
+            length += 1
+        elif c == target:
+            length += 1
+        else:
+            break
+    if target is None:
+        target = 'wild'  # all-wild prefix
+    return target, length
+
+
+def _slot_calc_wins(grid, payouts):
+    wins = []
+    for i, line in enumerate(SLOT_PAYLINES):
+        cells = [grid[col][row] for col, row in line]
+        sym, length = _slot_eval_line(cells)
+        if sym is None or length < 3:
+            continue
+        table = payouts.get(sym, [0, 0, 0])
+        idx   = length - 3
+        mult  = table[idx] if 0 <= idx < len(table) else 0
+        if mult <= 0:
+            continue
+        wins.append({
+            'line':   i,
+            'symbol': sym,
+            'count':  length,
+            'mult':   mult,
+            'cells':  [[c, r] for (c, r) in line[:length]],
+        })
+    return wins
+
+
+def _slot_scatter_positions(grid):
+    return [[col, row] for col in range(5) for row in range(3) if grid[col][row] == 'scatter']
+
+
+def _slot_is_jackpot(grid):
+    """Progressive jackpot triggers when the entire middle payline is wild."""
+    middle = SLOT_PAYLINES[0]
+    return all(grid[c][r] == 'wild' for c, r in middle)
+
+
+def _set_setting(db, key, value):
+    db.execute('INSERT OR REPLACE INTO system_settings(key,value) VALUES(?,?)',
+               (key, str(value)))
 
 def _get_streak_mode(db, pid):
     row = db.execute('SELECT streak_mode FROM players WHERE id=?', (pid,)).fetchone()
@@ -1383,6 +1514,20 @@ def game_bj_action(gid):
 
 # ─── Slots ───────────────────────────────────────────────────────────────────
 
+@app.route('/api/slots/jackpot', methods=['GET'])
+def slots_jackpot():
+    db = get_db()
+    try:
+        pool = int(_get_setting(db, JACKPOT_KEY) or JACKPOT_INITIAL)
+    except (TypeError, ValueError):
+        pool = JACKPOT_INITIAL
+    if pool < JACKPOT_INITIAL:
+        pool = JACKPOT_INITIAL
+        _set_setting(db, JACKPOT_KEY, pool)
+        db.commit()
+    return jsonify({'pool': pool, 'seed': JACKPOT_INITIAL, 'rake_pct': JACKPOT_RAKE_PCT})
+
+
 @app.route('/api/points/<int:pid>/slots', methods=['POST'])
 def game_slots(pid):
     d        = request.json or {}
@@ -1393,48 +1538,47 @@ def game_slots(pid):
     if theme_id not in SLOT_THEMES:
         theme_id = 'fruits'
     _atomic_deduct_points(db, pid, bet, f'Slots panos ({theme_id})')
+
     streak = _get_streak_mode(db, pid)
-    grid   = _slot_spin(theme_id)
     theme  = SLOT_THEMES[theme_id]
 
-    def calc_wins(g):
-        wins = []
-        for i, line in enumerate(SLOT_PAYLINES):
-            cells = [g[col][row] for col, row in line]
-            if cells[0] == cells[1] == cells[2] and cells[0] != 'scatter':
-                mult = theme['payouts'].get(cells[0], 0)
-                wins.append({'line': i, 'symbol': cells[0], 'mult': mult,
-                             'cells': [[col, row] for col, row in line]})
-        return wins
+    # 1. Contribute to the progressive jackpot pool.
+    try:
+        pool = int(_get_setting(db, JACKPOT_KEY) or JACKPOT_INITIAL)
+    except (TypeError, ValueError):
+        pool = JACKPOT_INITIAL
+    if pool < JACKPOT_INITIAL:
+        pool = JACKPOT_INITIAL
+    pool += max(1, int(bet * JACKPOT_RAKE_PCT))
+    _set_setting(db, JACKPOT_KEY, pool)
 
-    def count_scatters(g):
-        positions = []
-        for col in range(3):
-            for row in range(3):
-                if g[col][row] == 'scatter':
-                    positions.append([col, row])
-        return positions
+    # 2. Spin & evaluate.
+    grid              = _slot_spin(theme_id)
+    wins              = _slot_calc_wins(grid, theme['payouts'])
+    scatter_positions = _slot_scatter_positions(grid)
+    jackpot_won       = _slot_is_jackpot(grid)
 
-    wins = calc_wins(grid)
-    scatter_positions = count_scatters(grid)
-
-    if streak == 'lose' and (wins or len(scatter_positions) >= 3):
+    # 3. Streak overrides.
+    if streak == 'lose' and (wins or len(scatter_positions) >= 3 or jackpot_won):
         for _ in range(10):
-            grid = _slot_spin(theme_id)
-            wins = calc_wins(grid)
-            scatter_positions = count_scatters(grid)
+            grid              = _slot_spin(theme_id, include_wild=False)
+            wins              = _slot_calc_wins(grid, theme['payouts'])
+            scatter_positions = _slot_scatter_positions(grid)
+            jackpot_won       = False
             if not wins and len(scatter_positions) < 3:
                 break
-    elif streak == 'win' and not wins:
+    elif streak == 'win' and not wins and not jackpot_won:
         sym = theme['symbols'][0]['id']
-        grid[0][1] = grid[1][1] = grid[2][1] = sym
-        wins = calc_wins(grid)
-        scatter_positions = count_scatters(grid)
+        for c in range(3):
+            grid[c][1] = sym
+        wins              = _slot_calc_wins(grid, theme['payouts'])
+        scatter_positions = _slot_scatter_positions(grid)
 
+    # 4. Base payout.
     total_mult = sum(w['mult'] for w in wins)
     payout     = bet * total_mult
 
-    # ── Free spins bonus ──────────────────────────────────────────────────────
+    # 5. Free-spins bonus.
     free_spins_triggered = len(scatter_positions) >= 3
     fs_count    = theme['free_spins'] if free_spins_triggered else 0
     fs_mult     = theme['fs_mult']    if free_spins_triggered else 1
@@ -1443,16 +1587,24 @@ def game_slots(pid):
     if free_spins_triggered:
         for _ in range(fs_count):
             fg = _slot_spin(theme_id, include_scatter=False)
-            fw = calc_wins(fg)
+            fw = _slot_calc_wins(fg, theme['payouts'])
             fm = sum(w['mult'] for w in fw)
             fp = bet * fm * fs_mult
             bonus_payout += fp
             fs_results.append({'grid': fg, 'wins': fw, 'payout': fp})
 
-    total_payout = payout + bonus_payout
+    # 6. Progressive jackpot.
+    jackpot_payout = 0
+    if jackpot_won:
+        jackpot_payout = pool
+        pool = JACKPOT_INITIAL
+        _set_setting(db, JACKPOT_KEY, pool)
+
+    total_payout = payout + bonus_payout + jackpot_payout
     net = total_payout - bet
     if total_payout > 0:
-        _add_points(db, pid, total_payout, f'Slots voitto ({theme_id})')
+        reason = f'Slots voitto ({theme_id})' + (' — JACKPOT!' if jackpot_won else '')
+        _add_points(db, pid, total_payout, reason)
     db.commit()
     bal = db.execute('SELECT points FROM players WHERE id=?', (pid,)).fetchone()['points'] or 0
     return jsonify({
@@ -1469,6 +1621,9 @@ def game_slots(pid):
         'free_spin_mult':       fs_mult,
         'free_spin_results':    fs_results,
         'bonus_payout':         bonus_payout,
+        'jackpot_won':          jackpot_won,
+        'jackpot_payout':       jackpot_payout,
+        'jackpot_pool':         pool,
     })
 
 # ─── Streak mode (admin) ─────────────────────────────────────────────────────

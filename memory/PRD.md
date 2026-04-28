@@ -40,6 +40,40 @@
 8. Streak modes (`normal` / forced `win` / forced `lose` per player)
 9. Configurable points-per-€ + redemption limits
 
+## What's been implemented (Iteration 2 — 2026-04-28, slots overhaul)
+
+### Slots — full real-machine rewrite (5 reels × 3 rows)
+- Backend: 5×3 grid, **20 paylines**, tiered payouts (3-of-a-kind / 4 / 5),
+  **wild substitution** (with `wild` paying 5-of-a-kind on its own), scatter
+  free spins (3+ scatters → theme-defined free spins × multiplier),
+  **progressive jackpot** with 1 % rake per bet — 5 wilds on the middle
+  payline awards the entire pool and reseeds at 5 000 pts.
+  - Persisted in the same `settings` hash (Redis) / `system_settings` table
+    (SQLite), so the pool grows across all players and survives deploys.
+  - New endpoint: `GET /api/slots/jackpot` for the live ticker.
+- Frontend (`/asiakas` → Pisteet → Slots):
+  - 5×3 grid, fluidly sized for mobile (60→48→42 px cells)
+  - Animated **jackpot ticker** above the machine (gold sweep + bump on win)
+  - **Autoplay**: 10 / 25 / 50 spins with stop button + live counter
+  - **Turbo** mode (≈3× faster animation)
+  - **Sound** toggle (WebAudio API beeps for spin click, win arpeggio, jackpot
+    fanfare — no audio files, fully self-contained)
+  - **Win-line SVG overlay** highlighting up to 8 paylines simultaneously
+    with 8-color staggered draw animation
+  - **Big-win banner** for ≥ 20× bet, **jackpot banner** with celebration
+  - Wild + scatter cells get distinct pulsing borders (red / purple)
+  - Updated paytable showing 3×/4×/5× columns + wild + scatter + jackpot info
+
+### Validated (Python test_client + browser screenshots, both runtimes)
+- 5×3 grid shape, 20-payline evaluation with wild substitution ✓
+- Multi-payline wins (one spin produced 4 simultaneous wins, +8 700 net) ✓
+- Tiered payouts (cherry×3=2×, lemon×4=8×, orange×5=40×) ✓
+- Jackpot pool growing 5 003 → 5 013 → 5 018 across spins ✓
+- Autoplay 10× ran end-to-end, status counter updates, stop button visible ✓
+- Turbo accelerates spin animation ✓
+- Sound toggle persists across spins ✓
+- Big-win and jackpot banners render correctly ✓
+
 ## What's been implemented (Iteration 1 — 2026-04-28)
 
 ### Improvements
