@@ -1,0 +1,5 @@
+app.py
+casino.db
+instance/
+__pycache__/
+models.py
