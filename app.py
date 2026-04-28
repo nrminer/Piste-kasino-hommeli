@@ -707,26 +707,123 @@ def poker_hands_log():
     db     = get_db()
     limit  = max(1, min(int(request.args.get('limit', 25)), 200))
     offset = max(0, int(request.args.get('offset', 0)))
+    sid    = request.args.get('session_id')
+    where, params = '', []
+    if sid and sid not in ('', 'all'):
+        try:
+            where = ' WHERE session_id=?'
+            params.append(int(sid))
+        except (TypeError, ValueError):
+            pass
     rows = db.execute(
-        'SELECT * FROM poker_hand_log ORDER BY id DESC LIMIT ? OFFSET ?',
-        (limit, offset)
+        f'SELECT * FROM poker_hand_log{where} ORDER BY id DESC LIMIT ? OFFSET ?',
+        (*params, limit, offset)
     ).fetchall()
-    total = db.execute('SELECT COUNT(*) AS c FROM poker_hand_log').fetchone()['c']
-    out = []
-    for r in rows:
-        out.append({
-            'id':              r['id'],
-            'session_id':      r['session_id'],
-            'hand_number':     r['hand_number'],
-            'started_at':      r['started_at'],
-            'ended_at':        r['ended_at'],
-            'stage_reached':   r['stage_reached'],
-            'ended_by':        r['ended_by'],
-            'community_cards': json.loads(r['community_cards'] or '[]'),
-            'seats':           json.loads(r['seats'] or '[]'),
-            'winners':         json.loads(r['winners'] or '[]'),
-        })
-    return jsonify({'hands': out, 'total': total, 'limit': limit, 'offset': offset})
+    total = db.execute(
+        f'SELECT COUNT(*) AS c FROM poker_hand_log{where}', params
+    ).fetchone()['c']
+    sessions_meta = [{'session_id': r['session_id'], 'last': r['s'], 'count': r['n']}
+                     for r in db.execute(
+        'SELECT session_id, MAX(started_at) AS s, COUNT(*) AS n '
+        'FROM poker_hand_log GROUP BY session_id ORDER BY s DESC'
+    ).fetchall()]
+    out = [_hand_log_row_to_dict(r) for r in rows]
+    return jsonify({
+        'hands':    out,
+        'total':    total,
+        'limit':    limit,
+        'offset':   offset,
+        'sessions': sessions_meta,
+    })
+
+@app.route('/api/poker/hands.csv')
+def poker_hands_csv():
+    """Download the hand log as CSV (Excel-friendly UTF-8 BOM, ; delimiter)."""
+    db  = get_db()
+    sid = request.args.get('session_id')
+    where, params = '', []
+    if sid and sid not in ('', 'all'):
+        try:
+            where = ' WHERE session_id=?'
+            params.append(int(sid))
+        except (TypeError, ValueError):
+            pass
+    rows = db.execute(
+        f'SELECT * FROM poker_hand_log{where} ORDER BY id DESC',
+        params
+    ).fetchall()
+    hands = [_hand_log_row_to_dict(r) for r in rows]
+    return _hand_log_csv_response(hands, sid)
+
+
+def _hand_log_row_to_dict(r):
+    return {
+        'id':              r['id'],
+        'session_id':      r['session_id'],
+        'hand_number':     r['hand_number'],
+        'started_at':      r['started_at'],
+        'ended_at':        r['ended_at'],
+        'stage_reached':   r['stage_reached'],
+        'ended_by':        r['ended_by'],
+        'community_cards': json.loads(r['community_cards'] or '[]'),
+        'seats':           json.loads(r['seats'] or '[]'),
+        'winners':         json.loads(r['winners'] or '[]'),
+    }
+
+
+def _fmt_cards(cards):
+    """Render a list of {rank,suit} dicts as 'A♠ K♥ 7♦' (plain text)."""
+    return ' '.join(f"{c.get('rank','?')}{c.get('suit','?')}" for c in (cards or []))
+
+
+def _hand_log_csv_response(hands, session_id_filter=None):
+    """Return a Flask Response streaming the hand log as CSV.
+
+    Excel-friendly: UTF-8 with BOM, semicolon delimiter (Finnish locale convention).
+    """
+    import csv, io
+    from flask import Response
+    buf = io.StringIO()
+    buf.write('\ufeff')  # BOM so Excel detects UTF-8
+    w = csv.writer(buf, delimiter=';', quoting=csv.QUOTE_MINIMAL)
+    w.writerow([
+        'Käsi #', 'Istunto', 'Aloitettu', 'Päättynyt',
+        'Vaihe', 'Päättymistapa', 'Yhteiskortit',
+        'Pelaajat', 'Voittajat',
+    ])
+    for h in hands:
+        seats = '; '.join(
+            f"#{s.get('seat_number')} {s.get('player_name','')}: {_fmt_cards(s.get('hole_cards'))}"
+            + (' (fold)' if s.get('folded') else '')
+            for s in (h.get('seats') or [])
+        )
+        winners = ', '.join(
+            f"{w.get('player_name','')} ({w.get('hand_name','')})"
+            for w in (h.get('winners') or []) if w.get('is_winner')
+        )
+        w_endmap = {'showdown':'Showdown','void':'Mitätöity',
+                    'abandoned':'Hylätty','in_progress':'Käynnissä'}
+        w.writerow([
+            h.get('hand_number'),
+            h.get('session_id'),
+            h.get('started_at') or '',
+            h.get('ended_at') or '',
+            h.get('stage_reached') or '',
+            w_endmap.get(h.get('ended_by'), h.get('ended_by') or ''),
+            _fmt_cards(h.get('community_cards')),
+            seats,
+            winners,
+        ])
+    fname = 'kasihistoria'
+    if session_id_filter and session_id_filter not in ('', 'all'):
+        fname += f'_istunto-{session_id_filter}'
+    fname += '.csv'
+    return Response(
+        buf.getvalue(),
+        content_type='text/csv; charset=utf-8',
+        headers={'Content-Disposition': f'attachment; filename="{fname}"',
+                 'Cache-Control': 'no-store'}
+    )
 
 @app.route('/api/poker/deal', methods=['POST'])
 def poker_deal():

@@ -40,6 +40,33 @@
 8. Streak modes (`normal` / forced `win` / forced `lose` per player)
 9. Configurable points-per-€ + redemption limits
 
+## What's been implemented (Iteration 4 — 2026-04-28, hand-log filter + CSV)
+
+- **Per-session filter** on `GET /api/poker/hands` via `?session_id=N`,
+  plus a `sessions` array in the response (sorted newest first, with
+  hand count + last-played timestamp) so the manager UI can build the
+  dropdown without a second round-trip
+- **CSV export** at `GET /api/poker/hands.csv?session_id=N` — Excel-friendly
+  UTF-8 with BOM and `;` delimiter (Finnish locale convention). Filename
+  is auto-suffixed when filtered: `kasihistoria_istunto-4.csv`
+- Manager UI:
+  - **Session dropdown** at the top of the Käsihistoria panel, auto-populated
+    from the `sessions` metadata (re-renders only when set of IDs changes,
+    preserving focus). Default option: "Kaikki istunnot"
+  - **📥 Lataa CSV** button uses a hidden `<a>` element so the browser
+    handles the download natively (no popup, no new tab)
+  - Updated empty state message when filter narrows to a session with no hands
+- Shared helpers `_hand_log_row_to_dict`, `_fmt_cards`, `_hand_log_csv_response`
+  added to both `app.py` and `api/index.py` for symmetric behaviour
+
+### Validated
+- 6 hands across 3 sessions, dropdown lists all three with correct counts ✓
+- Filter narrows from 6 → 2 entries when "Istunto #4" selected ✓
+- CSV download triggers a real browser download (Playwright captured
+  filename + body, 3 lines, correct UTF-8 BOM, `;` delimiter, Finnish
+  card glyphs, winner column populated) ✓
+- Vercel runtime returns identical JSON/CSV ✓
+
 ## What's been implemented (Iteration 3 — 2026-04-28, hand-log)
 
 ### Käsihistoria — every dealt hand is logged for the manager

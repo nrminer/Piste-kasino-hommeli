@@ -943,24 +943,119 @@ def poker_hands_log():
     rc     = get_r()
     limit  = max(1, min(int(request.args.get('limit', 25)), 200))
     offset = max(0, int(request.args.get('offset', 0)))
+    sid    = request.args.get('session_id')
     rows = sorted(_all(rc, 'poker_hand_log'), key=lambda r: r['id'], reverse=True)
+    if sid and sid not in ('', 'all'):
+        try:
+            sid_int = int(sid)
+            rows = [r for r in rows if r.get('session_id') == sid_int]
+        except (TypeError, ValueError):
+            pass
     total = len(rows)
     page  = rows[offset:offset+limit]
-    out = []
-    for r in page:
-        out.append({
-            'id':              r['id'],
-            'session_id':      r['session_id'],
-            'hand_number':     r['hand_number'],
-            'started_at':      r.get('started_at'),
-            'ended_at':        r.get('ended_at'),
-            'stage_reached':   r.get('stage_reached'),
-            'ended_by':        r.get('ended_by'),
-            'community_cards': r.get('community_cards') or [],
-            'seats':           r.get('seats') or [],
-            'winners':         r.get('winners') or [],
+    out = [_hand_log_row_to_dict(r) for r in page]
+    # Sessions metadata: latest first, with hand counts
+    all_rows = sorted(_all(rc, 'poker_hand_log'),
+                      key=lambda r: r.get('started_at') or '', reverse=True)
+    seen, sessions_meta = set(), []
+    for r in all_rows:
+        s = r.get('session_id')
+        if s is None or s in seen:
+            continue
+        seen.add(s)
+        sessions_meta.append({
+            'session_id': s,
+            'last':       r.get('started_at'),
+            'count':      sum(1 for x in all_rows if x.get('session_id') == s),
         })
-    return jsonify({'hands': out, 'total': total, 'limit': limit, 'offset': offset})
+    return jsonify({
+        'hands':    out,
+        'total':    total,
+        'limit':    limit,
+        'offset':   offset,
+        'sessions': sessions_meta,
+    })
+
+
+@app.route('/api/poker/hands.csv')
+def poker_hands_csv():
+    """Download the hand log as CSV (Excel-friendly UTF-8 BOM, ; delimiter)."""
+    rc  = get_r()
+    sid = request.args.get('session_id')
+    rows = sorted(_all(rc, 'poker_hand_log'), key=lambda r: r['id'], reverse=True)
+    if sid and sid not in ('', 'all'):
+        try:
+            sid_int = int(sid)
+            rows = [r for r in rows if r.get('session_id') == sid_int]
+        except (TypeError, ValueError):
+            pass
+    hands = [_hand_log_row_to_dict(r) for r in rows]
+    return _hand_log_csv_response(hands, sid)
+
+
+def _hand_log_row_to_dict(r):
+    return {
+        'id':              r.get('id'),
+        'session_id':      r.get('session_id'),
+        'hand_number':     r.get('hand_number'),
+        'started_at':      r.get('started_at'),
+        'ended_at':        r.get('ended_at'),
+        'stage_reached':   r.get('stage_reached'),
+        'ended_by':        r.get('ended_by'),
+        'community_cards': r.get('community_cards') or [],
+        'seats':           r.get('seats') or [],
+        'winners':         r.get('winners') or [],
+    }
+
+
+def _fmt_cards(cards):
+    return ' '.join(f"{c.get('rank','?')}{c.get('suit','?')}" for c in (cards or []))
+
+
+def _hand_log_csv_response(hands, session_id_filter=None):
+    """Stream the hand log as CSV. UTF-8 BOM + ; delimiter (Excel/Finnish-friendly)."""
+    import csv, io
+    from flask import Response
+    buf = io.StringIO()
+    buf.write('\ufeff')
+    w = csv.writer(buf, delimiter=';', quoting=csv.QUOTE_MINIMAL)
+    w.writerow([
+        'Käsi #', 'Istunto', 'Aloitettu', 'Päättynyt',
+        'Vaihe', 'Päättymistapa', 'Yhteiskortit',
+        'Pelaajat', 'Voittajat',
+    ])
+    end_map = {'showdown':'Showdown','void':'Mitätöity','abandoned':'Hylätty','in_progress':'Käynnissä'}
+    for h in hands:
+        seats = '; '.join(
+            f"#{s.get('seat_number')} {s.get('player_name','')}: {_fmt_cards(s.get('hole_cards'))}"
+            + (' (fold)' if s.get('folded') else '')
+            for s in (h.get('seats') or [])
+        )
+        winners = ', '.join(
+            f"{x.get('player_name','')} ({x.get('hand_name','')})"
+            for x in (h.get('winners') or []) if x.get('is_winner')
+        )
+        w.writerow([
+            h.get('hand_number'),
+            h.get('session_id'),
+            h.get('started_at') or '',
+            h.get('ended_at') or '',
+            h.get('stage_reached') or '',
+            end_map.get(h.get('ended_by'), h.get('ended_by') or ''),
+            _fmt_cards(h.get('community_cards')),
+            seats,
+            winners,
+        ])
+    fname = 'kasihistoria'
+    if session_id_filter and session_id_filter not in ('', 'all'):
+        fname += f'_istunto-{session_id_filter}'
+    fname += '.csv'
+    return Response(
+        buf.getvalue(),
+        content_type='text/csv; charset=utf-8',
+        headers={'Content-Disposition': f'attachment; filename="{fname}"',
+                 'Cache-Control': 'no-store'}
+    )
 
 @app.route('/api/poker/deal', methods=['POST'])
 def poker_deal():

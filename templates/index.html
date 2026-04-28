@@ -279,6 +279,14 @@ select.form-control option{background:var(--bg2)}
 .hand-row.folded .hr-name{opacity:.55;text-decoration:line-through}
 .hand-row.folded .hr-cards{opacity:.5}
 .hand-card-winner-line{font-size:.78rem;color:var(--gold2);margin-top:.2rem;text-align:right}
+.select-sm{
+  background:rgba(255,255,255,.05);border:1px solid var(--border);
+  color:#e2e8f0;padding:.32rem .55rem;border-radius:8px;
+  font-size:.82rem;cursor:pointer;
+  font-family:inherit;outline:none;transition:border-color .2s;
+}
+.select-sm:hover,.select-sm:focus{border-color:var(--gold)}
+.select-sm option{background:#0d1f17;color:#e2e8f0}
 .truncate{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
 .divider{border:none;border-top:1px solid var(--border);margin:1rem 0}
 .empty-state{text-align:center;padding:2.5rem 1rem;color:var(--muted);font-size:.9rem}
@@ -474,9 +482,13 @@ select.form-control option{background:var(--bg2)}
   <div class="panel" id="hand-log-panel" style="margin-top:1.5rem" data-testid="hand-log-panel">
     <div class="panel-header">
       <h3>📜 Käsihistoria</h3>
-      <div style="display:flex;gap:.5rem;align-items:center">
+      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+        <select id="hand-log-session" class="select-sm" onchange="loadHandLog(true)" data-testid="hand-log-session-filter">
+          <option value="all">Kaikki istunnot</option>
+        </select>
         <span class="text-muted text-sm" id="hand-log-count" data-testid="hand-log-count"></span>
         <button class="btn btn-ghost btn-sm" onclick="loadHandLog(true)" data-testid="reload-hand-log-btn">↻ Päivitä</button>
+        <button class="btn btn-ghost btn-sm" onclick="downloadHandLogCsv()" data-testid="download-csv-btn">📥 Lataa CSV</button>
       </div>
     </div>
     <div class="panel-body">
@@ -1154,14 +1166,25 @@ function _esc(s){
 
 async function loadHandLog(reset=true){
   if(reset) _handLogOffset = 0;
-  const body = $('hand-log-body');
+  const body   = $('hand-log-body');
+  const filter = $('hand-log-session');
+  const sid    = (filter && filter.value) || 'all';
   try{
-    const d = await api('GET', `/api/poker/hands?limit=${HAND_LOG_PAGE}&offset=${_handLogOffset}`);
+    const d = await api(
+      'GET',
+      `/api/poker/hands?limit=${HAND_LOG_PAGE}&offset=${_handLogOffset}&session_id=${encodeURIComponent(sid)}`
+    );
     _handLogTotal = d.total || 0;
-    if(reset) body.innerHTML = '';
+    if(reset){
+      body.innerHTML = '';
+      _populateSessionFilter(d.sessions || [], sid);
+    }
     if(!d.hands || d.hands.length===0){
       if(reset){
-        body.innerHTML = `<div class="empty-state"><div class="empty-icon">📜</div>Kun käsi jaetaan, se ilmestyy tähän.</div>`;
+        const msg = sid === 'all'
+          ? 'Kun käsi jaetaan, se ilmestyy tähän.'
+          : 'Tällä istunnolla ei ole vielä jaettuja käsiä.';
+        body.innerHTML = `<div class="empty-state"><div class="empty-icon">📜</div>${msg}</div>`;
       }
     } else {
       d.hands.forEach(h => body.appendChild(renderHandLogCard(h)));
@@ -1172,6 +1195,39 @@ async function loadHandLog(reset=true){
   }catch(e){
     body.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠</div>Lokia ei voitu ladata.</div>`;
   }
+}
+
+function _populateSessionFilter(sessions, current){
+  const sel = $('hand-log-session');
+  if(!sel) return;
+  // Re-render only when the set of session ids changed (avoids losing focus)
+  const ids = sessions.map(s => String(s.session_id)).join(',');
+  if(sel.dataset.sids === ids) return;
+  sel.dataset.sids = ids;
+  const opts = ['<option value="all">Kaikki istunnot</option>']
+    .concat(sessions.map(s => {
+      const lbl = `Istunto #${s.session_id} · ${s.count} kättä` +
+                  (s.last ? ` · ${s.last.split(' ')[0]}` : '');
+      return `<option value="${s.session_id}">${_esc(lbl)}</option>`;
+    }));
+  sel.innerHTML = opts.join('');
+  // Restore selection if it still exists
+  if(current && opts.some(o => o.includes(`value="${current}"`))){
+    sel.value = current;
+  }
+}
+
+function downloadHandLogCsv(){
+  const sid = ($('hand-log-session') && $('hand-log-session').value) || 'all';
+  const url = `/api/poker/hands.csv?session_id=${encodeURIComponent(sid)}`;
+  // Trigger a download in a new tab/window so the browser handles the response.
+  const a = document.createElement('a');
+  a.href = url;
+  a.rel  = 'noopener';
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => document.body.removeChild(a), 0);
 }
 
 function renderHandLogCard(h){
