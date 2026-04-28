@@ -12,6 +12,11 @@ const PORT       = parseInt(process.env.PORT, 10) || 3000;
 const HOST       = process.env.HOST || '0.0.0.0';
 const TARGET     = process.env.BACKEND_TARGET || 'http://127.0.0.1:8001';
 
+// HTTP status returned when the upstream Flask backend is unreachable
+// (e.g. during a supervisor-driven restart). Surfaced as a friendly Finnish
+// "warming up" page rather than the default node-proxy stack trace.
+const BAD_GATEWAY_STATUS = 502;
+
 const app = express();
 
 // Lightweight health probe — returns 200 even if the backend is restarting.
@@ -27,7 +32,7 @@ app.use(
     logLevel: 'warn',
     onError(err, _req, res) {
       if (!res.headersSent) {
-        res.writeHead(502, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.writeHead(BAD_GATEWAY_STATUS, { 'Content-Type': 'text/html; charset=utf-8' });
       }
       res.end(
         `<!doctype html><meta charset="utf-8"><title>Backend not ready</title>` +
@@ -41,6 +46,4 @@ app.use(
   })
 );
 
-app.listen(PORT, HOST, () => {
-  console.log(`[proxy] listening on http://${HOST}:${PORT} → ${TARGET}`);
-});
+app.listen(PORT, HOST);
