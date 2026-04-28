@@ -79,6 +79,9 @@ class _DB:
         self._conn.close()
 
 def get_db():
+    if not DATABASE_URL:
+        from flask import abort
+        abort(503, 'DATABASE_URL environment variable is not set. Add it in the Vercel dashboard.')
     db = getattr(g, '_database', None)
     if db is None:
         db = g._database = _DB(DATABASE_URL)
@@ -98,6 +101,8 @@ def close_connection(exception):
 # ─── DB init ─────────────────────────────────────────────────────────────────
 
 def init_db():
+    if not DATABASE_URL:
+        return  # DATABASE_URL not set yet; every request will return a 503 via get_db()
     conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
 
     def run(sql):
