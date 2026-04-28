@@ -1,34 +1,140 @@
-import os, json, random, string, socket, hashlib
+import os, json, random, string, hashlib, threading
 from datetime import datetime
-from flask import Flask, request, jsonify, render_template, g, abort
+from flask import Flask, request, jsonify, render_template, g
 import redis as redis_lib
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 app = Flask(__name__, template_folder=os.path.join(_DIR, '..', 'templates'))
 
-REDIS_URL = os.environ.get('KV_URL') or os.environ.get('REDIS_URL') or ''
+# ─── Storage backend ──────────────────────────────────────────────────────────
+# We support three modes, in this order:
+#   1. Upstash / Vercel KV via TCP (KV_URL or REDIS_URL — `rediss://...`)
+#   2. Standard Redis via REDIS_URL
+#   3. Process-local in-memory fallback (so preview deployments without a KV
+#      attached still boot and let the user explore the UI). The fallback is
+#      *not* persistent across cold starts on serverless platforms, so we surface
+#      a banner via `/api/_health` so the client can warn the user.
 
-# ─── Redis helpers ────────────────────────────────────────────────────────────
+REDIS_URL = (
+    os.environ.get('KV_URL')
+    or os.environ.get('REDIS_URL')
+    or os.environ.get('UPSTASH_REDIS_URL')
+    or ''
+)
+
+# Cache the redis client at module scope. Vercel reuses warm containers, so this
+# avoids re-establishing TLS on every request.
+_redis_client     = None
+_redis_client_err = None
+_redis_lock       = threading.Lock()
+
+
+def _build_redis_client():
+    """Lazily build a redis client. Returns (client, error_str_or_None)."""
+    global _redis_client, _redis_client_err
+    if _redis_client is not None or _redis_client_err is not None:
+        return _redis_client, _redis_client_err
+    with _redis_lock:
+        if _redis_client is not None or _redis_client_err is not None:
+            return _redis_client, _redis_client_err
+        if not REDIS_URL:
+            _redis_client_err = 'no_url'
+            return None, _redis_client_err
+        try:
+            client = redis_lib.from_url(
+                REDIS_URL,
+                decode_responses=True,
+                socket_connect_timeout=5,
+                socket_timeout=5,
+                health_check_interval=30,
+            )
+            client.ping()
+            _redis_client = client
+        except Exception as e:  # pragma: no cover — depends on env
+            _redis_client_err = f'{type(e).__name__}: {e}'
+        return _redis_client, _redis_client_err
+
+
+# ─── In-memory fallback (mimics the redis hash + counter API we use) ──────────
+
+class _MemKV:
+    """Just enough of the redis-py interface for this app to keep working."""
+    def __init__(self):
+        self._lock     = threading.Lock()
+        self._counters = {}
+        self._hashes   = {}
+
+    # incr / hget / hset / hgetall / hdel
+    def incr(self, key):
+        with self._lock:
+            self._counters[key] = self._counters.get(key, 0) + 1
+            return self._counters[key]
+
+    def hset(self, name, key=None, value=None, mapping=None):
+        with self._lock:
+            store = self._hashes.setdefault(name, {})
+            if mapping:
+                store.update({str(k): str(v) for k, v in mapping.items()})
+                return len(mapping)
+            store[str(key)] = value if isinstance(value, str) else str(value)
+            return 1
+
+    def hget(self, name, key):
+        with self._lock:
+            return self._hashes.get(name, {}).get(str(key))
+
+    def hgetall(self, name):
+        with self._lock:
+            return dict(self._hashes.get(name, {}))
+
+    def hdel(self, name, key):
+        with self._lock:
+            return self._hashes.get(name, {}).pop(str(key), None) is not None
+
+    def ping(self):
+        return True
+
+    def close(self):  # no-op
+        pass
+
+
+_memkv = _MemKV()
+
 
 def _now():
     return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-def get_r():
-    if not REDIS_URL:
-        abort(503, 'KV_URL environment variable is not set. Add it in the Vercel dashboard.')
-    rc = getattr(g, '_redis', None)
-    if rc is None:
-        rc = g._redis = redis_lib.from_url(REDIS_URL, decode_responses=True)
-    return rc
 
-@app.teardown_appcontext
-def close_redis(exc):
+def get_r():
+    """Return a connected redis client, or the in-memory fallback."""
     rc = getattr(g, '_redis', None)
     if rc is not None:
-        try:
-            rc.close()
-        except Exception:
-            pass
+        return rc
+    client, _ = _build_redis_client()
+    rc = client if client is not None else _memkv
+    g._redis = rc
+    return rc
+
+
+def _kv_status():
+    """Used by /api/_health and the template to show a banner."""
+    if not REDIS_URL:
+        return {'mode': 'memory', 'reason': 'KV_URL is not configured.'}
+    client, err = _build_redis_client()
+    if client is None:
+        return {'mode': 'memory', 'reason': f'KV unreachable ({err}).'}
+    return {'mode': 'redis', 'reason': ''}
+
+
+@app.teardown_appcontext
+def close_redis(exc):  # noqa: ARG001
+    # Connection is cached at module scope; nothing to release per-request.
+    g.pop('_redis', None)
+
+
+@app.route('/api/_health')
+def _health():
+    return jsonify({'ok': True, 'storage': _kv_status()})
 
 def _insert(rc, table, data):
     id = int(rc.incr(f'seq:{table}'))
@@ -90,17 +196,20 @@ def gen_token():
     return ''.join(random.choices(string.ascii_letters + string.digits, k=24))
 
 def get_local_ip():
-    vercel_url = os.environ.get('VERCEL_URL', '')
-    if vercel_url:
-        return vercel_url
+    """Returns a host the customer/poker-player browser can reach.
+
+    Order of preference:
+      1. The request host (works for Vercel, custom domains and the Emergent
+         preview alike). Only available inside a request context.
+      2. VERCEL_URL (build/cold-start fallback on Vercel deployments).
+      3. 'localhost' as a last-resort placeholder.
+    """
     try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(('8.8.8.8', 80))
-        ip = s.getsockname()[0]
-        s.close()
-        return ip
-    except Exception:
-        return '127.0.0.1'
+        if request:  # inside a request → use the actual hostname seen by clients
+            return request.host
+    except RuntimeError:
+        pass
+    return os.environ.get('VERCEL_URL', 'localhost')
 
 def current_session(rc):
     sessions = _all(rc, 'poker_sessions')
@@ -312,6 +421,19 @@ def pwa_manifest():
                    "sizes": "any", "type": "image/svg+xml"}]
     }
     return Response(json.dumps(manifest), mimetype='application/manifest+json')
+
+@app.route('/favicon.ico')
+@app.route('/favicon.svg')
+def favicon():
+    from flask import Response
+    svg = (
+        "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>"
+        "<rect width='64' height='64' rx='12' fill='#0d1f17'/>"
+        "<text x='50%' y='52%' text-anchor='middle' dominant-baseline='middle' "
+        "font-size='42' font-family='serif' fill='#c9a84c'>♠</text></svg>"
+    )
+    return Response(svg, mimetype='image/svg+xml',
+                    headers={'Cache-Control': 'public, max-age=86400'})
 
 # ─── Players API ─────────────────────────────────────────────────────────────
 

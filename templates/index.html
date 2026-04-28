@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Kasinon Hallinta</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -391,7 +392,7 @@ select.form-control option{background:var(--bg2)}
 
   <div class="join-url-box">
     <span class="join-url-label">Pelaajan linkki</span>
-    <span class="join-url-text" id="join-url">http://{{ local_ip }}:5000/poker/join</span>
+    <span class="join-url-text" id="join-url"></span>
     <button class="btn btn-ghost btn-sm" onclick="copyJoinUrl()">📋 Kopioi</button>
   </div>
 
@@ -1154,6 +1155,8 @@ async function pokerVoid(){if(!confirm('Mitätöidäänkö käsi?'))return;try{a
 async function pokerFold(id){try{await api('POST',`/api/poker/fold/${id}`);loadPoker();}catch(e){toast(e.message,'error');}}
 async function pokerRemove(id){if(!confirm('Poistetaanko pelaaja pöydästä?'))return;try{await api('DELETE',`/api/poker/remove/${id}`);loadPoker();}catch(e){toast(e.message,'error');}}
 function copyJoinUrl(){navigator.clipboard.writeText($('join-url').textContent).then(()=>toast('Linkki kopioitu!','success'));}
+function setJoinUrl(){const el=$('join-url');if(el)el.textContent=window.location.origin+'/poker/join';}
+setJoinUrl();
 
 // ── Hand evaluation ────────────────────────────────────────────────────────
 async function evaluateHands(){

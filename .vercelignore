@@ -1,5 +1,27 @@
-app.py
+# Local dev / preview only — never deploy these to Vercel
+backend/
+frontend/
+
+# Python clutter
+__pycache__/
+.ruff_cache/
+*.pyc
+*.pyo
+
+# Local SQLite store (Vercel uses Upstash KV via /app/api/index.py)
+*.db
+*.db-shm
+*.db-wal
 casino.db
 instance/
-__pycache__/
+
+# Dotfiles & build artifacts
+.env
+.env.*
+.vercel
+.git/
+node_modules/
+
+# Local-only Flask entry-point (Vercel uses /app/api/index.py)
+app.py
 models.py

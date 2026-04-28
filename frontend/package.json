@@ -1,0 +1,13 @@
+{
+  "name": "kasino-frontend-proxy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tiny proxy that forwards every request to the Flask backend on :8001 so HTML pages render through the Emergent preview ingress on :3000.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "4.21.2",
+    "http-proxy-middleware": "2.0.7"
+  }
+}

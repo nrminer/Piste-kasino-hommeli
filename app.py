@@ -154,6 +154,17 @@ def gen_token():
     return ''.join(random.choices(string.ascii_letters + string.digits, k=24))
 
 def get_local_ip():
+    """Returns a host the customer/poker-player browser can reach.
+
+    Inside a request we use `request.host` (works for the Emergent preview,
+    Vercel, and any custom domain). Outside a request we fall back to the
+    LAN IP, with 'localhost' as the last resort.
+    """
+    try:
+        if request:
+            return request.host
+    except RuntimeError:
+        pass
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(('8.8.8.8', 80))
@@ -161,7 +172,7 @@ def get_local_ip():
         s.close()
         return ip
     except Exception:
-        return '127.0.0.1'
+        return 'localhost'
 
 def current_session(db):
     row = db.execute('SELECT * FROM poker_sessions ORDER BY id DESC LIMIT 1').fetchone()
@@ -250,6 +261,23 @@ def pwa_manifest():
         ]
     }
     return Response(json.dumps(manifest), mimetype='application/manifest+json')
+
+@app.route('/favicon.ico')
+@app.route('/favicon.svg')
+def favicon():
+    from flask import Response
+    svg = (
+        "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>"
+        "<rect width='64' height='64' rx='12' fill='#0d1f17'/>"
+        "<text x='50%' y='52%' text-anchor='middle' dominant-baseline='middle' "
+        "font-size='42' font-family='serif' fill='#c9a84c'>♠</text></svg>"
+    )
+    return Response(svg, mimetype='image/svg+xml',
+                    headers={'Cache-Control': 'public, max-age=86400'})
+
+@app.route('/api/_health')
+def _health():
+    return jsonify({'ok': True, 'storage': {'mode': 'sqlite'}})
 
 # ─── Players API ─────────────────────────────────────────────────────────────
 

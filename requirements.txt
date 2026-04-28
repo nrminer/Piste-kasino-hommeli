@@ -1,2 +1,3 @@
-flask
-redis
+flask==3.0.3
+redis==5.0.4
+Werkzeug==3.0.4
