@@ -40,6 +40,37 @@
 8. Streak modes (`normal` / forced `win` / forced `lose` per player)
 9. Configurable points-per-€ + redemption limits
 
+## What's been implemented (Iteration 3 — 2026-04-28, hand-log)
+
+### Käsihistoria — every dealt hand is logged for the manager
+- New table `poker_hand_log` (SQLite) / hash `tbl:poker_hand_log` (Redis/in-mem)
+  storing: hand_number, started_at/ended_at, stage_reached, ended_by,
+  community_cards, full seat snapshot (seat#, name, hole_cards, folded,
+  show_cards), winners (with hand_name, hand_rank, is_winner)
+- Lifecycle hooks: `/api/poker/deal` opens a new entry (and finalises any
+  prior `in_progress` row as **abandoned**), `/advance` updates the
+  community cards & stage, `/evaluate` records winners and finalises as
+  **showdown**, `/void` snapshots seats *before* clearing them and finalises
+  as **void**
+- New endpoint: `GET /api/poker/hands?limit=&offset=` (paginated, newest first)
+- Manager UI `/` → Pokeripöytä gains a "📜 Käsihistoria" panel with:
+  - Per-hand collapsible cards showing badge (Showdown / Mitätöity /
+    Hylätty / Käynnissä), timestamp, stage, player count
+  - Inline winner line `🏆 <name> — <hand_name>` in gold
+  - Expanded view: community cards + every seat (with mini cards),
+    winning row highlighted in gold, folded rows struck-through
+  - Page-size 25, "Näytä lisää" pagination, "Päivitä" refresh, total counter
+- Auto-refresh: hand log reloads whenever the dealer hits the poker view
+  refresh action (`loadPoker`)
+
+### Validated (curl + Python test_client + browser screenshots, both runtimes)
+- Lifecycle correct: preflop→flop→turn→river→showdown logs winners ✓
+- Re-deal finalises prior in-progress hand as `abandoned` ✓
+- Void snapshots seats BEFORE clearing hole cards (regression test passed) ✓
+- Pagination, total count, ordering (newest first) ✓
+- UI: 6 hands rendered; expand/collapse works; cards/winners/badges displayed ✓
+- Vercel-bound runtime mirrors SQLite version 1:1 ✓
+
 ## What's been implemented (Iteration 2 — 2026-04-28, slots overhaul)
 
 ### Slots — full real-machine rewrite (5 reels × 3 rows)

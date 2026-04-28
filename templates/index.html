@@ -239,6 +239,46 @@ select.form-control option{background:var(--bg2)}
 .flex{display:flex;align-items:center;gap:.5rem}.flex-wrap{flex-wrap:wrap}
 .flex-1{flex:1}.mb-1{margin-bottom:1rem}.mt-half{margin-top:.5rem}
 .text-muted{color:var(--muted)}.text-sm{font-size:.82rem}.bold{font-weight:700}
+
+/* ── Käsihistoria — hand log panel ───────────────────────────────────────── */
+.hand-log-list{display:flex;flex-direction:column;gap:.7rem;max-height:600px;overflow-y:auto;padding:.2rem 0}
+.hand-card{
+  border:1px solid var(--border);border-radius:12px;
+  background:rgba(255,255,255,.02);padding:.7rem .85rem;
+  transition:border-color .2s,background .2s;
+}
+.hand-card:hover{border-color:rgba(232,200,112,.3)}
+.hand-card.expanded{background:rgba(201,168,76,.05);border-color:rgba(232,200,112,.4)}
+.hand-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem;flex-wrap:wrap;cursor:pointer}
+.hand-card-num{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--gold);font-weight:700;line-height:1.1}
+.hand-card-meta{display:flex;gap:.45rem;flex-wrap:wrap;font-size:.78rem;color:var(--muted);margin-top:.2rem}
+.hand-card-badge{
+  display:inline-block;padding:.18rem .55rem;border-radius:99px;
+  font-size:.7rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+}
+.badge-showdown {background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.4)}
+.badge-void     {background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.4)}
+.badge-abandoned{background:rgba(234,179,8,.12);color:#fde68a;border:1px solid rgba(234,179,8,.4)}
+.badge-progress {background:rgba(59,130,246,.12);color:#93c5fd;border:1px solid rgba(59,130,246,.4)}
+.hand-card-body{margin-top:.6rem;display:none;animation:logExpand .25s ease}
+.hand-card.expanded .hand-card-body{display:block}
+@keyframes logExpand{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.hand-section-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:.5rem 0 .35rem}
+.hand-row{
+  display:flex;align-items:center;gap:.6rem;
+  padding:.32rem .5rem;border-radius:8px;
+  border-bottom:1px dashed rgba(255,255,255,.05);
+}
+.hand-row:last-child{border:0}
+.hand-row .hr-name{flex:1;color:#e2e8f0;font-weight:500}
+.hand-row .hr-hand{color:var(--muted);font-size:.78rem}
+.hand-row .hr-cards{display:flex;gap:.18rem}
+.hand-row.winner{background:rgba(201,168,76,.08);border:1px solid rgba(232,200,112,.3)}
+.hand-row.winner .hr-name{color:var(--gold2);font-weight:700}
+.hand-row.winner .hr-hand{color:var(--gold2)}
+.hand-row.folded .hr-name{opacity:.55;text-decoration:line-through}
+.hand-row.folded .hr-cards{opacity:.5}
+.hand-card-winner-line{font-size:.78rem;color:var(--gold2);margin-top:.2rem;text-align:right}
 .truncate{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
 .divider{border:none;border-top:1px solid var(--border);margin:1rem 0}
 .empty-state{text-align:center;padding:2.5rem 1rem;color:var(--muted);font-size:.9rem}
@@ -427,6 +467,31 @@ select.form-control option{background:var(--bg2)}
         <button class="btn btn-ghost btn-sm" onclick="$('hand-results').style.display='none'">✕ Sulje</button>
       </div>
       <div class="panel-body" id="hand-results-body"></div>
+    </div>
+  </div>
+
+  <!-- Käsihistoria — hand log of every dealt poker hand -->
+  <div class="panel" id="hand-log-panel" style="margin-top:1.5rem" data-testid="hand-log-panel">
+    <div class="panel-header">
+      <h3>📜 Käsihistoria</h3>
+      <div style="display:flex;gap:.5rem;align-items:center">
+        <span class="text-muted text-sm" id="hand-log-count" data-testid="hand-log-count"></span>
+        <button class="btn btn-ghost btn-sm" onclick="loadHandLog(true)" data-testid="reload-hand-log-btn">↻ Päivitä</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="text-muted text-sm" style="margin-bottom:.55rem">
+        Jokainen <strong>jaettu käsi</strong> kirjataan automaattisesti — taskukortit, yhteiskortit, voittajat ja päättymistapa.
+      </div>
+      <div id="hand-log-body" class="hand-log-list" data-testid="hand-log-body">
+        <div class="empty-state">
+          <div class="empty-icon">📜</div>
+          Kun käsi jaetaan, se ilmestyy tähän.
+        </div>
+      </div>
+      <div style="margin-top:.6rem;text-align:center">
+        <button class="btn btn-ghost btn-sm" id="hand-log-loadmore" style="display:none" onclick="loadHandLog(false)" data-testid="load-more-hands-btn">↓ Näytä lisää</button>
+      </div>
     </div>
   </div>
 </section>
@@ -1071,9 +1136,108 @@ let prevCommCount = 0;
 const STAGES=['waiting','preflop','flop','turn','river','showdown'];
 const STAGE_FI={waiting:'Odottaa',preflop:'Pre-Flop',flop:'Flop',turn:'Turn',river:'River',showdown:'Showdown'};
 
+// ── Käsihistoria (hand log) ────────────────────────────────────────────────
+const HAND_LOG_PAGE = 25;
+let _handLogOffset  = 0;
+let _handLogTotal   = 0;
+const _ENDED_BADGE = {
+  showdown:    {cls:'badge-showdown',  label:'Showdown'},
+  void:        {cls:'badge-void',      label:'Mitätöity'},
+  abandoned:   {cls:'badge-abandoned', label:'Hylätty'},
+  in_progress: {cls:'badge-progress',  label:'Käynnissä'},
+};
+function _esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, c => (
+    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+  ));
+}
+
+async function loadHandLog(reset=true){
+  if(reset) _handLogOffset = 0;
+  const body = $('hand-log-body');
+  try{
+    const d = await api('GET', `/api/poker/hands?limit=${HAND_LOG_PAGE}&offset=${_handLogOffset}`);
+    _handLogTotal = d.total || 0;
+    if(reset) body.innerHTML = '';
+    if(!d.hands || d.hands.length===0){
+      if(reset){
+        body.innerHTML = `<div class="empty-state"><div class="empty-icon">📜</div>Kun käsi jaetaan, se ilmestyy tähän.</div>`;
+      }
+    } else {
+      d.hands.forEach(h => body.appendChild(renderHandLogCard(h)));
+      _handLogOffset += d.hands.length;
+    }
+    $('hand-log-count').textContent = _handLogTotal ? `${_handLogTotal} kättä` : '';
+    $('hand-log-loadmore').style.display = (_handLogOffset < _handLogTotal) ? 'inline-block' : 'none';
+  }catch(e){
+    body.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠</div>Lokia ei voitu ladata.</div>`;
+  }
+}
+
+function renderHandLogCard(h){
+  const stage  = STAGE_FI[h.stage_reached] || h.stage_reached || '—';
+  const badge  = _ENDED_BADGE[h.ended_by] || {cls:'badge-progress', label:h.ended_by||'?'};
+  const winners = (h.winners || []).filter(w => w.is_winner);
+  const winnerLine = winners.length
+    ? `🏆 ${_esc(winners.map(w => `${w.player_name} — ${w.hand_name}`).join(', '))}`
+    : '';
+  const community = (h.community_cards || []).map(c => renderCard(c,'sm')).join('');
+  const seatRows = (h.seats || []).map(s => {
+    const wRec  = (h.winners || []).find(w => w.seat_number === s.seat_number);
+    const isWin = !!(wRec && wRec.is_winner);
+    const fold  = !!s.folded;
+    const cards = (s.hole_cards && s.hole_cards.length)
+      ? s.hole_cards.map(c => renderCard(c,'sm')).join('')
+      : `<span class="text-muted text-sm">—</span>`;
+    return `<div class="hand-row ${isWin?'winner':''} ${fold?'folded':''}">
+      <span class="text-muted text-sm">#${s.seat_number}</span>
+      <span class="hr-name">${_esc(s.player_name)}${isWin?' 🏆':''}${fold?' (fold)':''}</span>
+      <span class="hr-hand">${wRec ? _esc(wRec.hand_name) : ''}</span>
+      <span class="hr-cards">${cards}</span>
+    </div>`;
+  }).join('');
+
+  const card = document.createElement('div');
+  card.className = 'hand-card';
+  card.dataset.testid = 'hand-log-entry';
+  card.innerHTML = `
+    <div class="hand-card-header">
+      <div style="min-width:0;flex:1">
+        <div class="hand-card-num">Käsi #${h.hand_number}</div>
+        <div class="hand-card-meta">
+          <span>${_esc(h.started_at || '')}</span>
+          <span>·</span>
+          <span>${_esc(stage)}</span>
+          <span>·</span>
+          <span>${(h.seats||[]).length} pelaajaa</span>
+          ${(h.community_cards||[]).length ? `<span>·</span><span>${(h.community_cards||[]).length} yhteiskorttia</span>` : ''}
+        </div>
+      </div>
+      <div style="text-align:right">
+        <span class="hand-card-badge ${badge.cls}">${badge.label}</span>
+        ${winnerLine ? `<div class="hand-card-winner-line">${winnerLine}</div>` : ''}
+      </div>
+    </div>
+    <div class="hand-card-body">
+      <div class="hand-section-label">Yhteiskortit</div>
+      <div style="display:flex;gap:.25rem;flex-wrap:wrap">${community || `<span class="text-muted text-sm">— (ei yhteiskortteja)</span>`}</div>
+      <div class="hand-section-label" style="margin-top:.7rem">Pelaajien kädet</div>
+      ${seatRows || `<span class="text-muted text-sm">Ei pelaajia kirjattu.</span>`}
+    </div>`;
+  card.querySelector('.hand-card-header').addEventListener('click', () => {
+    card.classList.toggle('expanded');
+  });
+  return card;
+}
+
 async function loadPoker(){
-  try{const d=await api('GET','/api/poker/state');S.poker=d;renderPoker(d);}
-  catch(e){toast(e.message,'error');}
+  try{
+    const d = await api('GET','/api/poker/state');
+    S.poker = d;
+    renderPoker(d);
+    // Refresh the hand log alongside the live table state.
+    loadHandLog(true);
+  } catch(e){ toast(e.message,'error'); }
 }
 function renderPoker(d){
   const stage=d.stage||'waiting';

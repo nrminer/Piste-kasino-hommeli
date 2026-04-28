@@ -1,9 +1,13 @@
 import os, json, random, string, socket, hashlib
+from datetime import datetime
 from flask import Flask, request, jsonify, render_template, g
 import sqlite3
 
 app = Flask(__name__)
 DATABASE = 'casino.db'
+
+def _now():
+    return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 # ─── DB helpers ──────────────────────────────────────────────────────────────
 
@@ -129,6 +133,20 @@ def init_db():
             FOREIGN KEY (player_id) REFERENCES players(id)
         )""",
         "ALTER TABLE blackjack_games ADD COLUMN insurance_bet INTEGER DEFAULT 0",
+        """CREATE TABLE IF NOT EXISTS poker_hand_log (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id      INTEGER NOT NULL,
+            hand_number     INTEGER NOT NULL,
+            started_at      TEXT DEFAULT CURRENT_TIMESTAMP,
+            ended_at        TEXT,
+            stage_reached   TEXT DEFAULT 'preflop',
+            ended_by        TEXT DEFAULT 'in_progress',
+            community_cards TEXT DEFAULT '[]',
+            seats           TEXT DEFAULT '[]',
+            winners         TEXT DEFAULT '[]'
+        )""",
+        "CREATE INDEX IF NOT EXISTS idx_hand_log_session ON poker_hand_log(session_id, hand_number)",
+        "CREATE INDEX IF NOT EXISTS idx_hand_log_started ON poker_hand_log(started_at DESC)",
     ]
     for m in migrations:
         try:
@@ -598,6 +616,118 @@ def poker_join_api():
     db.commit()
     return jsonify({'token': token, 'seat': count + 1, 'name': name})
 
+# ─── Poker hand log helpers ──────────────────────────────────────────────────
+# Every hand started with `/api/poker/deal` is logged. The log captures
+# hole cards at deal-time, community cards as they are revealed, the
+# stage reached, the final winners (on showdown), and the way the hand
+# ended (showdown / void / abandoned by a re-deal before completion).
+
+def _hand_log_for_session(db, session_id):
+    """Return the current in-progress log row for a session, or None."""
+    row = db.execute(
+        "SELECT * FROM poker_hand_log "
+        "WHERE session_id=? AND ended_by='in_progress' "
+        "ORDER BY id DESC LIMIT 1",
+        (session_id,)
+    ).fetchone()
+    return dict(row) if row else None
+
+def _seats_snapshot(db, session_id):
+    """Snapshot of every active seat at the table right now."""
+    rows = db.execute(
+        'SELECT * FROM poker_seats WHERE session_id=? AND active=1 ORDER BY seat_number',
+        (session_id,)
+    ).fetchall()
+    return [{
+        'seat_number': r['seat_number'],
+        'player_name': r['player_name'],
+        'player_id':   r['player_id'],
+        'hole_cards':  json.loads(r['hole_cards_json'] or '[]'),
+        'folded':      bool(r['folded']),
+        'show_cards':  bool(r['show_cards']),
+    } for r in rows]
+
+def _log_hand_start(db, session_id):
+    """Log a freshly dealt hand. Any previous in-progress hand on this session
+    is closed off as 'abandoned'."""
+    prev = _hand_log_for_session(db, session_id)
+    if prev:
+        db.execute(
+            'UPDATE poker_hand_log SET ended_by=?, ended_at=? WHERE id=?',
+            ('abandoned', _now(), prev['id'])
+        )
+    nxt = (db.execute(
+        'SELECT MAX(hand_number) AS m FROM poker_hand_log WHERE session_id=?',
+        (session_id,)
+    ).fetchone()['m'] or 0) + 1
+    db.execute(
+        'INSERT INTO poker_hand_log'
+        '(session_id,hand_number,started_at,stage_reached,ended_by,community_cards,seats,winners)'
+        ' VALUES(?,?,?,?,?,?,?,?)',
+        (session_id, nxt, _now(), 'preflop', 'in_progress',
+         '[]', json.dumps(_seats_snapshot(db, session_id)), '[]')
+    )
+
+def _log_hand_advance(db, session_id, stage, community):
+    log = _hand_log_for_session(db, session_id)
+    if not log:
+        return
+    db.execute(
+        'UPDATE poker_hand_log SET stage_reached=?, community_cards=? WHERE id=?',
+        (stage, json.dumps(community), log['id'])
+    )
+
+def _log_hand_winners(db, session_id, winners, stage):
+    log = _hand_log_for_session(db, session_id)
+    if not log:
+        return
+    if stage == 'showdown':
+        db.execute(
+            'UPDATE poker_hand_log SET winners=?, seats=?, ended_by=?, ended_at=? WHERE id=?',
+            (json.dumps(winners), json.dumps(_seats_snapshot(db, session_id)),
+             'showdown', _now(), log['id'])
+        )
+    else:
+        db.execute(
+            'UPDATE poker_hand_log SET winners=? WHERE id=?',
+            (json.dumps(winners), log['id'])
+        )
+
+def _log_hand_void(db, session_id):
+    log = _hand_log_for_session(db, session_id)
+    if not log:
+        return
+    db.execute(
+        'UPDATE poker_hand_log SET ended_by=?, ended_at=?, seats=? WHERE id=?',
+        ('void', _now(), json.dumps(_seats_snapshot(db, session_id)), log['id'])
+    )
+
+@app.route('/api/poker/hands')
+def poker_hands_log():
+    db     = get_db()
+    limit  = max(1, min(int(request.args.get('limit', 25)), 200))
+    offset = max(0, int(request.args.get('offset', 0)))
+    rows = db.execute(
+        'SELECT * FROM poker_hand_log ORDER BY id DESC LIMIT ? OFFSET ?',
+        (limit, offset)
+    ).fetchall()
+    total = db.execute('SELECT COUNT(*) AS c FROM poker_hand_log').fetchone()['c']
+    out = []
+    for r in rows:
+        out.append({
+            'id':              r['id'],
+            'session_id':      r['session_id'],
+            'hand_number':     r['hand_number'],
+            'started_at':      r['started_at'],
+            'ended_at':        r['ended_at'],
+            'stage_reached':   r['stage_reached'],
+            'ended_by':        r['ended_by'],
+            'community_cards': json.loads(r['community_cards'] or '[]'),
+            'seats':           json.loads(r['seats'] or '[]'),
+            'winners':         json.loads(r['winners'] or '[]'),
+        })
+    return jsonify({'hands': out, 'total': total, 'limit': limit, 'offset': offset})
+
 @app.route('/api/poker/deal', methods=['POST'])
 def poker_deal():
     db    = get_db()
@@ -634,6 +764,10 @@ def poker_deal():
         'UPDATE poker_sessions SET deck_json=?,stage=?,status=?,community_cards_json=?,preset_hands_json=? WHERE id=?',
         (json.dumps(deck), 'preflop', 'active', '[]', json.dumps(new_presets), sess['id'])
     )
+    db.commit()
+    # Snapshot the new hand AFTER hole cards have been written so the log
+    # captures everyone's actual starting hand.
+    _log_hand_start(db, sess['id'])
     db.commit()
     return jsonify({'ok': True, 'stage': 'preflop'})
 
@@ -678,6 +812,7 @@ def poker_advance():
         'UPDATE poker_sessions SET deck_json=?,stage=?,community_cards_json=? WHERE id=?',
         (json.dumps(deck), new_stage, json.dumps(community), sess['id'])
     )
+    _log_hand_advance(db, sess['id'], new_stage, community)
     db.commit()
     return jsonify({'ok': True, 'stage': new_stage, 'community_cards': community})
 
@@ -687,6 +822,9 @@ def poker_void():
     sess = current_session(db)
     if not sess:
         return jsonify({'error': 'Ei istuntoa.'}), 400
+    # Snapshot the hand BEFORE we wipe seat hole cards — otherwise the log
+    # would record empty hands.
+    _log_hand_void(db, sess['id'])
     db.execute(
         'UPDATE poker_sessions SET deck_json=?,stage=?,community_cards_json=?,status=?,preset_hands_json=? WHERE id=?',
         (json.dumps(new_deck()), 'waiting', '[]', 'waiting', '{}', sess['id'])
@@ -779,6 +917,8 @@ def poker_evaluate():
         for r in results:
             r['is_winner'] = (r['hand_rank'] == top['hand_rank']
                               and r['tiebreakers'] == top['tiebreakers'])
+    _log_hand_winners(db, sess['id'], results, sess['stage'])
+    db.commit()
     return jsonify(results)
 
 @app.route('/api/poker/spin', methods=['POST'])

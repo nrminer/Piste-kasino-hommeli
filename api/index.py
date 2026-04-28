@@ -866,6 +866,102 @@ def poker_join_api():
     })
     return jsonify({'token': token, 'seat': count + 1, 'name': name})
 
+# ─── Poker hand log helpers (Redis / in-memory backend) ─────────────────────
+# Every hand started with `/api/poker/deal` is logged to `poker_hand_log`.
+# The log captures hole cards at deal-time, community cards as they are
+# revealed, the stage reached, the final winners (on showdown), and the
+# way the hand ended (showdown / void / abandoned by an early re-deal).
+
+def _hand_log_for_session(rc, session_id):
+    rows = [r for r in _where(rc, 'poker_hand_log', session_id=session_id, ended_by='in_progress')]
+    if not rows:
+        return None
+    return max(rows, key=lambda r: r['id'])
+
+def _seats_snapshot_kv(rc, session_id):
+    seats = sorted(_where(rc, 'poker_seats', session_id=session_id, active=1),
+                   key=lambda s: s['seat_number'])
+    return [{
+        'seat_number': s['seat_number'],
+        'player_name': s['player_name'],
+        'player_id':   s.get('player_id'),
+        'hole_cards':  json.loads(s.get('hole_cards_json') or '[]'),
+        'folded':      bool(s.get('folded')),
+        'show_cards':  bool(s.get('show_cards')),
+    } for s in seats]
+
+def _log_hand_start(rc, session_id):
+    prev = _hand_log_for_session(rc, session_id)
+    if prev:
+        _update(rc, 'poker_hand_log', prev['id'],
+                {'ended_by': 'abandoned', 'ended_at': _now()})
+    existing = _where(rc, 'poker_hand_log', session_id=session_id)
+    nxt = max((r.get('hand_number') or 0) for r in existing) + 1 if existing else 1
+    _insert(rc, 'poker_hand_log', {
+        'session_id':      session_id,
+        'hand_number':     nxt,
+        'started_at':      _now(),
+        'ended_at':        None,
+        'stage_reached':   'preflop',
+        'ended_by':        'in_progress',
+        'community_cards': [],
+        'seats':           _seats_snapshot_kv(rc, session_id),
+        'winners':         [],
+    })
+
+def _log_hand_advance(rc, session_id, stage, community):
+    log = _hand_log_for_session(rc, session_id)
+    if not log:
+        return
+    _update(rc, 'poker_hand_log', log['id'],
+            {'stage_reached': stage, 'community_cards': community})
+
+def _log_hand_winners(rc, session_id, winners, stage):
+    log = _hand_log_for_session(rc, session_id)
+    if not log:
+        return
+    fields = {'winners': winners}
+    if stage == 'showdown':
+        fields.update({
+            'ended_by': 'showdown',
+            'ended_at': _now(),
+            'seats':    _seats_snapshot_kv(rc, session_id),
+        })
+    _update(rc, 'poker_hand_log', log['id'], fields)
+
+def _log_hand_void(rc, session_id):
+    log = _hand_log_for_session(rc, session_id)
+    if not log:
+        return
+    _update(rc, 'poker_hand_log', log['id'], {
+        'ended_by': 'void', 'ended_at': _now(),
+        'seats':    _seats_snapshot_kv(rc, session_id),
+    })
+
+@app.route('/api/poker/hands')
+def poker_hands_log():
+    rc     = get_r()
+    limit  = max(1, min(int(request.args.get('limit', 25)), 200))
+    offset = max(0, int(request.args.get('offset', 0)))
+    rows = sorted(_all(rc, 'poker_hand_log'), key=lambda r: r['id'], reverse=True)
+    total = len(rows)
+    page  = rows[offset:offset+limit]
+    out = []
+    for r in page:
+        out.append({
+            'id':              r['id'],
+            'session_id':      r['session_id'],
+            'hand_number':     r['hand_number'],
+            'started_at':      r.get('started_at'),
+            'ended_at':        r.get('ended_at'),
+            'stage_reached':   r.get('stage_reached'),
+            'ended_by':        r.get('ended_by'),
+            'community_cards': r.get('community_cards') or [],
+            'seats':           r.get('seats') or [],
+            'winners':         r.get('winners') or [],
+        })
+    return jsonify({'hands': out, 'total': total, 'limit': limit, 'offset': offset})
+
 @app.route('/api/poker/deal', methods=['POST'])
 def poker_deal():
     rc    = get_r()
@@ -892,6 +988,7 @@ def poker_deal():
         'community_cards_json': '[]',
         'preset_hands_json': json.dumps({'community': comm_preset} if comm_preset else {}),
     })
+    _log_hand_start(rc, sess['id'])
     return jsonify({'ok': True, 'stage': 'preflop'})
 
 @app.route('/api/poker/preset', methods=['POST'])
@@ -930,6 +1027,7 @@ def poker_advance():
         'deck_json': json.dumps(deck), 'stage': new_stage,
         'community_cards_json': json.dumps(community),
     })
+    _log_hand_advance(rc, sess['id'], new_stage, community)
     return jsonify({'ok': True, 'stage': new_stage, 'community_cards': community})
 
 @app.route('/api/poker/void', methods=['POST'])
@@ -938,6 +1036,8 @@ def poker_void():
     sess = current_session(rc)
     if not sess:
         return jsonify({'error': 'Ei istuntoa.'}), 400
+    # Snapshot the hand BEFORE we wipe seat hole cards.
+    _log_hand_void(rc, sess['id'])
     _update(rc, 'poker_sessions', sess['id'], {
         'deck_json': json.dumps(new_deck()), 'stage': 'waiting',
         'community_cards_json': '[]', 'status': 'waiting', 'preset_hands_json': '{}',
@@ -1016,6 +1116,7 @@ def poker_evaluate():
         top = results[0]
         for r in results:
             r['is_winner'] = (r['hand_rank'] == top['hand_rank'] and r['tiebreakers'] == top['tiebreakers'])
+    _log_hand_winners(rc, sess['id'], results, sess['stage'])
     return jsonify(results)
 
 @app.route('/api/poker/spin', methods=['POST'])
