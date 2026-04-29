@@ -308,6 +308,27 @@ button.btn-secondary:hover{border-color:var(--gold);color:var(--gold)}
   100%{transform:translateY(-6px);filter:blur(1px);opacity:.7}
 }
 .slot-cell.spinning{animation:reelCycle .11s linear infinite}
+/* Anticipation: when 2+ scatters land on reels 0-1, remaining reels slow
+   down and pulse golden so the player feels the "are 3 scatters coming?" tension. */
+@keyframes reelAntic{
+  0%{transform:translateY(-3px);filter:blur(2px) brightness(1.2);opacity:.85;
+      background:rgba(201,168,76,.22);border-color:var(--gold);
+      box-shadow:inset 0 0 0 1px var(--gold),0 0 18px rgba(201,168,76,.35)}
+  50%{transform:translateY(3px);filter:blur(2px) brightness(1.4);opacity:1;
+      background:rgba(232,200,112,.32);border-color:var(--gold2);
+      box-shadow:inset 0 0 0 2px var(--gold2),0 0 28px rgba(232,200,112,.6)}
+  100%{transform:translateY(-3px);filter:blur(2px) brightness(1.2);opacity:.85;
+      background:rgba(201,168,76,.22);border-color:var(--gold);
+      box-shadow:inset 0 0 0 1px var(--gold),0 0 18px rgba(201,168,76,.35)}
+}
+.slot-cell.anticipation{animation:reelAntic .26s ease-in-out infinite}
+/* Near-miss: red flash on the cell that "broke" a 4-of-a-kind line. */
+@keyframes nearMissFlash{
+  0%,100%{background:rgba(239,68,68,.0);border-color:rgba(255,255,255,.12);box-shadow:none}
+  35%{background:rgba(239,68,68,.22);border-color:#ef4444;box-shadow:inset 0 0 0 2px #ef4444,0 0 22px rgba(239,68,68,.55)}
+  70%{background:rgba(239,68,68,.05);border-color:#ef4444;box-shadow:inset 0 0 0 1px #ef4444,0 0 8px rgba(239,68,68,.25)}
+}
+.slot-cell.near-miss{animation:nearMissFlash 1.4s ease-in-out 1}
 @keyframes cellBounce{
   0%{transform:scale(1.2);opacity:.6}100%{transform:scale(1);opacity:1}
 }
@@ -1988,6 +2009,45 @@ function clearWinLines(){
   if(svg) svg.innerHTML='';
 }
 
+// Mirror of backend SLOT_PAYLINES — used for client-side near-miss detection
+// only (server is the source of truth for actual wins/payouts).
+const CLIENT_PAYLINES = [
+  [[0,1],[1,1],[2,1],[3,1],[4,1]], [[0,0],[1,0],[2,0],[3,0],[4,0]],
+  [[0,2],[1,2],[2,2],[3,2],[4,2]], [[0,0],[1,1],[2,2],[3,1],[4,0]],
+  [[0,2],[1,1],[2,0],[3,1],[4,2]], [[0,0],[1,0],[2,1],[3,0],[4,0]],
+  [[0,2],[1,2],[2,1],[3,2],[4,2]], [[0,1],[1,0],[2,0],[3,0],[4,1]],
+  [[0,1],[1,2],[2,2],[3,2],[4,1]], [[0,0],[1,1],[2,1],[3,1],[4,0]],
+  [[0,2],[1,1],[2,1],[3,1],[4,2]], [[0,1],[1,0],[2,1],[3,2],[4,1]],
+  [[0,1],[1,2],[2,1],[3,0],[4,1]], [[0,0],[1,2],[2,0],[3,2],[4,0]],
+  [[0,2],[1,0],[2,2],[3,0],[4,2]], [[0,1],[1,1],[2,0],[3,1],[4,1]],
+  [[0,1],[1,1],[2,2],[3,1],[4,1]], [[0,0],[1,0],[2,2],[3,0],[4,0]],
+  [[0,2],[1,2],[2,0],[3,2],[4,2]], [[0,0],[1,2],[2,2],[3,2],[4,0]],
+];
+
+/** If exactly one payline matches 4-of-a-kind (or 4 with wild) but the 5th
+ *  cell breaks the streak, return that 5th cell [col,row]. Returns null
+ *  otherwise. Wild substitutes for the target symbol; scatter is ignored. */
+function findNearMissCell(grid){
+  for(const line of CLIENT_PAYLINES){
+    let target = null;
+    let matched = 0;
+    let breakIdx = -1;
+    for(let i=0;i<line.length;i++){
+      const [c,r] = line[i];
+      const sym = grid[c][r];
+      if(sym === 'scatter'){ matched = 0; break; }
+      if(sym === 'wild'){ matched++; continue; }
+      if(target === null){ target = sym; matched++; }
+      else if(sym === target){ matched++; }
+      else { breakIdx = i; break; }
+    }
+    if(matched === 4 && breakIdx === 4){
+      return line[4];
+    }
+  }
+  return null;
+}
+
 // Draw winning paylines as SVG paths over the slot grid for ~1.7s.
 function drawWinLines(wins, def){
   const overlay = $('win-line-overlay');
@@ -2214,24 +2274,49 @@ async function doSlotSpin(){
   // Reflect the new jackpot pool (server already incremented it)
   if(typeof data.jackpot_pool === 'number') bumpJackpot(data.jackpot_pool);
 
-  // Stop reels left → right
-  const stopDelays = turboMode ? [350,500,650,800,950] : [900,1150,1400,1650,1900];
-  await new Promise(resolve=>{
-    stopDelays.forEach((ms,col)=>{
-      setTimeout(()=>{
-        for(let row=0;row<ROWS;row++){
-          clearInterval(spinIntervals[`${col}-${row}`]);
-          const cell=$(`sc-${col}-${row}`);
-          cell.classList.remove('spinning');
-          cell.textContent=def.symbols[data.grid[col][row]] || data.grid[col][row];
-          cell.classList.add('stopping');
-          setTimeout(()=>cell.classList.remove('stopping'),turboMode?250:400);
-        }
-        playClick();
-        if(col===REELS-1) setTimeout(resolve, turboMode?250:450);
-      },ms);
-    });
-  });
+  // ── Realistic reel-stop sequence with anticipation ───────────────────────
+  // Reels stop left → right. After reels 0+1 stop, count scatters: if ≥2,
+  // engage *anticipation* on reels 2-4 (slower stops, golden pulse) — the
+  // signature "is the 3rd scatter coming?" tension that defines real slots.
+  const baseGap   = turboMode ? 150 : 250;          // gap between non-anticipation reel stops
+  const firstStop = turboMode ? 350 : 900;          // initial spin time before reel 0 stops
+  const anticGap  = turboMode ? 600 : 1300;         // dramatic slowdown for reels 2-4
+  let stoppedScatterCount = 0;
+  let anticipationOn = false;
+  function stopOneReel(col){
+    for(let row=0;row<ROWS;row++){
+      clearInterval(spinIntervals[`${col}-${row}`]);
+      const cell=$(`sc-${col}-${row}`);
+      cell.classList.remove('spinning','anticipation');
+      cell.textContent=def.symbols[data.grid[col][row]] || data.grid[col][row];
+      cell.classList.add('stopping');
+      setTimeout(()=>cell.classList.remove('stopping'),turboMode?250:400);
+      if(data.grid[col][row]==='scatter') stoppedScatterCount++;
+    }
+    playClick();
+  }
+  function engageAnticipation(){
+    if(anticipationOn) return;
+    anticipationOn = true;
+    for(let col=2; col<REELS; col++){
+      for(let row=0;row<ROWS;row++){
+        const cell=$(`sc-${col}-${row}`);
+        if(cell.classList.contains('spinning')) cell.classList.add('anticipation');
+      }
+    }
+    try{ playClick(); setTimeout(playClick, 180); }catch(e){}
+  }
+  await delay(firstStop);
+  stopOneReel(0);
+  await delay(baseGap);
+  stopOneReel(1);
+  // Decide anticipation now that reels 0 + 1 are revealed
+  if(stoppedScatterCount >= 2) engageAnticipation();
+  for(let col=2; col<REELS; col++){
+    await delay(anticipationOn ? anticGap : baseGap);
+    stopOneReel(col);
+  }
+  await delay(turboMode?200:380);
 
   // Highlight scatters & wilds
   if(data.scatter_positions&&data.scatter_positions.length>0){
@@ -2246,6 +2331,16 @@ async function doSlotSpin(){
     data.wins.forEach(w=>w.cells.forEach(([c,r])=>$(`sc-${c}-${r}`).classList.add('win')));
     drawWinLines(data.wins, def);
     playWin(data.wins);
+  } else {
+    // ── Near-miss: highlight the *one* cell that broke a 4-of-a-kind line.
+    // Real slots use this to make losses feel "close" — boosts engagement.
+    const nearMiss = findNearMissCell(data.grid);
+    if(nearMiss){
+      const [c, r] = nearMiss;
+      const cell = $(`sc-${c}-${r}`);
+      cell.classList.add('near-miss');
+      setTimeout(()=>cell.classList.remove('near-miss'), 1500);
+    }
   }
 
   if(data.jackpot_won){

@@ -1,0 +1,109 @@
+{
+  "project": "Casino Management Panel Redesign",
+  "theme": "The Auditor's Ledger (Swiss-Modernist / Financial Terminal)",
+  "archetype": "Archetype 4: Swiss & High-Contrast",
+  "rationale": "Strips away generic 'casino luxury' (no green/gold, no cards/suits). Introduces a ruthless, opinionated operational clarity reminiscent of high-end financial tools, physical ledgers, and Swiss print design. Designed for dense data consumption by floor managers.",
+  "tech_stack_constraints": {
+    "framework": "Pure HTML5 + Vanilla CSS",
+    "css_methodology": "CSS Variables + CSS Grid/Flexbox in a single <style> block",
+    "forbidden": [
+      "Tailwind",
+      "Bootstrap",
+      "React",
+      "External CSS files (except fonts/icons)",
+      "Border-radius (use sharp edges, 0px radius)",
+      "Box-shadows (use flat borders instead)",
+      "Emojis"
+    ]
+  },
+  "typography": {
+    "primary_ui_font": "'JetBrains Mono', monospace",
+    "display_font": "'Chivo', sans-serif",
+    "imports": [
+      "@import url('https://fonts.googleapis.com/css2?family=Chivo:wght@400;700;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap');"
+    ],
+    "rationale": "Chivo for brutalist, commanding page headers with heavy weight (900). JetBrains Mono for ALL tables, forms, buttons, and navigation to enforce the 'internal tool / terminal' aesthetic. Tabular numbers are perfect for financial and operational data."
+  },
+  "color_system": {
+    "css_variables": {
+      "--bg-canvas": "#EFEFE9",
+      "--bg-surface": "#FFFFFF",
+      "--text-main": "#0A0A0A",
+      "--text-muted": "#5C5C54",
+      "--border-hard": "#0A0A0A",
+      "--border-soft": "#D2D2CA",
+      "--accent-primary": "#3B00FF",
+      "--accent-danger": "#FF2A00",
+      "--accent-success": "#00B84D",
+      "--accent-warning": "#FFB800"
+    },
+    "rules": "No gradients. Flat colors only. Background is a warm ledger paper hue (--bg-canvas), active content surfaces are stark white (--bg-surface). Structural borders are solid black (--border-hard)."
+  },
+  "layout_and_spacing": {
+    "sidebar_width": "260px",
+    "grid_system": "Use strict CSS grid. For complex layouts like tables or KPI cards, use 'gap: 1px' with a wrapper background color of '--border-hard' to create true 1px structural grid lines (border-collapse style).",
+    "spacing_scale": {
+      "xs": "4px",
+      "sm": "8px",
+      "md": "16px",
+      "lg": "24px",
+      "xl": "32px",
+      "2xl": "48px",
+      "3xl": "64px"
+    }
+  },
+  "component_blueprints": {
+    "layout": "Standard 100vh layout with a fixed left sidebar (desktop) or hamburger drawer (mobile/tablet). Main content area scrolls. Header is stark white with a 1px solid black bottom border.",
+    "sidebar": "Background: --bg-canvas. Right border: 1px solid --border-hard. Links are plain text, ALL CAPS, JetBrains Mono. Hover state inverts background to --text-main and text to --bg-surface. Active state gets a 4px left border of --accent-primary. Use Lucide icons (monochrome) with 1.5px stroke.",
+    "stat_cards": "Background: --bg-surface. Sharp corners (border-radius: 0), 1px solid --border-hard. Content: upper-case overline label (muted, 12px), massive JetBrains Mono value (black, 32px+). No shadows. Heavy 4px bottom border for a grounded, structural feel.",
+    "data_table": "The focal point of the app. Use 'border-collapse: collapse; width: 100%;'. Every cell has a 1px solid --border-soft outline. Header row is --bg-canvas with --text-main. Text is purely JetBrains Mono, strictly left-aligned for text, right-aligned for currency/numbers. Hovering a row changes its background to --bg-canvas.",
+    "buttons": {
+      "primary": "Solid --text-main background, --bg-surface monospace text, sharp corners, 0px radius. Padding: 12px 24px. Hover: Background changes to --accent-primary.",
+      "secondary": "Transparent background, 1px solid --border-hard, --text-main text. Hover: Solid --text-main background, --bg-surface text.",
+      "danger": "Transparent background, 1px solid --accent-danger, --accent-danger text. Hover: Solid --accent-danger background, --bg-surface text."
+    },
+    "inputs": "Background: --bg-surface. Border: 1px solid --border-hard. 0px radius. Focus state: 2px solid --accent-primary, no outline. Height: 40px. Font: JetBrains Mono.",
+    "vip_badges": "Sharp rectangle. Solid background corresponding to tier. Instead of 'Gold/Silver', use functional ops naming (e.g., TIER 3 / TIER 2). T3 = --accent-primary bg, white text. T1 = --bg-canvas bg, black text, 1px black border."
+  },
+  "copy_and_voice": {
+    "strategy": "Clinical, precise, military/financial terminal tone in Finnish. Strip away 'friendly' or 'luxurious' language. Use technical abbreviations where appropriate.",
+    "examples": [
+      {
+        "old": "Kasinon Hallinta",
+        "new": "OPERAATIOT // PÄÄTE"
+      },
+      {
+        "old": "Pelaajat",
+        "new": "ASIAKASREKISTERI"
+      },
+      {
+        "old": "Bonukset",
+        "new": "KAMPANJAT // LOKI"
+      },
+      {
+        "old": "Poker",
+        "new": "PÖYTÄVERKKO // TXH"
+      },
+      {
+        "old": "Asetukset",
+        "new": "JÄRJESTELMÄ"
+      },
+      {
+        "old": "Lisää pisteitä",
+        "new": "KREDITOI"
+      }
+    ]
+  },
+  "media": {
+    "icons": "Lucide Icons via CDN (<script src=\"https://unpkg.com/lucide@latest\"></script>). No emojis allowed."
+  },
+  "instructions_to_main_agent": [
+    "Implement exactly as a single HTML file in /app/templates/index.html.",
+    "Do NOT use external CSS files, Tailwind, or Bootstrap. Write all CSS inside a <style> block in the HTML header.",
+    "Strictly follow the color system and typography guidelines defined here.",
+    "Ensure the layout relies on CSS Grid and Flexbox with CSS Variables for colors and spacing.",
+    "Retain all existing JS functionality, IDs, and view names unchanged. Only the visual presentation and copy should change.",
+    "Ensure every interactive element and key UI component has a 'data-testid' attribute (e.g., data-testid='nav-poker', data-testid='btn-credit').",
+    "Replace all emoji icons with Lucide SVG icons (e.g., <i data-lucide=\"users\"></i>)."
+  ]
+}

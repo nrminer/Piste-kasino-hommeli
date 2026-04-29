@@ -1110,16 +1110,19 @@ SLOT_THEMES = {
             {'id':'wild',    'weight':3},   # 🃏 substitutes for any non-scatter
             {'id':'scatter', 'weight':5},   # 💰 free-spin trigger
         ],
+        # RTP-calibrated payouts (3oak / 4oak / 5oak per line) — base RTP ≈ 85 %
+        # over 200 k Monte-Carlo spins (incl. 1 % progressive-jackpot rake).
+        # Values are per-line multipliers; payouts sum across all 20 lines.
         'payouts': {
-            'cherry':  [2,   5,   15],
-            'lemon':   [3,   8,   25],
-            'orange':  [4,   12,  40],
-            'grape':   [6,   20,  75],
-            'bell':    [10,  30,  125],
-            'star':    [20,  60,  250],
-            'jackpot': [40,  150, 500],
-            'diamond': [75,  300, 1000],
-            'wild':    [10,  50,  200],
+            'cherry':  [0.19, 0.48,  1.45],
+            'lemon':   [0.29, 0.73,  2.18],
+            'orange':  [0.39, 0.97,  3.38],
+            'grape':   [0.58, 1.74,  6.29],
+            'bell':    [0.87, 2.61, 10.64],
+            'star':    [1.74, 5.32, 21.27],
+            'jackpot': [3.38,13.05, 43.52],
+            'diamond': [6.53,26.11, 87.03],
+            'wild':    [0.87, 4.35, 17.41],
         },
         'free_spins': 8, 'fs_mult': 2,
     },
@@ -1136,14 +1139,14 @@ SLOT_THEMES = {
             {'id':'scatter', 'weight':5},   # 🔮 Ra
         ],
         'payouts': {
-            'scarab':  [2,   5,   15],
-            'eye':     [3,   8,   25],
-            'jar':     [5,   15,  50],
-            'eagle':   [8,   25,  90],
-            'cat':     [15,  40,  175],
-            'pharaoh': [40,  125, 400],
-            'book':    [80,  250, 800],
-            'wild':    [10,  50,  200],
+            'scarab':  [0.12, 0.30,  0.85],
+            'eye':     [0.18, 0.45,  1.40],
+            'jar':     [0.30, 0.85,  2.90],
+            'eagle':   [0.45, 1.45,  5.20],
+            'cat':     [0.85, 2.30, 10.00],
+            'pharaoh': [2.30, 7.20, 23.00],
+            'book':    [4.65,14.50, 46.00],
+            'wild':    [0.60, 2.90, 11.50],
         },
         'free_spins': 10, 'fs_mult': 2,
     },
@@ -1160,14 +1163,14 @@ SLOT_THEMES = {
             {'id':'scatter','weight':5},    # 🌀 wormhole
         ],
         'payouts': {
-            'planet': [2,   5,   15],
-            'comet':  [3,   8,   25],
-            'alien':  [5,   15,  50],
-            'rocket': [8,   25,  90],
-            'stars':  [15,  40,  175],
-            'moon':   [40,  125, 400],
-            'gem':    [80,  250, 800],
-            'wild':   [10,  50,  200],
+            'planet': [0.10, 0.26,  0.82],
+            'comet':  [0.15, 0.41,  1.34],
+            'alien':  [0.26, 0.82,  2.72],
+            'rocket': [0.41, 1.34,  4.93],
+            'stars':  [0.82, 2.16,  9.55],
+            'moon':   [2.16, 6.83, 21.88],
+            'gem':    [4.36,13.66, 43.65],
+            'wild':   [0.51, 2.72, 10.94],
         },
         'free_spins': 8, 'fs_mult': 3,  # space pays 3× during free spins
     },
@@ -1813,7 +1816,7 @@ def game_slots(pid):
 
     # 4. Base payout.
     total_mult = sum(w['mult'] for w in wins)
-    payout     = bet * total_mult
+    payout     = int(round(bet * total_mult))
 
     # 5. Free-spins bonus.
     free_spins_triggered = len(scatter_positions) >= 3
@@ -1826,7 +1829,7 @@ def game_slots(pid):
             fg = _slot_spin(theme_id, include_scatter=False)
             fw = _slot_calc_wins(fg, theme['payouts'])
             fm = sum(w['mult'] for w in fw)
-            fp = bet * fm * fs_mult
+            fp = int(round(bet * fm * fs_mult))
             bonus_payout += fp
             fs_results.append({'grid': fg, 'wins': fw, 'payout': fp})
 
