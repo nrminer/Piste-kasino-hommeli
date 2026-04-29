@@ -1312,7 +1312,7 @@ function renderPlayers(list){
   }).join('');
 }
 function openAddModal(){
-  $('modal-player-title').textContent='Lisää pelaaja';
+  $('modal-player-title').textContent='Lisää asiakas';
   $('edit-player-id').value='';
   $('pw-edit-hint').style.display='none';
   ['player-name','player-email','player-phone','player-notes','player-password'].forEach(id=>$(id).value='');
@@ -1322,7 +1322,7 @@ function openAddModal(){
 }
 function openEditModal(id){
   const p=S.players.find(x=>x.id===id); if(!p) return;
-  $('modal-player-title').textContent='Muokkaa pelaajaa';
+  $('modal-player-title').textContent='Muokkaa asiakasta';
   $('edit-player-id').value=id;
   $('pw-edit-hint').style.display='inline';
   $('player-name').value=p.name;$('player-email').value=p.email||'';

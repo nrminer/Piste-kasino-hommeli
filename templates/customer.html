@@ -2024,9 +2024,10 @@ const CLIENT_PAYLINES = [
   [[0,2],[1,2],[2,0],[3,2],[4,2]], [[0,0],[1,2],[2,2],[3,2],[4,0]],
 ];
 
-/** If exactly one payline matches 4-of-a-kind (or 4 with wild) but the 5th
- *  cell breaks the streak, return that 5th cell [col,row]. Returns null
- *  otherwise. Wild substitutes for the target symbol; scatter is ignored. */
+/** If a payline matches 3-of-a-kind start (cols 0,1,2) and the 4th breaks it,
+ *  return the 4th cell so we can flash it red. Real slots use this to make
+ *  losses feel "close" — boosts perceived engagement. Threshold=3 makes it
+ *  visible in regular play; threshold=4 (full near-jackpot) is even rarer. */
 function findNearMissCell(grid){
   for(const line of CLIENT_PAYLINES){
     let target = null;
@@ -2041,9 +2042,22 @@ function findNearMissCell(grid){
       else if(sym === target){ matched++; }
       else { breakIdx = i; break; }
     }
-    if(matched === 4 && breakIdx === 4){
-      return line[4];
+    // 4-of-5 (highest tension) — preferred when present
+    if(matched === 4 && breakIdx === 4) return line[4];
+  }
+  // Second pass: 3-of-4 (more frequent — visible in regular play)
+  for(const line of CLIENT_PAYLINES){
+    let target = null, matched = 0, breakIdx = -1;
+    for(let i=0;i<line.length;i++){
+      const [c,r] = line[i];
+      const sym = grid[c][r];
+      if(sym === 'scatter'){ matched = 0; break; }
+      if(sym === 'wild'){ matched++; continue; }
+      if(target === null){ target = sym; matched++; }
+      else if(sym === target){ matched++; }
+      else { breakIdx = i; break; }
     }
+    if(matched === 3 && breakIdx === 3) return line[3];
   }
   return null;
 }

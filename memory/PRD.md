@@ -249,3 +249,74 @@ and responsive PC + mobile support.
 ### Test credentials
 See `/app/memory/test_credentials.md` — `TestPelaaja` / `test123` (Player ID 1,
 5 000 points granted for this session).
+
+
+---
+
+## 2026-04-29 · Slot RTP calibration + Admin "Auditor's Ledger" redesign
+
+### New user requests
+1. Slot was not at 85 % RTP — calibrate the maths.
+2. Make the slot more *realistic* (anticipation slowdown, near-miss feedback).
+3. Make the casino-management panel *less AI-looking*.
+
+### User choices (jatka suosituksilla)
+- 1a Calibrate to ≈ 85 % via Monte-Carlo
+- 2d All realism additions (anticipation + near-miss + sequential reel stop)
+- 3a Visual refresh keeping all functionality
+- 4a Use design_agent for fresh distinctive look
+- 5a Only admin (`templates/index.html`); customer page untouched
+
+### Implemented
+**Slot RTP (backend — both `app.py` and `api/index.py`)**
+- New per-line fractional payouts replace the old 2-1000 integer ladder.
+  Base RTP ≈ 84 % per theme; with the existing 1 % progressive-jackpot rake
+  the effective long-run RTP lands at ≈ 85 % across fruits / egypt / space
+  (verified by 200 k-spin Monte-Carlo).
+- `payout = int(round(bet * total_mult))` cast added so credits stay integers.
+- Old empirical RTP was ~920–1580 % (broken!). Fixed.
+
+**Slot UX realism (customer.html)**
+- New CSS keyframes `reelAntic` and `nearMissFlash`.
+- `doSlotSpin` rewritten with sequential reel-stop. After reels 0+1 reveal,
+  if ≥ 2 scatters visible → *anticipation*: `.anticipation` class + 1.3 s gap
+  on remaining reels.
+- `findNearMissCell` flashes the cell that broke a 3- or 4-streak (CLIENT_PAYLINES
+  mirrors the backend list).
+- Anticipation observed working in DOM mid-spin.
+
+**Admin redesign — "Auditor's Ledger"** (`templates/index.html`)
+- Design from design_agent (`/app/design_guidelines.json`): paper-white
+  #EFEFE9, stark white surfaces, electric-blue #3B00FF, sharp 0 px corners,
+  1 px black borders, no shadows, no gradients, no emoji.
+- Typography: **Chivo** (display, 900) + **JetBrains Mono** (UI/data).
+- All chrome emojis → **Lucide SVG icons**. Throttled `MutationObserver`
+  re-runs `lucide.createIcons()` for dynamically-injected icons.
+- Voice: *Operaatiot // Pääte*, *Asiakasrekisteri*, *Pöytäverkko / TXH*,
+  *Järjestelmä*, *Lisää asiakas*, *Krediteeraa pisteet*, *Anna bonus*.
+- Components re-skinned but classes (`.btn`, `.panel`, `.stat-card`,
+  `.modal-overlay`, `.form-control`, `.vip`, `.card`, `.felt-table`, etc.)
+  preserved so dynamic JS string-builders keep working.
+- Felt board solid black (no green-felt cliché).
+- Responsive breakpoints retained.
+
+### Verified by testing agent (iteration_2.json)
+- Backend RTP: 100 % (8/8 pytest)
+- Frontend admin + slot UX + 3D regression: ~98 %
+- Cosmetic Finnish copy nit fixed: `Lisää pelaaja` → `Lisää asiakas`.
+- Anticipation visible (1/20 spins, RNG-rare). Near-miss threshold lowered to
+  3-of-4 so it fires in normal play.
+- 3D Blackjack/Baccarat from iteration 1 still render fine.
+
+### Backlog (informational, non-blocking)
+- `SLOT_THEMES` duplicated between `app.py` and `api/index.py` — refactor to
+  shared module.
+- Admin SPA is currently not auth-gated; harden before public deploy.
+- Both monolithic templates could split CSS/JS to `/static/`.
+
+### Files changed
+- `/app/app.py` (SLOT_THEMES + int cast)
+- `/app/api/index.py` (same)
+- `/app/templates/customer.html` (anticipation CSS, reel-stop loop, near-miss helper)
+- `/app/templates/index.html` (full redesign)
+- `/app/design_guidelines.json` (from design agent)
