@@ -13,6 +13,8 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>Asiakassivu · Kasino</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Three.js for 3D Blackjack & Baccarat scenes -->
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -462,6 +464,64 @@ button.btn-secondary:hover{border-color:var(--gold);color:var(--gold)}
 .claim-banner .claim-amount{font-size:1.8rem;font-weight:700;margin:.3rem 0}
 .claim-banner .claim-label{font-size:.88rem;opacity:.85;margin-bottom:.8rem}
 .claim-banner .claim-close{width:100%;padding:.65rem;background:#0a1a10;color:var(--gold);border:none;border-radius:8px;font-weight:700;font-size:.9rem;cursor:pointer;min-height:44px}
+
+/* ── 3D Casino scene (Blackjack & Baccarat) ───────────────────────────────── */
+.casino3d-wrap{
+  width:100%;height:320px;border-radius:14px;overflow:hidden;position:relative;
+  background:radial-gradient(ellipse at 50% 20%,#27522f 0%,#102218 65%,#050b07 100%);
+  border:1px solid rgba(201,168,76,.25);
+  box-shadow:inset 0 0 40px rgba(0,0,0,.55),0 4px 20px rgba(0,0,0,.4);
+  margin-bottom:.85rem;
+}
+.casino3d-wrap canvas{display:block;width:100%!important;height:100%!important;touch-action:manipulation}
+.casino3d-hud{
+  position:absolute;top:.55rem;left:.7rem;right:.7rem;display:flex;justify-content:space-between;
+  pointer-events:none;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;font-weight:600;
+}
+.casino3d-hud .hud-tag{
+  background:rgba(10,26,16,.7);backdrop-filter:blur(6px);color:var(--gold2);
+  padding:.22rem .6rem;border-radius:99px;border:1px solid rgba(201,168,76,.3);
+}
+.casino3d-hud .hud-tag.dealer{color:#ef9f9f;border-color:rgba(239,159,159,.35)}
+.casino3d-overlay{
+  position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center;
+}
+.casino3d-total{
+  pointer-events:none;position:absolute;padding:.3rem .75rem;border-radius:99px;
+  background:rgba(10,26,16,.75);backdrop-filter:blur(6px);
+  font-weight:700;font-size:.88rem;color:var(--gold2);
+  border:1px solid rgba(201,168,76,.35);letter-spacing:.04em;
+  transition:opacity .25s,transform .25s;
+}
+.casino3d-total.player{bottom:.65rem;left:50%;transform:translateX(-50%)}
+.casino3d-total.dealer{top:2rem;left:50%;transform:translateX(-50%);color:#ffb8b8;border-color:rgba(239,159,159,.35)}
+.casino3d-total.banker{top:2.1rem;right:1rem}
+.casino3d-total.plside{top:2.1rem;left:1rem;color:#9be0b0;border-color:rgba(155,224,176,.35)}
+.casino3d-total.tieside{top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,26,16,.85);color:#d4b676}
+.casino3d-burst{
+  position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center;
+  font-family:'Playfair Display',serif;font-size:2.6rem;font-weight:900;
+  color:var(--gold2);text-shadow:0 0 30px rgba(232,200,112,.9),0 0 10px rgba(0,0,0,.5);
+  opacity:0;transition:opacity .25s,transform .6s cubic-bezier(.34,1.56,.64,1);
+}
+.casino3d-burst.show{opacity:1;transform:scale(1.1)}
+.casino3d-burst.loss{color:#ff9b9b;text-shadow:0 0 30px rgba(255,155,155,.7)}
+.casino3d-burst.push{color:#d4b676;text-shadow:0 0 30px rgba(201,168,76,.6)}
+
+/* Baccarat bet spots (pre-game selection visual anchor) */
+.bac3d-spots{
+  position:absolute;bottom:.6rem;left:0;right:0;display:flex;gap:.4rem;justify-content:center;padding:0 .6rem;
+  pointer-events:none;
+}
+.bac3d-spot-pill{
+  background:rgba(10,26,16,.7);backdrop-filter:blur(6px);color:var(--muted);
+  padding:.22rem .6rem;border-radius:99px;border:1px solid rgba(90,138,106,.3);
+  font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+}
+.bac3d-spot-pill.selected{color:var(--gold2);border-color:var(--gold);background:rgba(201,168,76,.15);box-shadow:0 0 14px rgba(201,168,76,.25)}
+
+@media(max-width:430px){.casino3d-wrap{height:260px}}
+@media(max-width:360px){.casino3d-wrap{height:230px}.casino3d-burst{font-size:2rem}}
 </style>
 </head>
 <body>
@@ -660,38 +720,67 @@ button.btn-secondary:hover{border-color:var(--gold);color:var(--gold)}
 
       <!-- Baccarat -->
       <div class="game-panel" id="gpanel-baccarat">
+        <!-- 3D Baccarat scene -->
+        <div class="casino3d-wrap" id="bac-3d-wrap" data-testid="bac-3d-wrap">
+          <div class="casino3d-hud">
+            <span class="hud-tag dealer">🎴 Jakaja</span>
+            <span class="hud-tag">Baccarat</span>
+          </div>
+          <div class="casino3d-total plside" id="bac3d-player-total" style="display:none"></div>
+          <div class="casino3d-total banker" id="bac3d-banker-total" style="display:none"></div>
+          <div class="casino3d-total tieside" id="bac3d-tie-label" style="display:none">TIE</div>
+          <div class="bac3d-spots" id="bac3d-spots">
+            <span class="bac3d-spot-pill selected" data-spot="player">Pelaaja</span>
+            <span class="bac3d-spot-pill" data-spot="tie">Tasapeli</span>
+            <span class="bac3d-spot-pill" data-spot="banker">Bankeri</span>
+          </div>
+          <div class="casino3d-burst" id="bac3d-burst"></div>
+        </div>
         <div class="bet-row">
           <label>Panos (pistettä)</label>
-          <input class="bet-inp" type="number" id="bac-bet" value="100" min="10" max="10000" step="10">
+          <input class="bet-inp" type="number" id="bac-bet" value="100" min="10" max="10000" step="10" data-testid="bac-bet-input">
         </div>
         <div class="choice-row">
-          <button class="choice-btn selected" id="bac-player" onclick="bacChoose('player')">👤 Pelaaja (1:1)</button>
-          <button class="choice-btn" id="bac-banker" onclick="bacChoose('banker')">🏦 Bankeri (0.95:1)</button>
-          <button class="choice-btn" id="bac-tie" onclick="bacChoose('tie')">🤝 Tasapeli (8:1)</button>
+          <button class="choice-btn selected" id="bac-player" onclick="bacChoose('player')" data-testid="bac-side-player">👤 Pelaaja (1:1)</button>
+          <button class="choice-btn" id="bac-banker" onclick="bacChoose('banker')" data-testid="bac-side-banker">🏦 Bankeri (0.95:1)</button>
+          <button class="choice-btn" id="bac-tie" onclick="bacChoose('tie')" data-testid="bac-side-tie">🤝 Tasapeli (8:1)</button>
         </div>
-        <button class="btn-primary" id="bac-btn" onclick="doBaccarat()">Pelaa Baccarat</button>
+        <button class="btn-primary" id="bac-btn" onclick="doBaccarat()" data-testid="bac-deal-btn">Pelaa Baccarat</button>
         <div id="bac-result"></div>
       </div>
 
       <!-- Blackjack -->
       <div class="game-panel" id="gpanel-blackjack">
         <div id="bj-start-area">
+          <!-- 3D Blackjack scene (idle state) -->
+          <div class="casino3d-wrap" id="bj-3d-wrap-start" data-testid="bj-3d-wrap-start">
+            <div class="casino3d-hud">
+              <span class="hud-tag dealer">🎴 Jakaja odottaa</span>
+              <span class="hud-tag">Blackjack</span>
+            </div>
+          </div>
           <div class="bet-row">
             <label>Panos (pistettä)</label>
-            <input class="bet-inp" type="number" id="bj-bet" value="100" min="10" max="10000" step="10">
+            <input class="bet-inp" type="number" id="bj-bet" value="100" min="10" max="10000" step="10" data-testid="bj-bet-input">
           </div>
-          <button class="btn-primary" id="bj-start-btn" onclick="doBlackjackStart()">Aloita peli</button>
+          <button class="btn-primary" id="bj-start-btn" onclick="doBlackjackStart()" data-testid="bj-start-btn">Aloita peli</button>
         </div>
         <div id="bj-game-area" style="display:none">
-          <div style="margin-bottom:.5rem">
-            <div class="section-label" style="margin-bottom:.3rem">Jakajan käsi</div>
-            <div class="mini-cards" id="bj-dealer-cards"></div>
-            <div style="text-align:center;font-size:.82rem;color:var(--muted)" id="bj-dealer-total"></div>
+          <!-- 3D Blackjack scene (active game) -->
+          <div class="casino3d-wrap" id="bj-3d-wrap" data-testid="bj-3d-wrap">
+            <div class="casino3d-hud">
+              <span class="hud-tag dealer">🎴 Jakaja</span>
+              <span class="hud-tag" id="bj3d-stage-tag">Peli käynnissä</span>
+            </div>
+            <div class="casino3d-total dealer" id="bj3d-dealer-total">—</div>
+            <div class="casino3d-total player" id="bj3d-player-total">—</div>
+            <div class="casino3d-burst" id="bj3d-burst"></div>
           </div>
-          <div style="margin-bottom:.5rem">
-            <div class="section-label" style="margin-bottom:.3rem">Sinun kätesi</div>
+          <div style="display:none">
+            <div class="mini-cards" id="bj-dealer-cards"></div>
+            <div id="bj-dealer-total"></div>
             <div class="mini-cards" id="bj-player-cards"></div>
-            <div style="text-align:center;font-size:.9rem;font-weight:700;color:var(--gold2)" id="bj-player-total"></div>
+            <div id="bj-player-total"></div>
           </div>
           <div id="bj-insurance-area" style="display:none;margin-bottom:.6rem">
             <div style="background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);border-radius:8px;padding:.75rem;margin-bottom:.5rem;font-size:.85rem;text-align:center">
@@ -699,17 +788,17 @@ button.btn-secondary:hover{border-color:var(--gold);color:var(--gold)}
               <span style="color:var(--muted);font-size:.78rem" id="bj-ins-cost"></span>
             </div>
             <div class="bj-actions">
-              <button id="bj-ins-take" onclick="doBlackjackAction('insurance')" style="border-color:rgba(201,168,76,.5);color:var(--gold)">🛡 Vakuutus</button>
-              <button id="bj-ins-decline" onclick="declineInsurance()">✗ Ei vakuutusta</button>
+              <button id="bj-ins-take" onclick="doBlackjackAction('insurance')" style="border-color:rgba(201,168,76,.5);color:var(--gold)" data-testid="bj-insurance-take-btn">🛡 Vakuutus</button>
+              <button id="bj-ins-decline" onclick="declineInsurance()" data-testid="bj-insurance-decline-btn">✗ Ei vakuutusta</button>
             </div>
           </div>
           <div class="bj-actions">
-            <button id="bj-hit" onclick="doBlackjackAction('hit')">🃏 Ota kortti</button>
-            <button id="bj-stand" onclick="doBlackjackAction('stand')">🛑 Jää</button>
-            <button id="bj-double" onclick="doBlackjackAction('double')">✌️ Tuplaa</button>
+            <button id="bj-hit" onclick="doBlackjackAction('hit')" data-testid="bj-hit-btn">🃏 Ota kortti</button>
+            <button id="bj-stand" onclick="doBlackjackAction('stand')" data-testid="bj-stand-btn">🛑 Jää</button>
+            <button id="bj-double" onclick="doBlackjackAction('double')" data-testid="bj-double-btn">✌️ Tuplaa</button>
           </div>
           <div id="bj-result"></div>
-          <button class="btn-secondary" id="bj-new-btn" onclick="bjReset()" style="display:none;margin-top:.75rem;width:100%">Uusi peli</button>
+          <button class="btn-secondary" id="bj-new-btn" onclick="bjReset()" style="display:none;margin-top:.75rem;width:100%" data-testid="bj-new-btn">Uusi peli</button>
         </div>
       </div>
 
@@ -2231,6 +2320,714 @@ function showFinalSlotResult(data, def){
   </div>`;
   pollPoints();
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── 3D Casino Scenes (Blackjack + Baccarat) — Three.js ────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── WebAudio synth — reused pattern from slots ────────────────────────────
+let _casinoAudio = null;
+function _getAudio(){
+  if(_casinoAudio) return _casinoAudio;
+  try{ _casinoAudio = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; }
+  return _casinoAudio;
+}
+function _beep(freq, dur=0.08, type='sine', vol=0.12, delay=0){
+  const ctx = _getAudio(); if(!ctx) return;
+  if(ctx.state==='suspended') ctx.resume().catch(()=>{});
+  const t0 = ctx.currentTime + delay;
+  const osc = ctx.createOscillator(); const gain = ctx.createGain();
+  osc.type = type; osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, t0);
+  gain.gain.linearRampToValueAtTime(vol, t0 + 0.008);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(t0); osc.stop(t0 + dur + 0.02);
+}
+function _noise(dur=0.15, vol=0.08, delay=0){
+  const ctx = _getAudio(); if(!ctx) return;
+  if(ctx.state==='suspended') ctx.resume().catch(()=>{});
+  const t0 = ctx.currentTime + delay;
+  const buf = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * dur)), ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for(let i=0;i<data.length;i++) data[i] = (Math.random()*2-1) * (1 - i/data.length);
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const filter = ctx.createBiquadFilter(); filter.type='highpass'; filter.frequency.value=1200;
+  const gain = ctx.createGain(); gain.gain.setValueAtTime(vol, t0);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+  src.connect(filter).connect(gain).connect(ctx.destination);
+  src.start(t0); src.stop(t0 + dur + 0.02);
+}
+const Sounds = {
+  deal(){ _noise(0.09, 0.06); _beep(340, 0.04, 'triangle', 0.06, 0.02); },
+  flip(){ _beep(520, 0.06, 'triangle', 0.05); _beep(680, 0.04, 'sine', 0.04, 0.03); },
+  chip(){ _beep(1400, 0.03, 'square', 0.04); _beep(900, 0.04, 'triangle', 0.035, 0.015); },
+  shuffle(){ for(let i=0;i<6;i++) _noise(0.06, 0.05, i*0.04); },
+  win(){ [523,659,784,1047].forEach((f,i)=>_beep(f,0.18,'triangle',0.1,i*0.09)); },
+  lose(){ [330,294,247].forEach((f,i)=>_beep(f,0.2,'sawtooth',0.06,i*0.08)); },
+  push(){ _beep(440,0.12,'sine',0.08); _beep(440,0.12,'sine',0.08,0.14); },
+  bust(){ _noise(0.18, 0.09); _beep(160,0.25,'sawtooth',0.09,0.05); },
+};
+
+// ── Card texture cache: draw rank+suit onto a canvas, use as Three texture ──
+const _cardTexCache = new Map();
+function _buildCardTexture(rank, suit){
+  const key = rank + suit;
+  if(_cardTexCache.has(key)) return _cardTexCache.get(key);
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 358;
+  const ctx = cv.getContext('2d');
+  // bg
+  ctx.fillStyle = '#fdfcf4';
+  _roundRect(ctx, 4, 4, cv.width-8, cv.height-8, 22); ctx.fill();
+  ctx.strokeStyle = '#e6deb8'; ctx.lineWidth = 2;
+  _roundRect(ctx, 4, 4, cv.width-8, cv.height-8, 22); ctx.stroke();
+  const red = (suit==='♥'||suit==='♦');
+  ctx.fillStyle = red ? '#c0392b' : '#141414';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.font = 'bold 52px "DM Sans", sans-serif';
+  ctx.fillText(rank, 18, 16);
+  ctx.font = 'bold 46px serif';
+  ctx.fillText(suit, 18, 74);
+  // center big suit
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = 'bold 150px serif';
+  ctx.fillText(suit, cv.width/2, cv.height/2);
+  // bottom-right mirrored
+  ctx.save();
+  ctx.translate(cv.width-18, cv.height-16); ctx.rotate(Math.PI);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.font = 'bold 52px "DM Sans", sans-serif';
+  ctx.fillText(rank, 0, 0);
+  ctx.font = 'bold 46px serif';
+  ctx.fillText(suit, 0, 58);
+  ctx.restore();
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
+  _cardTexCache.set(key, tex);
+  return tex;
+}
+function _roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+let _cardBackTex = null;
+function _getCardBackTex(){
+  if(_cardBackTex) return _cardBackTex;
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 358;
+  const ctx = cv.getContext('2d');
+  // diagonal stripes gold+green
+  ctx.fillStyle = '#0e3a1b';
+  _roundRect(ctx,4,4,cv.width-8,cv.height-8,22); ctx.fill();
+  const grad = ctx.createLinearGradient(0,0,cv.width,cv.height);
+  grad.addColorStop(0,'#163524'); grad.addColorStop(0.5,'#255c36'); grad.addColorStop(1,'#163524');
+  ctx.fillStyle = grad;
+  _roundRect(ctx,14,14,cv.width-28,cv.height-28,18); ctx.fill();
+  // gold diamond pattern
+  ctx.fillStyle = 'rgba(201,168,76,0.45)';
+  for(let x=-40;x<cv.width;x+=26){
+    for(let y=-40;y<cv.height;y+=26){
+      ctx.beginPath();
+      ctx.moveTo(x+13,y); ctx.lineTo(x+26,y+13); ctx.lineTo(x+13,y+26); ctx.lineTo(x,y+13);
+      ctx.closePath(); ctx.fill();
+    }
+  }
+  // center crest
+  ctx.fillStyle = '#c9a84c';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = 'bold 90px serif';
+  ctx.fillText('♠', cv.width/2, cv.height/2);
+  ctx.strokeStyle = '#c9a84c'; ctx.lineWidth = 4;
+  _roundRect(ctx,14,14,cv.width-28,cv.height-28,18); ctx.stroke();
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
+  _cardBackTex = tex;
+  return tex;
+}
+
+// ── Card3D: a plane group with front/back faces; flips + slides animated ──
+class Card3D{
+  constructor(rank, suit){
+    this.rank = rank; this.suit = suit;
+    const w = 1.0, h = 1.4;
+    const group = new THREE.Group();
+    const frontMat = new THREE.MeshStandardMaterial({
+      map: _buildCardTexture(rank, suit), roughness: 0.55, metalness: 0.05,
+    });
+    const backMat = new THREE.MeshStandardMaterial({
+      map: _getCardBackTex(), roughness: 0.55, metalness: 0.08,
+    });
+    const geo = new THREE.PlaneGeometry(w, h);
+    const front = new THREE.Mesh(geo, frontMat);
+    front.rotation.x = -Math.PI/2; // lie flat on table, face up
+    front.position.y = 0.012;
+    const back = new THREE.Mesh(geo, backMat);
+    back.rotation.x = Math.PI/2; // face down
+    back.position.y = -0.012;
+    group.add(front); group.add(back);
+    this.group = group;
+    this.isFaceUp = false;
+    // start face down
+    group.rotation.x = Math.PI;
+  }
+  setFaceUp(up){
+    this.isFaceUp = !!up;
+    this.group.rotation.x = up ? 0 : Math.PI;
+  }
+  /** Animate from current transform to target position + faceUp orientation. */
+  animateTo(pos, opts={}){
+    const {duration=450, flip=true, onComplete} = opts;
+    const g = this.group;
+    const startPos = g.position.clone();
+    const startRotX = g.rotation.x;
+    const startRotZ = g.rotation.z;
+    const endRotX = flip ? 0 : Math.PI;
+    const endRotZ = opts.rotZ ?? 0;
+    const t0 = performance.now();
+    const step = (now) => {
+      const p = Math.min(1, (now - t0) / duration);
+      const e = 1 - Math.pow(1-p, 3);
+      // arc: lift y mid-way
+      g.position.x = startPos.x + (pos.x - startPos.x) * e;
+      g.position.z = startPos.z + (pos.z - startPos.z) * e;
+      const liftY = Math.sin(p * Math.PI) * 0.6;
+      g.position.y = startPos.y + (pos.y - startPos.y) * e + liftY;
+      g.rotation.x = startRotX + (endRotX - startRotX) * e;
+      g.rotation.z = startRotZ + (endRotZ - startRotZ) * e;
+      if(p < 1) requestAnimationFrame(step);
+      else {
+        this.isFaceUp = flip;
+        if(onComplete) onComplete();
+      }
+    };
+    requestAnimationFrame(step);
+  }
+  dispose(){ this.group.traverse(o=>{ if(o.geometry) o.geometry.dispose(); }); }
+}
+
+// ── CasinoScene: shared table, lights, dealer silhouette, renderer ─────────
+class CasinoScene{
+  constructor(container){
+    this.container = container;
+    const w = container.clientWidth || 400;
+    const h = container.clientHeight || 320;
+    this.scene = new THREE.Scene();
+    this.scene.fog = new THREE.Fog(0x061108, 8, 22);
+    this.camera = new THREE.PerspectiveCamera(42, w/h, 0.1, 50);
+    this.camera.position.set(0, 5.2, 5.6);
+    this.camera.lookAt(0, 0, 0);
+    this.renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setSize(w, h);
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.25;
+    container.appendChild(this.renderer.domElement);
+    this._buildEnvironment();
+    this._buildTable();
+    this._buildDealer();
+    this._resizeHandler = () => this._onResize();
+    window.addEventListener('resize', this._resizeHandler);
+    this._animId = null;
+    this._start();
+  }
+  _buildEnvironment(){
+    // Ambient warm light
+    this.scene.add(new THREE.AmbientLight(0xfff2d0, 0.65));
+    // Key: top spotlight (dealer table lamp feel)
+    const key = new THREE.SpotLight(0xffe8b0, 1.8, 20, Math.PI/3.5, 0.5, 1.2);
+    key.position.set(0, 6, 1.5);
+    key.target.position.set(0, 0, 0);
+    this.scene.add(key); this.scene.add(key.target);
+    // Rim — gold accent
+    const rim = new THREE.PointLight(0xc9a84c, 0.8, 10);
+    rim.position.set(-4, 2, 3); this.scene.add(rim);
+    // Fill — cool back
+    const fill = new THREE.PointLight(0x5a94b8, 0.5, 12);
+    fill.position.set(4, 2, -3); this.scene.add(fill);
+    // Floor disc (subtle)
+    const floorGeo = new THREE.CircleGeometry(12, 48);
+    const floorMat = new THREE.MeshStandardMaterial({color:0x0a1a10, roughness:1, metalness:0});
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI/2;
+    floor.position.y = -0.5;
+    this.scene.add(floor);
+  }
+  _buildTable(){
+    // Felt surface — flat cylinder (ellipse via scale)
+    const feltGeo = new THREE.CylinderGeometry(4.2, 4.2, 0.18, 64);
+    const feltMat = new THREE.MeshStandardMaterial({
+      color:0x1e5c32, roughness:0.95, metalness:0.02,
+    });
+    const felt = new THREE.Mesh(feltGeo, feltMat);
+    felt.scale.z = 0.65;
+    felt.position.y = -0.09;
+    this.scene.add(felt);
+    // Wooden rim (torus flattened)
+    const rimGeo = new THREE.TorusGeometry(4.15, 0.24, 10, 64);
+    const rimMat = new THREE.MeshStandardMaterial({
+      color:0x5a3317, roughness:0.5, metalness:0.15,
+    });
+    const rim = new THREE.Mesh(rimGeo, rimMat);
+    rim.rotation.x = Math.PI/2;
+    rim.scale.z = 0.65;
+    rim.position.y = -0.02;
+    this.scene.add(rim);
+    // Gold inner line
+    const ringGeo = new THREE.TorusGeometry(3.75, 0.025, 8, 64);
+    const ringMat = new THREE.MeshStandardMaterial({color:0xc9a84c, roughness:0.3, metalness:0.85, emissive:0x3a2a0b});
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = Math.PI/2;
+    ring.scale.z = 0.65;
+    ring.position.y = 0.002;
+    this.scene.add(ring);
+  }
+  _buildDealer(){
+    const grp = new THREE.Group();
+    // Torso
+    const torsoGeo = new THREE.CapsuleGeometry(0.42, 0.7, 8, 16);
+    const torsoMat = new THREE.MeshStandardMaterial({color:0x16181f, roughness:0.65, metalness:0.05});
+    const torso = new THREE.Mesh(torsoGeo, torsoMat);
+    torso.position.y = 0.7;
+    grp.add(torso);
+    // Bow tie
+    const bow = new THREE.Mesh(
+      new THREE.BoxGeometry(0.22, 0.08, 0.02),
+      new THREE.MeshStandardMaterial({color:0xc0392b, roughness:0.5}),
+    );
+    bow.position.set(0, 0.95, 0.41); grp.add(bow);
+    // Shirt slit
+    const shirt = new THREE.Mesh(
+      new THREE.BoxGeometry(0.12, 0.55, 0.02),
+      new THREE.MeshStandardMaterial({color:0xf0ead8, roughness:0.8}),
+    );
+    shirt.position.set(0, 0.7, 0.405); grp.add(shirt);
+    // Head
+    const head = new THREE.Mesh(
+      new THREE.SphereGeometry(0.28, 24, 20),
+      new THREE.MeshStandardMaterial({color:0xe6c49a, roughness:0.7}),
+    );
+    head.position.y = 1.45; grp.add(head);
+    // Hair cap
+    const hair = new THREE.Mesh(
+      new THREE.SphereGeometry(0.29, 24, 20, 0, Math.PI*2, 0, Math.PI/2.2),
+      new THREE.MeshStandardMaterial({color:0x1a120a, roughness:0.6}),
+    );
+    hair.position.y = 1.48; grp.add(hair);
+    grp.position.set(0, 0, -2.7);
+    this.scene.add(grp);
+    this.dealer = grp;
+    // Card deck stack (visual prop near the shoe)
+    const deckGeo = new THREE.BoxGeometry(1.0, 0.32, 1.4);
+    const deckMat = new THREE.MeshStandardMaterial({
+      color:0xf0e7c7, roughness:0.7, metalness:0.02,
+    });
+    const deck = new THREE.Mesh(deckGeo, deckMat);
+    deck.position.set(-1.7, 0.16, -1.6);
+    this.scene.add(deck);
+    const deckTopGeo = new THREE.PlaneGeometry(1.0, 1.4);
+    const deckTop = new THREE.Mesh(deckTopGeo, new THREE.MeshStandardMaterial({
+      map: _getCardBackTex(), roughness:0.55, metalness:0.1,
+    }));
+    deckTop.rotation.x = -Math.PI/2;
+    deckTop.position.set(-1.7, 0.325, -1.6);
+    this.scene.add(deckTop);
+    this.shoePos = new THREE.Vector3(-1.7, 0.5, -1.6);
+  }
+  _start(){
+    const loop = () => {
+      this._animId = requestAnimationFrame(loop);
+      // Subtle dealer breathe + head sway
+      if(this.dealer){
+        const t = performance.now() / 1000;
+        this.dealer.position.y = Math.sin(t*1.4)*0.02;
+        this.dealer.rotation.y = Math.sin(t*0.7)*0.04;
+      }
+      this.renderer.render(this.scene, this.camera);
+    };
+    loop();
+  }
+  _onResize(){
+    if(!this.container.isConnected) return;
+    const w = this.container.clientWidth || 400;
+    const h = this.container.clientHeight || 320;
+    this.camera.aspect = w/h; this.camera.updateProjectionMatrix();
+    this.renderer.setSize(w, h);
+  }
+  dispose(){
+    cancelAnimationFrame(this._animId);
+    window.removeEventListener('resize', this._resizeHandler);
+    this.renderer.dispose();
+    if(this.renderer.domElement && this.renderer.domElement.parentNode)
+      this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
+  }
+}
+
+// ── Blackjack 3D scene manager ─────────────────────────────────────────────
+const BJ3D = {
+  scene: null, cards: [], dealerCards: [], playerCards: [],
+  ready: false,
+  init(){
+    const wrap = $('bj-3d-wrap');
+    if(!wrap || this.scene) return;
+    this.scene = new CasinoScene(wrap);
+    this.ready = true;
+    this._addChipStack();
+  },
+  initStartScene(){
+    const wrap = $('bj-3d-wrap-start');
+    if(!wrap || wrap._scene) return;
+    wrap._scene = new CasinoScene(wrap);
+  },
+  _addChipStack(){
+    const grp = new THREE.Group();
+    const colors = [0xc0392b, 0x2c3e50, 0x27ae60, 0xc9a84c];
+    for(let i=0;i<5;i++){
+      const chip = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.28, 0.28, 0.08, 24),
+        new THREE.MeshStandardMaterial({color: colors[i%colors.length], roughness:0.45, metalness:0.25}),
+      );
+      chip.position.set(2.2, 0.04 + i*0.09, 1.9);
+      grp.add(chip);
+    }
+    this.scene.scene.add(grp);
+    this.chipStack = grp;
+  },
+  reset(){
+    if(!this.scene) return;
+    [...this.playerCards, ...this.dealerCards].forEach(c=>{
+      this.scene.scene.remove(c.group); c.dispose();
+    });
+    this.playerCards = []; this.dealerCards = [];
+    $('bj3d-player-total').textContent = '—';
+    $('bj3d-dealer-total').textContent = '—';
+    const burst = $('bj3d-burst'); if(burst) burst.classList.remove('show','loss','push');
+  },
+  _cardSlot(side, idx, count){
+    // Spread cards in a fan
+    const centerZ = side==='player' ? 1.6 : -1.0;
+    const y = 0.01;
+    const spacing = 0.55;
+    const x = (idx - (count-1)/2) * spacing;
+    return new THREE.Vector3(x, y, centerZ);
+  },
+  _positionCards(cards, side){
+    const count = cards.length;
+    cards.forEach((card, i) => {
+      const target = this._cardSlot(side, i, count);
+      // smooth reposition
+      const start = card.group.position.clone();
+      const t0 = performance.now();
+      const dur = 280;
+      const step = (now) => {
+        const p = Math.min(1, (now - t0) / dur);
+        const e = 1 - Math.pow(1-p, 3);
+        card.group.position.x = start.x + (target.x - start.x) * e;
+        card.group.position.z = start.z + (target.z - start.z) * e;
+        card.group.position.y = start.y + (target.y - start.y) * e;
+        if(p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+  },
+  async dealCard(side, rank, suit, faceUp=true){
+    if(!this.scene || !rank || rank==='?') return null;
+    const card = new Card3D(rank, suit);
+    // start at shoe
+    card.group.position.copy(this.scene.shoePos);
+    card.group.rotation.x = Math.PI; // face down initially
+    this.scene.scene.add(card.group);
+    const arr = side==='player' ? this.playerCards : this.dealerCards;
+    arr.push(card);
+    // reposition existing cards
+    this._positionCards(arr, side);
+    Sounds.deal();
+    // animate to target
+    const target = this._cardSlot(side, arr.length-1, arr.length);
+    await new Promise(resolve => {
+      card.animateTo(target, {duration: 520, flip: faceUp, onComplete: () => {
+        if(faceUp) Sounds.flip();
+        resolve();
+      }});
+    });
+    return card;
+  },
+  /** Sync scene to server state. Incremental: only deal new cards, flip hidden dealer cards on reveal. */
+  async sync(state, prevPlayerCount, prevActive){
+    if(!this.scene) this.init();
+    if(!this.scene) return;
+    const pc = state.player_cards || [];
+    const dc = state.dealer_cards || [];
+    const isActive = state.status === 'active';
+    // Player: deal new cards
+    for(let i = this.playerCards.length; i < pc.length; i++){
+      const c = pc[i];
+      if(c && c.rank && c.rank !== '?') await this.dealCard('player', c.rank, c.suit, true);
+    }
+    // Dealer: first card is always visible, additional face-down while active.
+    for(let i = this.dealerCards.length; i < dc.length; i++){
+      const c = dc[i];
+      const faceUp = (i === 0) || !isActive || (c && c.rank !== '?');
+      const rank = (c && c.rank && c.rank !== '?') ? c.rank : null;
+      const suit = (c && c.suit && c.suit !== '?') ? c.suit : null;
+      if(rank && suit){
+        await this.dealCard('dealer', rank, suit, faceUp);
+      } else {
+        // Placeholder face-down card (we don't know rank yet)
+        const placeholder = new Card3D('A', '♠'); // hidden — will be replaced on reveal
+        placeholder.group.position.copy(this.scene.shoePos);
+        placeholder.group.rotation.x = Math.PI;
+        this.scene.scene.add(placeholder.group);
+        placeholder._isPlaceholder = true;
+        this.dealerCards.push(placeholder);
+        this._positionCards(this.dealerCards, 'dealer');
+        const t = this._cardSlot('dealer', this.dealerCards.length-1, this.dealerCards.length);
+        await new Promise(res => placeholder.animateTo(t, {duration:520, flip:false, onComplete:res}));
+        Sounds.deal();
+      }
+    }
+    // Reveal: if game just finished and we had placeholders, replace them
+    if(!isActive && prevActive){
+      for(let i=0; i<this.dealerCards.length; i++){
+        const card = this.dealerCards[i];
+        const realCard = dc[i];
+        if(card._isPlaceholder && realCard && realCard.rank && realCard.rank !== '?'){
+          // dispose placeholder, build real card at same pos
+          const pos = card.group.position.clone();
+          this.scene.scene.remove(card.group); card.dispose();
+          const real = new Card3D(realCard.rank, realCard.suit);
+          real.group.position.copy(pos);
+          real.group.rotation.x = Math.PI; // face down
+          this.scene.scene.add(real.group);
+          this.dealerCards[i] = real;
+          // flip
+          setTimeout(() => {
+            real.animateTo(pos, {duration:350, flip:true, onComplete: () => Sounds.flip()});
+          }, i * 180);
+        }
+      }
+    }
+    // Totals
+    $('bj3d-player-total').textContent = `Sinä: ${state.player_total}`;
+    $('bj3d-dealer-total').textContent = isActive ? `Jakaja: ${state.dealer_total}` : `Jakaja: ${state.dealer_total}`;
+    // Outcome burst
+    if(!isActive && state.outcome){
+      this._showBurst(state.outcome, state.net);
+    }
+  },
+  _showBurst(outcome, net){
+    const burst = $('bj3d-burst'); if(!burst) return;
+    burst.classList.remove('show','loss','push');
+    const labels = {blackjack:'BLACKJACK!', win:'VOITTO!', push:'TASAPELI', loss:'HÄVIÖ', bust:'PALOI!'};
+    burst.textContent = labels[outcome] || outcome.toUpperCase();
+    if(outcome==='loss' || outcome==='bust') burst.classList.add('loss');
+    else if(outcome==='push') burst.classList.add('push');
+    requestAnimationFrame(()=>burst.classList.add('show'));
+    setTimeout(()=>burst.classList.remove('show'), 2600);
+    if(outcome==='win' || outcome==='blackjack') Sounds.win();
+    else if(outcome==='push') Sounds.push();
+    else if(outcome==='bust') Sounds.bust();
+    else Sounds.lose();
+  },
+};
+
+// ── Baccarat 3D scene manager ──────────────────────────────────────────────
+const BAC3D = {
+  scene: null, playerCards: [], bankerCards: [],
+  init(){
+    const wrap = $('bac-3d-wrap');
+    if(!wrap || this.scene) return;
+    this.scene = new CasinoScene(wrap);
+    // Reposition camera to see both sides
+    this.scene.camera.position.set(0, 5.6, 5.2);
+    this.scene.camera.lookAt(0, 0, 0);
+  },
+  reset(){
+    if(!this.scene) return;
+    [...this.playerCards, ...this.bankerCards].forEach(c=>{
+      this.scene.scene.remove(c.group); c.dispose();
+    });
+    this.playerCards = []; this.bankerCards = [];
+    ['bac3d-player-total','bac3d-banker-total','bac3d-tie-label'].forEach(id=>{
+      const el = $(id); if(el) el.style.display='none';
+    });
+    const burst = $('bac3d-burst'); if(burst) burst.classList.remove('show','loss','push');
+  },
+  _slot(side, idx, count){
+    const y = 0.01;
+    const spacing = 0.45;
+    const centerX = side === 'player' ? -1.9 : 1.9;
+    const centerZ = 1.2;
+    const x = centerX + (idx - (count-1)/2) * spacing;
+    return new THREE.Vector3(x, y, centerZ);
+  },
+  async _dealOne(side, rank, suit){
+    const card = new Card3D(rank, suit);
+    card.group.position.copy(this.scene.shoePos);
+    card.group.rotation.x = Math.PI;
+    this.scene.scene.add(card.group);
+    const arr = side==='player' ? this.playerCards : this.bankerCards;
+    arr.push(card);
+    // reposition existing
+    arr.forEach((c, i) => {
+      const t = this._slot(side, i, arr.length);
+      const sp = c.group.position.clone();
+      const t0 = performance.now(); const dur = 240;
+      const step = (now)=>{
+        const p = Math.min(1, (now-t0)/dur); const e = 1 - Math.pow(1-p, 3);
+        c.group.position.x = sp.x + (t.x - sp.x) * e;
+        c.group.position.z = sp.z + (t.z - sp.z) * e;
+        if(p < 1) requestAnimationFrame(step);
+      };
+      if(c !== card) requestAnimationFrame(step);
+    });
+    Sounds.deal();
+    const target = this._slot(side, arr.length-1, arr.length);
+    await new Promise(res => card.animateTo(target, {duration:500, flip:true, onComplete: () => {
+      Sounds.flip(); res();
+    }}));
+  },
+  async deal(playerHand, bankerHand, selectedSide){
+    this.reset();
+    // Interleave player/banker deals like real baccarat (P,B,P,B)
+    const maxLen = Math.max(playerHand.length, bankerHand.length);
+    for(let i=0;i<maxLen;i++){
+      if(i < playerHand.length && playerHand[i]){
+        await this._dealOne('player', playerHand[i].rank, playerHand[i].suit);
+      }
+      if(i < bankerHand.length && bankerHand[i]){
+        await this._dealOne('banker', bankerHand[i].rank, bankerHand[i].suit);
+      }
+    }
+  },
+  showTotals(ptot, btot, winner){
+    const pe = $('bac3d-player-total'); pe.style.display='block'; pe.textContent = `Pelaaja: ${ptot}`;
+    const be = $('bac3d-banker-total'); be.style.display='block'; be.textContent = `Bankeri: ${btot}`;
+    if(winner === 'tie'){
+      const te = $('bac3d-tie-label'); te.style.display='block'; te.textContent = `TASAPELI ${ptot}—${btot}`;
+    }
+    // Highlight winner
+    if(winner === 'player'){ pe.style.borderColor = 'var(--gold)'; pe.style.color = 'var(--gold2)'; }
+    if(winner === 'banker'){ be.style.borderColor = 'var(--gold)'; be.style.color = 'var(--gold2)'; }
+  },
+  showBurst(outcome){
+    const burst = $('bac3d-burst'); if(!burst) return;
+    burst.classList.remove('show','loss','push');
+    const labels = {win:'VOITTO!', push:'TASAPELI', loss:'HÄVIÖ'};
+    burst.textContent = labels[outcome] || outcome.toUpperCase();
+    if(outcome==='loss') burst.classList.add('loss');
+    else if(outcome==='push') burst.classList.add('push');
+    requestAnimationFrame(()=>burst.classList.add('show'));
+    setTimeout(()=>burst.classList.remove('show'), 2600);
+    if(outcome==='win') Sounds.win();
+    else if(outcome==='push') Sounds.push();
+    else Sounds.lose();
+  },
+  highlightSpot(side){
+    document.querySelectorAll('#bac3d-spots .bac3d-spot-pill').forEach(el=>{
+      el.classList.toggle('selected', el.dataset.spot === side);
+    });
+  },
+};
+
+// ── Hook: initialize 3D scenes when their tab becomes visible ───────────────
+(function(){
+  const lazyInit = () => {
+    const bjPanel = $('gpanel-blackjack');
+    const bacPanel = $('gpanel-baccarat');
+    if(bjPanel && bjPanel.classList.contains('active')){
+      BJ3D.initStartScene();
+      if($('bj-game-area').style.display !== 'none') BJ3D.init();
+    }
+    if(bacPanel && bacPanel.classList.contains('active')) BAC3D.init();
+  };
+  // Observe DOM for tab changes
+  document.addEventListener('click', (e) => {
+    const t = e.target;
+    if(!t || !t.matches) return;
+    if(t.matches('[onclick*="switchGameTab"]') || t.matches('.gtab-btn')){
+      setTimeout(lazyInit, 80);
+    }
+    if(t.id === 'mtab-points'){ setTimeout(lazyInit, 120); }
+  });
+  // On load, if points tab is active and blackjack/baccarat is active
+  window.addEventListener('DOMContentLoaded', () => setTimeout(lazyInit, 250));
+})();
+
+// ── Wrap existing functions to drive the 3D scenes ─────────────────────────
+// Blackjack: wrap bjReset to also reset 3D
+const _origBjReset = window.bjReset;
+window.bjReset = function(){
+  _origBjReset();
+  BJ3D.reset();
+  BJ3D.initStartScene();
+};
+
+// Blackjack: wrap renderBjState to also sync 3D
+const _origRenderBjState = window.renderBjState;
+window.renderBjState = function(d, resultHtml=''){
+  // Capture previous state BEFORE the original mutates it
+  const prevPlayerCount = prevBjPlayerCount;
+  const prevActive = prevBjActive;
+  _origRenderBjState(d, resultHtml);
+  // Initialize 3D now that game area is visible
+  BJ3D.init();
+  BJ3D.sync(d, prevPlayerCount, prevActive);
+};
+
+// Baccarat: wrap doBaccarat to play the cards in 3D BEFORE showing the text result
+const _origDoBaccarat = window.doBaccarat;
+window.doBaccarat = async function(){
+  const bet = getBet('bac-bet'); if(!bet) return;
+  const btn = $('bac-btn'); btn.disabled = true; btn.textContent = '…';
+  BAC3D.init();
+  BAC3D.highlightSpot(bacSide);
+  try{
+    const r = await fetch(`/api/points/${player.id}/baccarat`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({bet, side: bacSide})
+    });
+    const d = await r.json();
+    if(!r.ok){ alert(d.error); return; }
+    player.points = d.points;
+    Sounds.shuffle();
+    await BAC3D.deal(d.player_hand, d.banker_hand, bacSide);
+    BAC3D.showTotals(d.player_total, d.banker_total, d.winner);
+    BAC3D.showBurst(d.outcome);
+    // Also show the textual result below
+    const sideLabels = {player:'Pelaaja', banker:'Bankeri', tie:'Tasapeli'};
+    const winnerLabel = sideLabels[d.winner] || d.winner;
+    showGameResult('bac-result', d.outcome,
+      d.outcome==='win'?`Voitit! (${winnerLabel} voitti)`:d.outcome==='push'?`Tasapeli — palautus`:`Hävisit (${winnerLabel} voitti)`,
+      `Panos: ${bet} p · Voitto: ${d.payout} p`, d.net
+    );
+  }catch(e){ alert('Virhe.'); }
+  finally{ btn.disabled = false; btn.textContent = 'Pelaa Baccarat'; }
+};
+
+// Wrap bacChoose to update the spot highlight
+const _origBacChoose = window.bacChoose;
+window.bacChoose = function(s){
+  _origBacChoose(s);
+  BAC3D.highlightSpot(s);
+};
+
+// Reset Baccarat scene when navigating away
+(function(){
+  const origSwitchGameTab = window.switchGameTab;
+  if(typeof origSwitchGameTab === 'function'){
+    window.switchGameTab = function(name){
+      origSwitchGameTab(name);
+      setTimeout(() => {
+        if(name === 'blackjack'){ BJ3D.initStartScene(); if(bjGameId) BJ3D.init(); }
+        if(name === 'baccarat'){ BAC3D.init(); }
+      }, 80);
+    };
+  }
+})();
 </script>
 
 <!-- Free Spins Banner -->

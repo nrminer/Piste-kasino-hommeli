@@ -1,0 +1,35 @@
+{
+  "summary": "Frontend testing of 3D Blackjack + Baccarat (Three.js) transformation in /asiakas. Logged in as TestPelaaja/test123. Verified: 3D canvas renders inside #bj-3d-wrap-start (426x318) and #bj-3d-wrap; Aloita peli starts BJ game with animated cards (player=10, dealer=2 shown with one card face down); Ota kortti updates player total (10 -> 21); Jää reveals dealer hole card and dealer draws to bust (Jakaja: 25), VOITTO burst overlay shows (class='casino3d-burst show'), bj-new-btn becomes visible, bj-result shows 'Voitit! +100 pistettä'; Uusi peli resets UI to start view. Baccarat: #bac-3d-wrap visible, canvases increment when tab opens, selecting Bankeri + Pelaa Baccarat deals cards with totals (Pelaaja: 0, Bankeri: 9), VOITTO burst shows, bac-result='Bankeri voitti, +95 pistettä'. Regression: Coinflip/WAR/Baccarat/Pikapokeri/Slots all reachable and their primary buttons (cf-btn, war-btn, pika-deal-btn, slots-btn) visible. Responsive: at 400px width, #bj-3d-wrap-start height = 260px matching the CSS media query spec. Only 4 console warnings (all GPU performance hints from WebGL ReadPixels), no JS errors, no pageerrors.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Blackjack action buttons", "issue": "After game end, bj-hit, bj-stand, bj-double still have computed display:'block' alongside the visible bj-new-btn. Per spec these should be hidden when the round concludes. The final screenshot shows 'Ota kortti / Jää / Tuplaa' rendered together with the 'Voitit!' result panel and Uusi peli button, which is cluttered UX.", "selector": "#bj-hit, #bj-stand, #bj-double", "priority": "LOW"},
+      {"component": "Baccarat 3D pills", "issue": "Spec mentions '.bac3d-pill' elements with 'selected' class on BANKERI pill after clicking Bankeri, but document.querySelectorAll('.bac3d-pill') returns 0 elements. Pills (PELAAJA/TASAPELI/BANKERI) do appear visually inside the 3D wrap (see screenshot) but use a different class name - verify if class was renamed (e.g., 'casino3d-pill') or if highlight logic is actually wired.", "selector": ".bac3d-pill, .bac3d-pill.selected", "priority": "LOW"},
+      {"component": "Blackjack wrap visibility toggle", "issue": "Both #bj-3d-wrap-start and #bj-3d-wrap report computed display != 'none' simultaneously during active game and after Uusi peli reset. Visually only the active one is painted (likely due to z-index/opacity stacking or the HTML 'hidden' attribute being used), so not a visible bug - but programmatic toggling of display/hidden should be consistent for testability.", "selector": "#bj-3d-wrap-start, #bj-3d-wrap", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Hide #bj-hit, #bj-stand, #bj-double when game round ends (player bust or dealer resolved) so only Uusi peli remains, per spec.",
+    "Confirm Baccarat 3D pill class name / selected state wiring - either rename class to 'bac3d-pill' to match spec or update test expectations. Functionally the bet side selection works via #bac-player/#bac-banker/#bac-tie.",
+    "Optional: use a single source of truth (display:none vs hidden attribute) for toggling start/game wraps in Blackjack so state is observable programmatically."
+  ],
+  "critical_code_review_comments": [
+    "/app/templates/customer.html is very large (single monolithic file ~3000 lines mixing CSS, HTML, 3D JS module). Consider splitting (e.g., static/casino3d.js for the Three.js module, static/customer.css for styles) for maintainability.",
+    "GPU stall warning 'GPU stall due to ReadPixels' appeared 4x on first WebGL init. Likely from reading canvas for screenshot/texture. Not blocking but investigate if any frame uses gl.readPixels synchronously.",
+    "Button ID naming inconsistency between spec (bac-side-banker / bj-hit-btn) and implementation (bac-banker / bj-hit). data-testid variants mentioned in spec were not verified in DOM; add data-testid attributes for testability on the 3D-era interactive elements."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested (frontend-only request)", "frontend": "~92% (core flows all pass; 3 minor UX/testability findings)"},
+  "test_credentials": "TestPelaaja / test123 at /asiakas (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "None - used existing TestPelaaja account; balance decreased from 5000 -> 4350 -> 4550 -> 4645 across BJ and Baccarat rounds.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All critical 3D flows verified end-to-end. Key selectors that worked: #login-name, #login-pw, #login-btn, #mtab-points, text '🃏 Blackjack' / '🎴 Baccarat' (exact, with emoji), #bj-start-btn, #bj-hit, #bj-stand, #bj-new-btn, #bac-banker (NOT bac-side-banker), #bac-btn. Result/state DOM ids: bj3d-player-total, bj3d-dealer-total, bj3d-burst, bj-result, bac3d-player-total, bac3d-banker-total, bac3d-burst, bac-result. Three.js init takes ~2-3s after tab becomes visible - wait 3500ms before asserting canvas. Tab-switch creates additional canvases (count grows from 2 to 4) - do not assume fixed canvas count.",
+  "rca of the issue": "N/A - no critical bugs. Minor finding on BJ action buttons not hiding post-round: likely renderBjState does not toggle display:none on action buttons when game status transitions to terminal state (bust/stand resolved). Likely fix is in the renderBjState function wrapper in customer.html (~lines 2900-3000) to set bj-hit/bj-stand/bj-double display='none' when Uusi peli becomes visible."
+}
