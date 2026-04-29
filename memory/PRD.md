@@ -191,3 +191,61 @@
 - Attach Upstash Redis in Vercel dashboard before going live
 - Smoke-test `/api/_health` after deploy to confirm `mode: redis`
 - Consider migrating to bcrypt before exposing to real customers
+
+
+---
+
+## 2026-04-29 · 3D Blackjack & Baccarat (Three.js) session
+
+### New user request
+Transform the existing 2D Blackjack and Baccarat mini-games on `/asiakas` into a
+3D casino environment — realistic table, cards, chips, dealer, animations, sound
+and responsive PC + mobile support.
+
+### User choices gathered
+- Three.js via CDN inside the existing Flask/HTML stack (no React rewrite)
+- Only Blackjack and Baccarat panels transformed (other games untouched)
+- Dealer-only AI (no extra AI seat opponents)
+- WebAudio synthesized SFX (no external asset CDN)
+- PC + mobile responsive (no VR, no real-time multiplayer)
+
+### Implemented (all in `/app/templates/customer.html`)
+- `<head>`: Three.js r160 CDN
+- CSS: `.casino3d-wrap`, `.casino3d-hud`, `.casino3d-total`, `.casino3d-burst`,
+  `.bac3d-spots`, mobile media queries (320 → 260 → 230 px height)
+- HTML: `#bj-3d-wrap-start`, `#bj-3d-wrap`, `#bac-3d-wrap` with HUD labels,
+  total-pill overlays and burst overlays. `data-testid` added on every new
+  interactive element.
+- JS module: `_getAudio`, `Sounds` (deal / flip / chip / shuffle / win / lose /
+  push / bust), `_buildCardTexture` / `_getCardBackTex` (canvas-drawn textures),
+  `Card3D` (plane with front + back faces, animated flight + flip),
+  `CasinoScene` (felt table, wooden rim, gold ring, ambient + spotlight + point
+  lights, dealer silhouette, card-deck prop, shoe position), `BJ3D` singleton
+  (player / dealer card choreography, placeholder reveal on stand, outcome
+  bursts), `BAC3D` singleton (interleaved P/B deal, totals, bet-spot highlight,
+  outcome bursts)
+- Hook wrappers around existing `bjReset`, `renderBjState`, `doBaccarat`,
+  `bacChoose`, `switchGameTab` — **no backend changes**
+- UX polish: `bj-action-row` auto-hides when round ends so only "Uusi peli" shows
+
+### Verified by testing agent (92 % success, iteration_1.json)
+- 3D canvas renders in both BJ and Baccarat
+- Aloita peli → animated deal → Ota kortti / Jää → dealer reveal → VOITTO / HÄVIÖ
+  burst → Uusi peli round-trip works
+- Baccarat: side selection, dealing, totals, outcome burst all wired
+- No JS errors, no regressions on Coinflip / WAR / Pikapokeri / Slots
+- 400 px responsive breakpoint honoured
+
+### Deferred / Backlog
+- Chip-flight animation from player stack to bet spot on bet placement
+- Win-confetti particle burst on VOITTO
+- Brighter dealer avatar with deal gesture
+- AI seat opponents with basic strategy (user declined)
+- VR / WebXR (user declined)
+- Real-time multiplayer via websockets (user declined)
+- Externalise the ~700-line 3D JS module into `/app/static/casino3d.js` for
+  maintainability (today it lives inline inside `customer.html`)
+
+### Test credentials
+See `/app/memory/test_credentials.md` — `TestPelaaja` / `test123` (Player ID 1,
+5 000 points granted for this session).

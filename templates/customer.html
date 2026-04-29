@@ -792,7 +792,7 @@ button.btn-secondary:hover{border-color:var(--gold);color:var(--gold)}
               <button id="bj-ins-decline" onclick="declineInsurance()" data-testid="bj-insurance-decline-btn">✗ Ei vakuutusta</button>
             </div>
           </div>
-          <div class="bj-actions">
+          <div class="bj-actions" id="bj-action-row">
             <button id="bj-hit" onclick="doBlackjackAction('hit')" data-testid="bj-hit-btn">🃏 Ota kortti</button>
             <button id="bj-stand" onclick="doBlackjackAction('stand')" data-testid="bj-stand-btn">🛑 Jää</button>
             <button id="bj-double" onclick="doBlackjackAction('double')" data-testid="bj-double-btn">✌️ Tuplaa</button>
@@ -1692,6 +1692,10 @@ function renderBjState(d, resultHtml=''){
   $('bj-hit').disabled=!canAct;
   $('bj-stand').disabled=!canAct;
   $('bj-double').disabled=!canAct || pc.length!==2;
+
+  // Hide the action-button row entirely when the round has concluded
+  const actionsRow = $('bj-action-row');
+  if(actionsRow) actionsRow.style.display = isActive ? 'flex' : 'none';
 
   if(resultHtml) $('bj-result').innerHTML=resultHtml;
   if(!isActive) $('bj-new-btn').style.display='block';
