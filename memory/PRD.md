@@ -59,3 +59,29 @@ User chose all suggested enhancements, prioritizing consistent visual polish.
 - Replace the external Three.js build script with a modern module import to remove the deprecation warning.
 #### P2
 - Add richer role-based permissions around bulk actions.
+
+## Immersive Slot Machine Upgrade
+User requested a cinematic, tactile, rewarding slot-machine experience for mobile and desktop, with all visual variations selectable, full in-app implementation plus spec notes, full bonus logic with rewards, mobile haptics + Gamepad rumble, and HUD/settings accessibility controls.
+
+### Implemented
+- Rebuilt the slots presentation with a cinematic 5×3 reel stage, glass/metal lighting, animated side panels, HUD chips for balance/RTP/bet, first-use tooltip, and glowing spin CTA.
+- Added selectable visual skins: Luxury, Neon Noir, and Steampunk.
+- Added quick/settings accessibility controls: high contrast, reduced motion, particle toggle, and persistent RTP display.
+- Added tactile feedback hooks: mobile vibration and Gamepad API rumble where supported.
+- Expanded reel feedback with reactive lighting, adaptive particles, big-win camera shake, and synchronized reel/win/no-win/anticipation sound cues.
+- Added server-backed full-screen Bonus Vault mini-game: scatter/free-spin bonus can generate a hidden reward board; player opens 3 tiles and rewards credit immediately.
+- Added technical deliverable: `/app/memory/slot_machine_technical_spec.md` with UI mockups, animation timing, RNG/RTP notes, accessibility/performance rules, and asset list.
+
+### Verification
+- QA Iteration 5 passed: immersive slot UI, skins, HUD, settings toggles, tooltip behavior, spin flow, bonus overlay, and bonus pick API.
+- Final regression passed: 21/21 backend tests, including new `/app/backend/tests/test_slot_bonus_pick.py`.
+- Python compile and inline JavaScript syntax checks passed.
+
+### Backlog Updates
+#### P0
+- None currently known.
+#### P1
+- Add missing `data-testid` attributes to older login/main-tab controls for even stronger automation.
+- Migrate deprecated Three.js CDN include to module-based import.
+#### P2
+- Split large inline slot/customer template into smaller JS/CSS modules for maintainability.
