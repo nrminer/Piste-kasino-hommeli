@@ -107,3 +107,26 @@ User approved the next cleanup items.
 - Optional: handle expected `/api/poker/join` no-open-game response without browser network-error noise.
 #### P2
 - Continue splitting large templates into maintainable modules.
+
+## Theme-Specific Free Spins Redesign
+User requested real-slot-inspired free spins: Egypt like an expanding-symbol bonus, Space like Starburst, and Fruit like Fire Joker, with the screenshot-style free-spins counter retained.
+
+### Implemented
+- Fruits: Fire Joker-style free spins with a rising multiplier ladder; wins or jokers heat the multiplier up to 5×.
+- Egypt: Ra/Amu-style selected expanding symbol; one regular symbol is chosen and expands to full reels during free spins.
+- Space: Starburst-style expanding wilds; wilds expand to full reels, become sticky, and new wild reels award respins up to a safe cap.
+- Added `free_spin_feature` payload and per-round feature metadata for animation/UI.
+- Updated the free-spins overlay with theme-specific intro text, round messaging, result messages, colors, and feature cell animations (`expanded-feature`, `sticky-wild`, `fire-joker`, `feature-new`).
+
+### Verification
+- QA Iteration 6 passed backend + frontend validation.
+- Final regression passed: 27/27 tests, including new unit and live API free-spin tests.
+- Python compile and inline JS/module syntax checks passed.
+
+### Backlog Updates
+#### P0
+- None currently known.
+#### P1
+- Optional: expose a controlled demo trigger for previewing each free-spin mode without waiting for random scatters.
+#### P2
+- Split slot logic/styles from the large customer template for maintainability.
