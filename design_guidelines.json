@@ -1,109 +1,124 @@
 {
-  "project": "Casino Management Panel Redesign",
-  "theme": "The Auditor's Ledger (Swiss-Modernist / Financial Terminal)",
-  "archetype": "Archetype 4: Swiss & High-Contrast",
-  "rationale": "Strips away generic 'casino luxury' (no green/gold, no cards/suits). Introduces a ruthless, opinionated operational clarity reminiscent of high-end financial tools, physical ledgers, and Swiss print design. Designed for dense data consumption by floor managers.",
-  "tech_stack_constraints": {
-    "framework": "Pure HTML5 + Vanilla CSS",
-    "css_methodology": "CSS Variables + CSS Grid/Flexbox in a single <style> block",
-    "forbidden": [
-      "Tailwind",
-      "Bootstrap",
-      "React",
-      "External CSS files (except fonts/icons)",
-      "Border-radius (use sharp edges, 0px radius)",
-      "Box-shadows (use flat borders instead)",
-      "Emojis"
-    ]
+  "project_overview": {
+    "domain": "Casino Gaming & Admin Management",
+    "theme": "Hybrid (Management: Light, Customer: Dark)",
+    "archetype_management": "Archetype 4 (Swiss & High-Contrast) - Clean, objective, functional",
+    "archetype_customer": "Archetype 5 (Jewel & Luxury) mixed with Playful - Expensive, deep, vibrant accents"
   },
   "typography": {
-    "primary_ui_font": "'JetBrains Mono', monospace",
-    "display_font": "'Chivo', sans-serif",
-    "imports": [
-      "@import url('https://fonts.googleapis.com/css2?family=Chivo:wght@400;700;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap');"
-    ],
-    "rationale": "Chivo for brutalist, commanding page headers with heavy weight (900). JetBrains Mono for ALL tables, forms, buttons, and navigation to enforce the 'internal tool / terminal' aesthetic. Tabular numbers are perfect for financial and operational data."
-  },
-  "color_system": {
-    "css_variables": {
-      "--bg-canvas": "#EFEFE9",
-      "--bg-surface": "#FFFFFF",
-      "--text-main": "#0A0A0A",
-      "--text-muted": "#5C5C54",
-      "--border-hard": "#0A0A0A",
-      "--border-soft": "#D2D2CA",
-      "--accent-primary": "#3B00FF",
-      "--accent-danger": "#FF2A00",
-      "--accent-success": "#00B84D",
-      "--accent-warning": "#FFB800"
+    "headings": {
+      "family": "Cabinet Grotesk",
+      "import_url": "https://fonts.cdnfonts.com/css/cabinet-grotesk",
+      "rules": "Never use Inter for headings. Use tight letter spacing (tracking-tight) for large headers."
     },
-    "rules": "No gradients. Flat colors only. Background is a warm ledger paper hue (--bg-canvas), active content surfaces are stark white (--bg-surface). Structural borders are solid black (--border-hard)."
-  },
-  "layout_and_spacing": {
-    "sidebar_width": "260px",
-    "grid_system": "Use strict CSS grid. For complex layouts like tables or KPI cards, use 'gap: 1px' with a wrapper background color of '--border-hard' to create true 1px structural grid lines (border-collapse style).",
-    "spacing_scale": {
-      "xs": "4px",
-      "sm": "8px",
-      "md": "16px",
-      "lg": "24px",
-      "xl": "32px",
-      "2xl": "48px",
-      "3xl": "64px"
+    "body": {
+      "family": "Manrope",
+      "import_url": "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap"
+    },
+    "scale": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-none",
+      "h2": "text-2xl sm:text-3xl lg:text-4xl tracking-tight",
+      "h3": "text-xl sm:text-2xl",
+      "h4": "text-lg sm:text-xl",
+      "body": "text-base leading-relaxed",
+      "small_labels": "text-xs tracking-[0.2em] uppercase font-bold"
     }
   },
-  "component_blueprints": {
-    "layout": "Standard 100vh layout with a fixed left sidebar (desktop) or hamburger drawer (mobile/tablet). Main content area scrolls. Header is stark white with a 1px solid black bottom border.",
-    "sidebar": "Background: --bg-canvas. Right border: 1px solid --border-hard. Links are plain text, ALL CAPS, JetBrains Mono. Hover state inverts background to --text-main and text to --bg-surface. Active state gets a 4px left border of --accent-primary. Use Lucide icons (monochrome) with 1.5px stroke.",
-    "stat_cards": "Background: --bg-surface. Sharp corners (border-radius: 0), 1px solid --border-hard. Content: upper-case overline label (muted, 12px), massive JetBrains Mono value (black, 32px+). No shadows. Heavy 4px bottom border for a grounded, structural feel.",
-    "data_table": "The focal point of the app. Use 'border-collapse: collapse; width: 100%;'. Every cell has a 1px solid --border-soft outline. Header row is --bg-canvas with --text-main. Text is purely JetBrains Mono, strictly left-aligned for text, right-aligned for currency/numbers. Hovering a row changes its background to --bg-canvas.",
-    "buttons": {
-      "primary": "Solid --text-main background, --bg-surface monospace text, sharp corners, 0px radius. Padding: 12px 24px. Hover: Background changes to --accent-primary.",
-      "secondary": "Transparent background, 1px solid --border-hard, --text-main text. Hover: Solid --text-main background, --bg-surface text.",
-      "danger": "Transparent background, 1px solid --accent-danger, --accent-danger text. Hover: Solid --accent-danger background, --bg-surface text."
+  "colors": {
+    "management_side": {
+      "background": "#F8F9FA",
+      "surface": "#FFFFFF",
+      "text_primary": "#111111",
+      "text_secondary": "#555555",
+      "accent_primary": "#0A0A0A",
+      "accent_secondary": "#FF3B30",
+      "border": "rgba(0,0,0,0.1)"
     },
-    "inputs": "Background: --bg-surface. Border: 1px solid --border-hard. 0px radius. Focus state: 2px solid --accent-primary, no outline. Height: 40px. Font: JetBrains Mono.",
-    "vip_badges": "Sharp rectangle. Solid background corresponding to tier. Instead of 'Gold/Silver', use functional ops naming (e.g., TIER 3 / TIER 2). T3 = --accent-primary bg, white text. T1 = --bg-canvas bg, black text, 1px black border."
+    "customer_side": {
+      "background": "#0B0C10",
+      "surface": "rgba(255, 255, 255, 0.05)",
+      "text_primary": "#FFFFFF",
+      "text_secondary": "rgba(255, 255, 255, 0.7)",
+      "accent_primary": "#FFD700",
+      "accent_secondary": "#00F0FF",
+      "border": "rgba(255, 255, 255, 0.1)"
+    }
   },
-  "copy_and_voice": {
-    "strategy": "Clinical, precise, military/financial terminal tone in Finnish. Strip away 'friendly' or 'luxurious' language. Use technical abbreviations where appropriate.",
-    "examples": [
-      {
-        "old": "Kasinon Hallinta",
-        "new": "OPERAATIOT // PÄÄTE"
-      },
-      {
-        "old": "Pelaajat",
-        "new": "ASIAKASREKISTERI"
-      },
-      {
-        "old": "Bonukset",
-        "new": "KAMPANJAT // LOKI"
-      },
-      {
-        "old": "Poker",
-        "new": "PÖYTÄVERKKO // TXH"
-      },
-      {
-        "old": "Asetukset",
-        "new": "JÄRJESTELMÄ"
-      },
-      {
-        "old": "Lisää pisteitä",
-        "new": "KREDITOI"
-      }
-    ]
+  "spacing_and_layout": {
+    "general": {
+      "padding": "Generous spacing philosophy (p-8 to p-12 for containers)",
+      "alignment": "Left-align dense content/forms; Center-align hero moments in games."
+    },
+    "management_grid": {
+      "type": "Control Room Grid",
+      "rules": "grid-cols-1 md:grid-cols-3 lg:grid-cols-4. Gap-6. Strict hierarchy, no empty gaps, functional. Sidebar for navigation."
+    },
+    "customer_grid": {
+      "type": "Bento Grid",
+      "rules": "Asymmetrical, gap-8 to gap-12, heavily visual. Uses negative space for focus on games."
+    }
+  },
+  "components": {
+    "management": {
+      "cards": "Flat background, 1px subtle border, no heavy drop shadows. Hover states lift slightly (-translate-y-1).",
+      "navigation": "Collapsible left-sidebar, highly scannable, F-pattern layout.",
+      "tables": "Dense, high-contrast, left-aligned, sticky headers."
+    },
+    "customer": {
+      "surfaces": "Glassmorphism (backdrop-blur-xl bg-black/60) with 1px delicate inner stroke (border-white/10).",
+      "buttons": "Neumorphic or glowing edges with Framer Motion hover effects.",
+      "modals": "Crystal glass effect, heavily blurred background (backdrop-blur-2xl)."
+    }
+  },
+  "animations_and_mechanics": {
+    "slot_machine": {
+      "engine": "Framer Motion + CSS Transforms",
+      "physics": "Spring animation: type='spring', stiffness=80, damping=15, mass=1.2",
+      "mechanics": "Simulate inertia with negative start or overshoot. Use staggerChildren: 0.3 to stagger reel stops sequentially. Use repeat symbols (20+) in column and animate translateY for seamless scroll."
+    },
+    "card_games_war_pikapokeri": {
+      "deal": "Framer Motion layout animations. Cards translate from a fixed deck origin point.",
+      "flip": "3D rotateY(180deg) transition using Framer Motion with backface-visibility: hidden.",
+      "wins_loss": "Particle effects via tsparticles or framer-motion explosions. Highlight winning paylines with glowing overlays."
+    }
+  },
+  "testing_guidelines": {
+    "attributes": "All interactive elements MUST include data-testid. Example: data-testid='spin-button', data-testid='deal-button'.",
+    "qa_focus": "Regression testing for payout logic and state transitions, ensure game engine RTP remains fair during animation lags. Frame-rate testing on animations."
   },
   "media": {
-    "icons": "Lucide Icons via CDN (<script src=\"https://unpkg.com/lucide@latest\"></script>). No emojis allowed."
+    "images": [
+      {
+        "category": "Customer Background",
+        "description": "Dark moody casino background with abstract 3d shapes and neon lights. Use as the base wallpaper behind the game areas.",
+        "url": "https://static.prod-images.emergentagent.com/jobs/540c5af7-00aa-455e-b94f-cb1040a649f2/images/bbdeb8be120b81add19307042967e88a5cc3b3b7e16213bc94c86140265f61a5.png"
+      },
+      {
+        "category": "Game Asset - Card Back",
+        "description": "Luxurious geometric deep indigo and gold card back for WAR and Pikapokeri.",
+        "url": "https://static.prod-images.emergentagent.com/jobs/540c5af7-00aa-455e-b94f-cb1040a649f2/images/001c2656921f93edb060575b46bcee2fc7810eca14827a8b02e431e57c4b62af.png"
+      },
+      {
+        "category": "Game Asset - Slot Frame",
+        "description": "Modern dark brushed metal frame for the slot machine UI.",
+        "url": "https://static.prod-images.emergentagent.com/jobs/540c5af7-00aa-455e-b94f-cb1040a649f2/images/de3dc0024decc7f601853161d062ba21f38b64788200913695a65b658607d856.png"
+      },
+      {
+        "category": "Customer Decoration",
+        "description": "Casino chips for onboarding flow or decoration.",
+        "url": "https://images.pexels.com/photos/35926283/pexels-photo-35926283.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+      }
+    ],
+    "icons": {
+      "library": "lucide-react (default) and @phosphor-icons/react for dense dashboard metrics."
+    }
   },
   "instructions_to_main_agent": [
-    "Implement exactly as a single HTML file in /app/templates/index.html.",
-    "Do NOT use external CSS files, Tailwind, or Bootstrap. Write all CSS inside a <style> block in the HTML header.",
-    "Strictly follow the color system and typography guidelines defined here.",
-    "Ensure the layout relies on CSS Grid and Flexbox with CSS Variables for colors and spacing.",
-    "Retain all existing JS functionality, IDs, and view names unchanged. Only the visual presentation and copy should change.",
-    "Ensure every interactive element and key UI component has a 'data-testid' attribute (e.g., data-testid='nav-poker', data-testid='btn-credit').",
-    "Replace all emoji icons with Lucide SVG icons (e.g., <i data-lucide=\"users\"></i>)."
+    "Use standard Tailwind classes. For fonts, ensure they are imported via Google/CDN links in index.css.",
+    "Implement the Management dashboard in pure HTML/Tailwind with Shadcn for complex forms. Keep it completely separated from the Customer side layout.",
+    "Customer side must use Dark mode exclusively. Avoid standard generic borders; use glassmorphism with high saturation.",
+    "Slot machine must NOT use random intervals alone. Calculate the final state first, then spin the reels using Framer Motion to land exactly on the required offset.",
+    "Do NOT alter the game logic/payout RTP rules, focus strictly on making the visual and animation layers wrapper around the deterministic logic.",
+    "Ensure all actions (spin, bet, deal) have 'data-testid' and disabled states during animations."
   ]
 }
