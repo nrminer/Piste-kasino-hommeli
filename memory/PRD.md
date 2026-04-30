@@ -85,3 +85,25 @@ User requested a cinematic, tactile, rewarding slot-machine experience for mobil
 - Migrate deprecated Three.js CDN include to module-based import.
 #### P2
 - Split large inline slot/customer template into smaller JS/CSS modules for maintainability.
+
+## Cleanup Enhancement — Test Hooks & Three.js Module Loading
+User approved the next cleanup items.
+
+### Implemented
+- Added stable `data-testid` attributes to customer login inputs/buttons/errors, customer main navigation tabs, game tabs, slot theme tabs, stats tabs, logout, and poker join login controls.
+- Replaced deprecated global Three.js script include with the module build and safely exposed `window.THREE` for existing 3D Blackjack/Baccarat scene code.
+- Added guarded lazy initialization so 3D scenes wait for the module before rendering.
+
+### Verification
+- Customer login, main tab navigation, Blackjack/Baccarat 3D tabs, and slot theme selection verified via browser automation using the new test IDs.
+- Poker join login verified using new test IDs.
+- Deprecated Three.js CDN warning is removed; only browser WebGL performance warnings remain during 3D rendering.
+- Final regression passed: 21/21 backend tests. Python compile and inline JS/module syntax checks passed.
+
+### Backlog Updates
+#### P0
+- None currently known.
+#### P1
+- Optional: handle expected `/api/poker/join` no-open-game response without browser network-error noise.
+#### P2
+- Continue splitting large templates into maintainable modules.

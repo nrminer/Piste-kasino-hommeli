@@ -14,8 +14,12 @@
 <title>Asiakassivu · Kasino</title>
 <link href="https://fonts.cdnfonts.com/css/cabinet-grotesk" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<!-- Three.js for 3D Blackjack & Baccarat scenes -->
-<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<!-- Three.js for 3D Blackjack & Baccarat scenes (module build, exposed for legacy scene code) -->
+<script type="module">
+  import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+  window.THREE = THREE;
+  window.dispatchEvent(new Event('three-ready'));
+</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -606,16 +610,16 @@ button.btn-primary,.pts-input-row button{background:linear-gradient(135deg,var(-
   <div class="card-box" style="width:100%">
     <div class="inp-wrap">
       <label class="inp-label">Käyttäjänimi</label>
-      <input class="inp" id="login-name" placeholder="Syötä nimesi" maxlength="50" autocomplete="username"
+      <input class="inp" id="login-name" placeholder="Syötä nimesi" maxlength="50" autocomplete="username" data-testid="customer-login-name-input"
              onkeydown="if(event.key==='Enter')focusPw()">
     </div>
     <div class="inp-wrap" id="pw-wrap">
       <label class="inp-label">Salasana <span id="pw-optional" style="color:var(--muted);text-transform:none;letter-spacing:0;font-size:.72rem">(jos asetettu)</span></label>
-      <input class="inp" id="login-pw" type="password" placeholder="Salasana" maxlength="100" autocomplete="current-password"
+      <input class="inp" id="login-pw" type="password" placeholder="Salasana" maxlength="100" autocomplete="current-password" data-testid="customer-login-password-input"
              onkeydown="if(event.key==='Enter')doLogin()">
     </div>
-    <button class="btn-primary" id="login-btn" onclick="doLogin()">Kirjaudu sisään</button>
-    <div class="err-msg" id="login-err"></div>
+    <button class="btn-primary" id="login-btn" onclick="doLogin()" data-testid="customer-login-submit-button">Kirjaudu sisään</button>
+    <div class="err-msg" id="login-err" data-testid="customer-login-error"></div>
     <div class="pw-hint">Ei tiliä? Pyydä kassohenkilökuntaa rekisteröimään sinut.</div>
   </div>
 </div>
@@ -630,15 +634,15 @@ button.btn-primary,.pts-input-row button{background:linear-gradient(135deg,var(-
       <div style="font-weight:700;font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="player-name-display">—</div>
       <div id="player-vip-display" style="margin-top:.15rem"></div>
     </div>
-    <button class="btn-secondary" onclick="logout()">Kirjaudu ulos</button>
+    <button class="btn-secondary" onclick="logout()" data-testid="customer-logout-button">Kirjaudu ulos</button>
   </div>
 
   <!-- Päätabit: Peli · Bonukset · Pisteet · Tilastot -->
   <div class="main-tab-bar">
-    <button class="main-tab-btn active" id="mtab-game"   onclick="switchMainTab('game')">🎲 Peli</button>
-    <button class="main-tab-btn"        id="mtab-bonus"  onclick="switchMainTab('bonus')">🎁 Bonukset</button>
-    <button class="main-tab-btn"        id="mtab-points" onclick="switchMainTab('points')">🪙 Pisteet</button>
-    <button class="main-tab-btn"        id="mtab-stats"  onclick="switchMainTab('stats')">📊 Tilastot</button>
+    <button class="main-tab-btn active" id="mtab-game"   onclick="switchMainTab('game')" data-testid="customer-main-tab-game">🎲 Peli</button>
+    <button class="main-tab-btn"        id="mtab-bonus"  onclick="switchMainTab('bonus')" data-testid="customer-main-tab-bonus">🎁 Bonukset</button>
+    <button class="main-tab-btn"        id="mtab-points" onclick="switchMainTab('points')" data-testid="customer-main-tab-points">🪙 Pisteet</button>
+    <button class="main-tab-btn"        id="mtab-stats"  onclick="switchMainTab('stats')" data-testid="customer-main-tab-stats">📊 Tilastot</button>
   </div>
 
   <!-- ═══ Pelin paneeli ═══ -->
@@ -731,12 +735,12 @@ button.btn-primary,.pts-input-row button{background:linear-gradient(135deg,var(-
 
       <!-- Pelitabit -->
       <div class="game-tabs-bar" id="game-tabs-bar">
-        <button class="gtab-btn active" onclick="switchGameTab('coinflip')">🪙 Kolikon-heitto</button>
-        <button class="gtab-btn" onclick="switchGameTab('war')">⚔️ WAR</button>
-        <button class="gtab-btn" onclick="switchGameTab('baccarat')">🎴 Baccarat</button>
-        <button class="gtab-btn" onclick="switchGameTab('blackjack')">🃏 Blackjack</button>
-        <button class="gtab-btn" onclick="switchGameTab('pikapokeri')">♠ Pikapokeri</button>
-        <button class="gtab-btn" onclick="switchGameTab('slots')">🎰 Slots</button>
+        <button class="gtab-btn active" onclick="switchGameTab('coinflip')" data-testid="game-tab-coinflip">🪙 Kolikon-heitto</button>
+        <button class="gtab-btn" onclick="switchGameTab('war')" data-testid="game-tab-war">⚔️ WAR</button>
+        <button class="gtab-btn" onclick="switchGameTab('baccarat')" data-testid="game-tab-baccarat">🎴 Baccarat</button>
+        <button class="gtab-btn" onclick="switchGameTab('blackjack')" data-testid="game-tab-blackjack">🃏 Blackjack</button>
+        <button class="gtab-btn" onclick="switchGameTab('pikapokeri')" data-testid="game-tab-pikapokeri">♠ Pikapokeri</button>
+        <button class="gtab-btn" onclick="switchGameTab('slots')" data-testid="game-tab-slots">🎰 Slots</button>
       </div>
 
       <!-- Kolikonheitto -->
@@ -882,9 +886,9 @@ button.btn-primary,.pts-input-row button{background:linear-gradient(135deg,var(-
       <div class="game-panel" id="gpanel-slots">
         <!-- Theme selector -->
         <div class="game-tabs-bar" style="margin-bottom:.6rem">
-          <button class="gtab-btn active" id="stheme-fruits" onclick="setSlotTheme('fruits')">🍒 Hedelmät</button>
-          <button class="gtab-btn" id="stheme-egypt" onclick="setSlotTheme('egypt')">🏺 Egypti</button>
-          <button class="gtab-btn" id="stheme-space" onclick="setSlotTheme('space')">🚀 Avaruus</button>
+          <button class="gtab-btn active" id="stheme-fruits" onclick="setSlotTheme('fruits')" data-testid="slot-theme-fruits">🍒 Hedelmät</button>
+          <button class="gtab-btn" id="stheme-egypt" onclick="setSlotTheme('egypt')" data-testid="slot-theme-egypt">🏺 Egypti</button>
+          <button class="gtab-btn" id="stheme-space" onclick="setSlotTheme('space')" data-testid="slot-theme-space">🚀 Avaruus</button>
         </div>
 
         <div class="slot-skin-row" data-testid="slot-skin-row">
@@ -999,8 +1003,8 @@ button.btn-primary,.pts-input-row button{background:linear-gradient(135deg,var(-
         </div>
       </div>
       <div class="tab-bar">
-        <button class="tab-btn active" id="tab-history" onclick="switchTab('history')">Historia</button>
-        <button class="tab-btn" id="tab-bygame" onclick="switchTab('bygame')">Peleittäin</button>
+        <button class="tab-btn active" id="tab-history" onclick="switchTab('history')" data-testid="stats-tab-history">Historia</button>
+        <button class="tab-btn" id="tab-bygame" onclick="switchTab('bygame')" data-testid="stats-tab-by-game">Peleittäin</button>
       </div>
       <div class="tab-panel active" id="panel-history">
         <div id="tx-history"><p style="color:var(--muted);font-size:.85rem;text-align:center;padding:.5rem">Ei tapahtumia vielä.</p></div>
@@ -2748,6 +2752,11 @@ const Sounds = {
   bust(){ _noise(0.18, 0.09); _beep(160,0.25,'sawtooth',0.09,0.05); },
 };
 
+function whenThreeReady(fn){
+  if(window.THREE){ fn(); return; }
+  window.addEventListener('three-ready', fn, {once:true});
+}
+
 // ── Card texture cache: draw rank+suit onto a canvas, use as Three texture ──
 const _cardTexCache = new Map();
 function _buildCardTexture(rank, suit){
@@ -3315,6 +3324,7 @@ const BAC3D = {
 // ── Hook: initialize 3D scenes when their tab becomes visible ───────────────
 (function(){
   const lazyInit = () => {
+    if(!window.THREE){ whenThreeReady(lazyInit); return; }
     const bjPanel = $('gpanel-blackjack');
     const bacPanel = $('gpanel-baccarat');
     if(bjPanel && bjPanel.classList.contains('active')){
@@ -3353,8 +3363,10 @@ window.renderBjState = function(d, resultHtml=''){
   const prevActive = prevBjActive;
   _origRenderBjState(d, resultHtml);
   // Initialize 3D now that game area is visible
-  BJ3D.init();
-  BJ3D.sync(d, prevPlayerCount, prevActive);
+  whenThreeReady(()=>{
+    BJ3D.init();
+    BJ3D.sync(d, prevPlayerCount, prevActive);
+  });
 };
 
 // Baccarat: wrap doBaccarat to play the cards in 3D BEFORE showing the text result
@@ -3362,6 +3374,7 @@ const _origDoBaccarat = window.doBaccarat;
 window.doBaccarat = async function(){
   const bet = getBet('bac-bet'); if(!bet) return;
   const btn = $('bac-btn'); btn.disabled = true; btn.textContent = '…';
+  if(!window.THREE){ await new Promise(resolve=>window.addEventListener('three-ready', resolve, {once:true})); }
   BAC3D.init();
   BAC3D.highlightSpot(bacSide);
   try{
@@ -3401,8 +3414,10 @@ window.bacChoose = function(s){
     window.switchGameTab = function(name){
       origSwitchGameTab(name);
       setTimeout(() => {
-        if(name === 'blackjack'){ BJ3D.initStartScene(); if(bjGameId) BJ3D.init(); }
-        if(name === 'baccarat'){ BAC3D.init(); }
+        whenThreeReady(()=>{
+          if(name === 'blackjack'){ BJ3D.initStartScene(); if(bjGameId) BJ3D.init(); }
+          if(name === 'baccarat'){ BAC3D.init(); }
+        });
       }, 80);
     };
   }

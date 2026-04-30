@@ -198,13 +198,13 @@ html{background:var(--bg)}body{font-family:'Manrope','DM Sans',sans-serif;backgr
     <div class="login-sub">Kirjaudu pelaajatilillesi liittyäksesi pöytään</div>
     <div class="form-card">
       <label class="field-label">Käyttäjänimi</label>
-      <input class="inp" id="login-name" placeholder="Nimesi" maxlength="50" autocomplete="username"
+      <input class="inp" id="login-name" placeholder="Nimesi" maxlength="50" autocomplete="username" data-testid="poker-login-name-input"
              onkeydown="if(event.key==='Enter')focusPw()">
       <label class="field-label" style="margin-top:.85rem">Salasana <span style="color:var(--muted);text-transform:none;font-size:.72rem;letter-spacing:0">(jos asetettu)</span></label>
-      <input class="inp" id="login-pw" type="password" placeholder="Salasana" maxlength="100" autocomplete="current-password"
+      <input class="inp" id="login-pw" type="password" placeholder="Salasana" maxlength="100" autocomplete="current-password" data-testid="poker-login-password-input"
              onkeydown="if(event.key==='Enter')doLogin()">
-      <button class="btn-gold" id="login-btn" onclick="doLogin()">Kirjaudu ja liity pöytään</button>
-      <div class="err" id="login-err"></div>
+      <button class="btn-gold" id="login-btn" onclick="doLogin()" data-testid="poker-login-submit-button">Kirjaudu ja liity pöytään</button>
+      <div class="err" id="login-err" data-testid="poker-login-error"></div>
       <div class="hint">Ei tiliä? Pyydä kasinon henkilökuntaa luomaan sinulle tili.</div>
     </div>
   </div>
