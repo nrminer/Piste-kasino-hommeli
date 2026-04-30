@@ -1767,6 +1767,7 @@ function bjReset(){
   $('bj-start-area').style.display='block';
   $('bj-game-area').style.display='none';
   $('bj-insurance-area').style.display='none';
+  ['bj-ins-take','bj-ins-decline','bj-hit','bj-stand','bj-double'].forEach(id=>{const el=$(id); if(el) el.disabled=false;});
   $('bj-result').innerHTML='';
   $('bj-new-btn').style.display='none';
   $('bj-start-btn').disabled=false;
@@ -1800,6 +1801,11 @@ function renderBjState(d, resultHtml=''){
   if(insAvail){
     const insCost = Math.max(1, Math.floor(d.bet/2));
     $('bj-ins-cost').textContent = `Vakuutus maksaa ${insCost} pistettä · Voitto 2:1 jos jakajalla on BJ`;
+    $('bj-ins-take').disabled = false;
+    $('bj-ins-decline').disabled = false;
+  } else {
+    $('bj-ins-take').disabled = true;
+    $('bj-ins-decline').disabled = true;
   }
 
   // Disable action buttons while insurance prompt is showing
@@ -1899,6 +1905,8 @@ async function doBlackjackAction(action){
 function declineInsurance(){
   bjInsuranceDeclined=true;
   $('bj-insurance-area').style.display='none';
+  $('bj-ins-take').disabled=true;
+  $('bj-ins-decline').disabled=true;
   ['bj-hit','bj-stand','bj-double'].forEach(id=>$(id).disabled=false);
 }
 

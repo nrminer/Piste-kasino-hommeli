@@ -177,3 +177,20 @@ User requested all table games be made consistently realistic, with real casino 
 - Optional: add a UI strategy/help drawer for Blackjack basic strategy and Baccarat third-card rules.
 #### P2
 - Optional: add admin-facing table-game simulation report screen.
+
+## Blackjack Insurance UI Bug Fix
+User reported the insurance offer appeared but could not be purchased.
+
+### Root Cause
+- The insurance buttons were disabled by a previous Blackjack action and `bjReset()` / `renderBjState()` did not re-enable them when a later hand showed a valid insurance offer.
+
+### Implemented
+- `bjReset()` now resets insurance/action button disabled states.
+- `renderBjState()` explicitly enables insurance buttons when insurance is available and disables them otherwise.
+- `declineInsurance()` disables insurance controls after declining while keeping normal action buttons usable.
+
+### Verification
+- Reproduced the issue in browser: insurance offer visible but purchase button disabled.
+- Retested after fix: insurance offer visible, both buttons enabled, clicking insurance sent the API request and returned 200.
+- Verified dealer Blackjack insurance win path in UI: insurance paid +100 net on side bet while main hand lost, total net 0.
+- Backend table-game regressions passed: 18/18.
