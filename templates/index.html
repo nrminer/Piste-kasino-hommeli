@@ -650,6 +650,7 @@ body{background:radial-gradient(circle at 12% 0%,rgba(17,24,39,.08),transparent 
 #sidebar{background:rgba(255,255,255,.74);backdrop-filter:blur(18px);border-right:1px solid var(--border-soft);box-shadow:12px 0 40px rgba(17,24,39,.05)}
 .sidebar-brand{border-bottom:1px solid var(--border-soft)}.sidebar-brand .logo,#topbar .logo,.page-header h1,.panel-header h3,.h3-sub,.hand-card-num{font-family:'Cabinet Grotesk','Manrope',sans-serif}.sidebar-brand .logo,.page-header h1{text-transform:none;letter-spacing:-.035em}.sidebar-brand .tagline,.page-header .subline{letter-spacing:.12em}nav ul li{border-radius:12px;margin:.25rem .75rem;padding:.85rem 1rem;border-left:0;font-family:'Manrope',sans-serif;text-transform:none;letter-spacing:0;font-weight:700}nav ul li:hover{background:#F1F5F9;color:var(--cream)}nav ul li.active{background:#111827;color:#fff}nav ul li.active .nav-icon,nav ul li:hover .nav-icon{color:currentColor}.sidebar-footer{border-top:1px solid var(--border-soft);text-transform:none;letter-spacing:.06em}
 .view{padding:2.25rem 2.5rem}.page-header{border-bottom:0;padding-bottom:0;margin-bottom:1.5rem}.page-header h1{font-size:2.4rem}.stat-grid{gap:1rem;background:transparent;border:0}.stat-card,.panel,.search-bar,.join-url-box,.modal-box,.hand-card,.seat-card{border:1px solid var(--border-soft);border-radius:var(--radius);box-shadow:0 10px 28px rgba(17,24,39,.05)}.stat-card{padding:1.25rem}.stat-card::after{height:3px;background:linear-gradient(90deg,#111827,#94a3b8)}.panel{overflow:hidden}.panel-header{background:#F8FAFC;border-bottom:1px solid var(--border-soft)}.panel-header h3{text-transform:none;letter-spacing:-.01em;font-size:1rem}.tbl-wrap{border-radius:var(--radius)}table{font-family:'Manrope',sans-serif}th{background:#F8FAFC;border-color:var(--border-soft);letter-spacing:.08em}td{border-color:var(--border-soft)}tbody tr:hover td{background:#F8FAFC}.btn,.form-control,.select-sm,.vip,.modal-close,.stage-pill,.cp-card,.comm-slot,.show-indicator,.hand-card-badge,.hand-name-tag,.bonus-tag,.pw-set-badge,.pw-none-badge{border-radius:12px}.btn{font-family:'Manrope',sans-serif;text-transform:none;letter-spacing:0;transition:transform .16s,background-color .16s,color .16s,border-color .16s}.btn:hover{transform:translateY(-1px)}.btn-gold{background:#111827;color:#fff;border-color:#111827}.btn-gold:hover{background:#334155;border-color:#334155}.btn-ghost:hover{background:#111827;color:#fff}.btn-red:hover{background:var(--red);color:#fff}.btn-green:hover{background:var(--green);color:#fff}.form-control{font-family:'Manrope',sans-serif;background:#fff;border-color:var(--border-soft)}.form-control:focus{box-shadow:0 0 0 4px rgba(17,24,39,.08);border-color:#111827}.search-bar{gap:.5rem;padding:.35rem;background:#fff}.search-input-wrap input{font-family:'Manrope',sans-serif}.search-bar select.form-control{border-left:1px solid var(--border-soft)}.modal-box{border-bottom:0}.modal-head,.modal-footer{background:#F8FAFC;border-color:var(--border-soft)}.toast{border-radius:14px;font-family:'Manrope',sans-serif;box-shadow:0 14px 35px rgba(17,24,39,.14)}.felt-table{border-radius:22px;background:radial-gradient(ellipse at center,#0f172a,#111827);border:1px solid rgba(255,255,255,.08);box-shadow:inset 0 0 40px rgba(0,0,0,.35),0 16px 36px rgba(17,24,39,.12)}.seats-grid{gap:.75rem;background:transparent;border:0}.seat-card{transition:transform .16s,box-shadow .16s}.seat-card:hover{transform:translateY(-2px);background:#fff;box-shadow:0 16px 34px rgba(17,24,39,.09)}.hand-log-list{border-radius:14px;border-color:var(--border-soft)}.hand-card{box-shadow:none;border-radius:0}.hand-card.expanded{background:#F8FAFC}.dash-cols{gap:1rem}
+.bulk-action-bar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin:.9rem 0 1rem;padding:.75rem;background:rgba(255,255,255,.75);border:1px solid var(--border-soft);border-radius:var(--radius);box-shadow:0 10px 28px rgba(17,24,39,.05)}.bulk-action-bar .form-control{width:auto;min-width:150px}.bulk-selected{font-weight:800;color:#111827;background:#F8FAFC;border:1px solid var(--border-soft);border-radius:12px;padding:.62rem .9rem}.audit-panel{margin-top:1rem}.audit-filters{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}.audit-filters .form-control{height:34px;width:auto;min-width:180px}.audit-list{display:grid;gap:.6rem}.audit-item{display:grid;grid-template-columns:auto 1fr auto;gap:.8rem;align-items:start;padding:.75rem;border:1px solid var(--border-soft);border-radius:14px;background:#fff}.audit-action{font-weight:900;color:#111827}.audit-detail{color:var(--muted);font-size:.78rem;margin-top:.16rem}.audit-time{font-size:.72rem;color:var(--muted);white-space:nowrap}.audit-dot{width:10px;height:10px;border-radius:999px;background:#111827;margin-top:.32rem}.audit-dot.bulk{background:#D9822B}.audit-dot.points{background:#7b2d8b}.audit-dot.delete{background:#E5484D}@media(max-width:760px){.bulk-action-bar .form-control,.audit-filters .form-control{width:100%}.audit-item{grid-template-columns:auto 1fr}.audit-time{grid-column:2}}
 
 /* ── Responsive: Tablet (≤1024px) ────────────────────────────────────────── */
 @media (max-width:1024px){
@@ -769,10 +770,27 @@ body{background:radial-gradient(circle at 12% 0%,rgba(17,24,39,.08),transparent 
       <option>Standard</option><option>Silver</option><option>Gold</option><option>Whale</option>
     </select>
   </div>
+  <div class="bulk-action-bar" id="bulk-action-bar" data-testid="bulk-action-bar">
+    <div class="bulk-selected" data-testid="bulk-selected-count"><strong id="bulk-count">0</strong> valittuna</div>
+    <select class="form-control" id="bulk-action" data-testid="bulk-action-select" onchange="updateBulkFields()">
+      <option value="grant_spins">Anna pyöräytyksiä</option>
+      <option value="grant_points">Anna/vähennä pisteitä</option>
+      <option value="set_vip">Aseta VIP-taso</option>
+      <option value="set_streak">Aseta putkitila</option>
+      <option value="delete">Poista asiakkaat</option>
+    </select>
+    <input class="form-control bulk-field" id="bulk-count-input" type="number" value="1" step="1" data-testid="bulk-count-input">
+    <select class="form-control bulk-field" id="bulk-vip-input" style="display:none" data-testid="bulk-vip-input"><option>Standard</option><option>Silver</option><option>Gold</option><option>Whale</option></select>
+    <select class="form-control bulk-field" id="bulk-streak-input" style="display:none" data-testid="bulk-streak-input"><option value="normal">Normaali</option><option value="win">Voittoputki</option><option value="lose">Häviöputki</option></select>
+    <input class="form-control bulk-field" id="bulk-reason-input" placeholder="Syy / muistiinpano" style="display:none" data-testid="bulk-reason-input">
+    <button class="btn btn-gold" onclick="runBulkAction()" data-testid="bulk-run-button"><i data-lucide="zap"></i> Suorita</button>
+    <button class="btn btn-ghost" onclick="clearBulkSelection()" data-testid="bulk-clear-button">Tyhjennä</button>
+  </div>
   <div class="panel">
     <div class="tbl-wrap">
       <table id="players-table">
         <thead><tr>
+          <th><input type="checkbox" id="select-all-players" onchange="toggleAllPlayers(this.checked)" data-testid="select-all-players"></th>
           <th>Nimi</th><th>Taso</th>
           <th class="col-hide-sm">Sähköposti</th>
           <th class="col-hide-sm">Puhelin</th>
@@ -789,6 +807,29 @@ body{background:radial-gradient(circle at 12% 0%,rgba(17,24,39,.08),transparent 
     <div id="players-empty" class="empty-state" style="display:none">
       <div class="empty-icon"><i data-lucide="users"></i></div>Ei asiakkaita rekisterissä. Lisää ensimmäinen.
     </div>
+  </div>
+  <div class="panel audit-panel" data-testid="audit-panel">
+    <div class="panel-header">
+      <h3><i data-lucide="clipboard-list"></i> Audit trail</h3>
+      <div class="audit-filters">
+        <select class="form-control" id="audit-action-filter" onchange="loadAudit()" data-testid="audit-action-filter">
+          <option value="">Kaikki tapahtumat</option>
+          <option value="player_created">Asiakas luotu</option>
+          <option value="player_updated">Asiakas päivitetty</option>
+          <option value="grant_spins">Pyöräytykset</option>
+          <option value="grant_points">Pisteet</option>
+          <option value="bulk_grant_spins">Bulk-pyöräytykset</option>
+          <option value="bulk_grant_points">Bulk-pisteet</option>
+          <option value="bulk_set_vip">Bulk VIP</option>
+          <option value="bulk_set_streak">Bulk putki</option>
+          <option value="transaction_added">Tapahtuma lisätty</option>
+          <option value="transaction_deleted">Tapahtuma poistettu</option>
+        </select>
+        <input class="form-control" id="audit-search" placeholder="Hae nimeä tai detailia…" oninput="loadAuditDebounced()" data-testid="audit-search-input">
+        <button class="btn btn-ghost btn-sm" onclick="loadAudit()" data-testid="audit-refresh-button"><i data-lucide="rotate-cw"></i></button>
+      </div>
+    </div>
+    <div class="panel-body audit-list" id="audit-list" data-testid="audit-list"><p class="text-muted text-sm">Ladataan audit-lokia…</p></div>
   </div>
 </section>
 
@@ -1173,6 +1214,8 @@ let S = {
   giveBonusPlayerId: null,
   grantSpinsPlayerId: null,
   grantPointsPlayerId: null,
+  selectedPlayers: new Set(),
+  currentPlayerList: [],
   presets: {}, activePick: null,
 };
 
@@ -1270,7 +1313,7 @@ function renderDashboard(d){
 
 // ── Players ────────────────────────────────────────────────────────────────
 async function loadPlayers(){
-  try{ S.players=await api('GET','/api/players'); renderPlayers(S.players); }
+  try{ S.players=await api('GET','/api/players'); renderPlayers(S.players); loadAudit(); }
   catch(e){ toast(e.message,'error'); }
 }
 function filterPlayers(){
@@ -1282,7 +1325,8 @@ function filterPlayers(){
 }
 function renderPlayers(list){
   const tbody=$('players-tbody'), empty=$('players-empty');
-  if(!list.length){tbody.innerHTML='';empty.style.display='block';return;}
+  S.currentPlayerList = list.map(p=>p.id);
+  if(!list.length){tbody.innerHTML='';empty.style.display='block';updateBulkBar();return;}
   empty.style.display='none';
   const streakMeta = {
     normal: {icon:'🎲', cls:'btn-ghost',   label:'Normaali'},
@@ -1292,7 +1336,8 @@ function renderPlayers(list){
   tbody.innerHTML=list.map(p=>{
     const sm = streakMeta[p.streak_mode||'normal'] || streakMeta.normal;
     return `
-    <tr>
+    <tr data-testid="player-row-${p.id}">
+      <td><input type="checkbox" class="bulk-check" ${S.selectedPlayers.has(p.id)?'checked':''} onchange="togglePlayerSelection(${p.id},this.checked)" data-testid="select-player-${p.id}"></td>
       <td><span class="bold">${esc(p.name)}</span></td>
       <td>${vipBadge(p.vip_level)}</td>
       <td class="text-muted text-sm truncate col-hide-sm">${esc(p.email||'—')}</td>
@@ -1317,6 +1362,71 @@ function renderPlayers(list){
       </td>
     </tr>`;
   }).join('');
+  updateBulkBar();
+}
+function getVisiblePlayers(){return S.players.filter(p=>S.currentPlayerList.includes(p.id));}
+function togglePlayerSelection(id, checked){
+  if(checked) S.selectedPlayers.add(id); else S.selectedPlayers.delete(id);
+  updateBulkBar();
+}
+function toggleAllPlayers(checked){
+  S.currentPlayerList.forEach(id=> checked ? S.selectedPlayers.add(id) : S.selectedPlayers.delete(id));
+  renderPlayers(getVisiblePlayers());
+}
+function clearBulkSelection(){S.selectedPlayers.clear();renderPlayers(getVisiblePlayers());}
+function updateBulkBar(){
+  const count=S.selectedPlayers.size;
+  if($('bulk-count')) $('bulk-count').textContent=count;
+  const all=$('select-all-players');
+  if(all){all.checked=count>0 && S.currentPlayerList.length>0 && S.currentPlayerList.every(id=>S.selectedPlayers.has(id));}
+}
+function updateBulkFields(){
+  const action=$('bulk-action').value;
+  $('bulk-count-input').style.display=(action==='grant_spins'||action==='grant_points')?'block':'none';
+  $('bulk-vip-input').style.display=action==='set_vip'?'block':'none';
+  $('bulk-streak-input').style.display=action==='set_streak'?'block':'none';
+  $('bulk-reason-input').style.display=action==='grant_points'?'block':'none';
+}
+async function runBulkAction(){
+  const ids=[...S.selectedPlayers];
+  if(!ids.length){toast('Valitse ensin asiakkaat.','error');return;}
+  const action=$('bulk-action').value;
+  const body={ids,action};
+  if(action==='grant_spins') body.count=parseInt($('bulk-count-input').value,10)||0;
+  if(action==='grant_points'){body.count=parseInt($('bulk-count-input').value,10)||0;body.reason=$('bulk-reason-input').value.trim();}
+  if(action==='set_vip') body.vip_level=$('bulk-vip-input').value;
+  if(action==='set_streak') body.mode=$('bulk-streak-input').value;
+  if(action==='delete' && !confirm(`Poistetaanko ${ids.length} valittua asiakasta?`)) return;
+  try{
+    const res=await api('POST','/api/players/bulk',body);
+    toast(`${res.affected} asiakasta käsitelty.`, 'success');
+    S.selectedPlayers.clear();
+    await loadPlayers();
+    await loadDashboard();
+  }catch(e){toast(e.message,'error');}
+}
+
+let auditTimer=null;
+function loadAuditDebounced(){clearTimeout(auditTimer);auditTimer=setTimeout(loadAudit,250);}
+function auditLabel(action){
+  const map={player_created:'Asiakas luotu',player_updated:'Asiakas päivitetty',player_deleted:'Asiakas poistettu',grant_spins:'Pyöräytyksiä annettu',grant_points:'Pisteet päivitetty',set_streak:'Putki asetettu',bulk_grant_spins:'Bulk: pyöräytykset',bulk_grant_points:'Bulk: pisteet',bulk_set_vip:'Bulk: VIP',bulk_set_streak:'Bulk: putki',bulk_delete_player:'Bulk: poisto',transaction_added:'Tapahtuma lisätty',transaction_deleted:'Tapahtuma poistettu'};
+  return map[action]||action;
+}
+function auditDot(action){return action.includes('bulk')?'bulk':action.includes('point')?'points':action.includes('delete')?'delete':'';}
+async function loadAudit(){
+  if(!$('audit-list')) return;
+  const params=new URLSearchParams();
+  const action=$('audit-action-filter').value, q=$('audit-search').value.trim();
+  if(action) params.set('action',action); if(q) params.set('q',q); params.set('limit','50');
+  try{
+    const rows=await api('GET','/api/audit?'+params.toString());
+    $('audit-list').innerHTML=rows.length?rows.map(a=>`
+      <div class="audit-item" data-testid="audit-item-${a.id}">
+        <span class="audit-dot ${auditDot(a.action)}"></span>
+        <div><div class="audit-action">${auditLabel(a.action)} · ${esc(a.player_name||'Järjestelmä')}</div><div class="audit-detail">${esc(a.details||'')}</div></div>
+        <div class="audit-time">${fmtDate(a.created_at)}</div>
+      </div>`).join(''):'<p class="text-muted text-sm">Ei audit-tapahtumia valituilla suodattimilla.</p>';
+  }catch(e){$('audit-list').innerHTML=`<p class="c-red text-sm">${esc(e.message)}</p>`;}
 }
 function openAddModal(){
   $('modal-player-title').textContent='Lisää asiakas';

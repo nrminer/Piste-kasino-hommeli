@@ -2220,11 +2220,30 @@ function tone(freq, duration=0.1, type='sine', vol=0.08){
 }
 function playSpin(){ tone(220,0.06,'square',0.05); }
 function playClick(){ tone(440,0.04,'square',0.05); }
+function playReelStart(){
+  if(!soundOn) return;
+  [164,196,247,294].forEach((n,i)=>setTimeout(()=>tone(n,0.055,'sawtooth',0.035),i*42));
+}
+function playReelStop(col, scatterHit=false){
+  if(!soundOn) return;
+  tone(260 + col*42,0.075,'square',0.045);
+  setTimeout(()=>tone(120 + col*18,0.045,'triangle',0.025),55);
+  if(scatterHit) setTimeout(()=>tone(880,0.16,'triangle',0.075),95);
+}
+function playAnticipation(){
+  if(!soundOn) return;
+  [392,466,523,659].forEach((n,i)=>setTimeout(()=>tone(n,0.09,'triangle',0.055),i*120));
+}
+function playNoWin(){
+  if(!soundOn) return;
+  tone(150,0.11,'sine',0.035);
+  setTimeout(()=>tone(105,0.12,'sine',0.025),95);
+}
 function playWin(wins){
   if(!wins||!wins.length) return;
   const total = wins.reduce((a,w)=>a+(w.mult||0),0);
-  const notes = total>=100 ? [523,659,784,1047] : total>=20 ? [523,659,784] : [523,659];
-  notes.forEach((n,i)=>setTimeout(()=>tone(n,0.18,'triangle',0.09), i*90));
+  const notes = total>=4 ? [523,659,784,1047,1319] : total>=1 ? [392,523,659,784] : [523,659];
+  notes.forEach((n,i)=>setTimeout(()=>tone(n,0.18,'triangle',0.09), i*95));
 }
 function playJackpot(){
   const seq = [523,659,784,1047,784,1047,1319,1568];
@@ -2270,6 +2289,7 @@ async function doFreeSpins(data, def){
     info.textContent=`Kierros ${i+1}...`;
 
     startSpinning(def, true);
+    playReelStart();
     await delay(turboMode?500:1100);
 
     for(let col=0;col<REELS;col++){
@@ -2289,7 +2309,7 @@ async function doFreeSpins(data, def){
       for(let row=0;row<ROWS;row++){
         if(fs.grid[col][row]==='wild') $(`sc-${col}-${row}`).classList.add('wild');
       }
-      playClick();
+      playReelStop(col, fs.grid[col].includes('scatter'));
       await delay(turboMode?100:220);
     }
     await delay(turboMode?150:280);
@@ -2325,6 +2345,7 @@ async function doSlotSpin(){
 
   startSpinning(def);
   playSpin();
+  playReelStart();
 
   let data;
   try{
@@ -2372,7 +2393,7 @@ async function doSlotSpin(){
       setTimeout(()=>cell.classList.remove('stopping'),turboMode?250:400);
       if(data.grid[col][row]==='scatter') stoppedScatterCount++;
     }
-    playClick();
+    playReelStop(col, data.grid[col].includes('scatter'));
   }
   function engageAnticipation(){
     if(anticipationOn) return;
@@ -2383,7 +2404,7 @@ async function doSlotSpin(){
         if(cell.classList.contains('spinning')) cell.classList.add('anticipation');
       }
     }
-    try{ playClick(); setTimeout(playClick, 180); }catch(e){}
+    try{ playAnticipation(); }catch(e){}
   }
   await delay(firstStop);
   stopOneReel(0);
@@ -2411,6 +2432,7 @@ async function doSlotSpin(){
     drawWinLines(data.wins, def);
     playWin(data.wins);
   } else {
+    playNoWin();
     // ── Near-miss: highlight the *one* cell that broke a 4-of-a-kind line.
     // Real slots use this to make losses feel "close" — boosts engagement.
     const nearMiss = findNearMissCell(data.grid);

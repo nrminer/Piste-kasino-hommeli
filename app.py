@@ -55,6 +55,15 @@ CREATE TABLE IF NOT EXISTS bonuses (
     created_at  TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (player_id) REFERENCES players(id)
 );
+CREATE TABLE IF NOT EXISTS audit_events (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    action      TEXT NOT NULL,
+    player_id   INTEGER DEFAULT NULL,
+    player_name TEXT DEFAULT '',
+    details     TEXT DEFAULT '',
+    actor       TEXT DEFAULT 'management',
+    created_at  TEXT DEFAULT CURRENT_TIMESTAMP
+);
 CREATE TABLE IF NOT EXISTS poker_sessions (
     id                   INTEGER PRIMARY KEY AUTOINCREMENT,
     status               TEXT DEFAULT 'waiting',
@@ -115,6 +124,7 @@ def init_db():
             FOREIGN KEY (player_id) REFERENCES players(id)
         )""",
         "ALTER TABLE players ADD COLUMN streak_mode TEXT DEFAULT 'normal'",
+        "CREATE TABLE IF NOT EXISTS audit_events (id INTEGER PRIMARY KEY AUTOINCREMENT, action TEXT NOT NULL, player_id INTEGER DEFAULT NULL, player_name TEXT DEFAULT '', details TEXT DEFAULT '', actor TEXT DEFAULT 'management', created_at TEXT DEFAULT CURRENT_TIMESTAMP)",
         """CREATE TABLE IF NOT EXISTS system_settings (
             key   TEXT PRIMARY KEY,
             value TEXT NOT NULL
@@ -155,6 +165,16 @@ def init_db():
             pass
     db.commit()
     db.close()
+
+def _audit(db, action, player_id=None, player_name='', details=None, actor='management'):
+    try:
+        payload = details if isinstance(details, str) else json.dumps(details or {}, ensure_ascii=False)
+        db.execute(
+            'INSERT INTO audit_events(action,player_id,player_name,details,actor) VALUES(?,?,?,?,?)',
+            (action, player_id, player_name or '', payload, actor)
+        )
+    except Exception:
+        pass
 
 init_db()
 
@@ -347,7 +367,81 @@ def create_player():
     row.pop('password_hash', None)
     row['has_password'] = bool(pw_hash)
     row.update({'total_won': 0, 'total_lost': 0, 'net_balance': 0, 'tx_count': 0})
+    _audit(db, 'player_created', cur.lastrowid, d['name'], {'vip_level': d.get('vip_level','Standard')})
+    db.commit()
     return jsonify(row), 201
+
+@app.route('/api/players/bulk', methods=['POST'])
+def bulk_players():
+    d = request.json or {}
+    ids = []
+    for raw in d.get('ids', []):
+        try:
+            pid = int(raw)
+            if pid not in ids:
+                ids.append(pid)
+        except (TypeError, ValueError):
+            pass
+    if not ids:
+        return jsonify({'error': 'Valitse vähintään yksi asiakas.'}), 400
+    action = d.get('action')
+    db = get_db()
+    marks = ','.join('?' for _ in ids)
+    rows = [dict(r) for r in db.execute(f'SELECT id,name FROM players WHERE id IN ({marks})', ids).fetchall()]
+    if not rows:
+        return jsonify({'error': 'Valittuja asiakkaita ei löydy.'}), 404
+    found_ids = [r['id'] for r in rows]
+    if action == 'grant_spins':
+        try:
+            count = int(d.get('count', 0))
+        except (TypeError, ValueError):
+            return jsonify({'error': 'Virheellinen pyöräytysmäärä.'}), 400
+        if count == 0:
+            return jsonify({'error': 'Määrä ei voi olla 0.'}), 400
+        for p in rows:
+            db.execute('UPDATE players SET spins_remaining=MAX(0, COALESCE(spins_remaining,0)+?) WHERE id=?', (count, p['id']))
+            _audit(db, 'bulk_grant_spins', p['id'], p['name'], {'count': count})
+    elif action == 'grant_points':
+        try:
+            count = int(d.get('count', 0))
+        except (TypeError, ValueError):
+            return jsonify({'error': 'Virheellinen pistemäärä.'}), 400
+        if count == 0:
+            return jsonify({'error': 'Määrä ei voi olla 0.'}), 400
+        reason = (d.get('reason') or 'Bulk pistepäivitys').strip()[:120]
+        for p in rows:
+            row = db.execute('SELECT points FROM players WHERE id=?', (p['id'],)).fetchone()
+            current = row['points'] or 0
+            new_val = max(0, current + count)
+            actual_delta = new_val - current
+            db.execute('UPDATE players SET points=? WHERE id=?', (new_val, p['id']))
+            _log_points(db, p['id'], actual_delta, reason)
+            _audit(db, 'bulk_grant_points', p['id'], p['name'], {'delta': actual_delta, 'reason': reason})
+    elif action == 'set_vip':
+        vip = d.get('vip_level')
+        if vip not in ('Standard', 'Silver', 'Gold', 'Whale'):
+            return jsonify({'error': 'Virheellinen VIP-taso.'}), 400
+        for p in rows:
+            db.execute('UPDATE players SET vip_level=? WHERE id=?', (vip, p['id']))
+            _audit(db, 'bulk_set_vip', p['id'], p['name'], {'vip_level': vip})
+    elif action == 'set_streak':
+        mode = d.get('mode')
+        if mode not in ('normal', 'win', 'lose'):
+            return jsonify({'error': 'Virheellinen putkitila.'}), 400
+        for p in rows:
+            db.execute('UPDATE players SET streak_mode=? WHERE id=?', (mode, p['id']))
+            _audit(db, 'bulk_set_streak', p['id'], p['name'], {'mode': mode})
+    elif action == 'delete':
+        for p in rows:
+            db.execute('DELETE FROM transactions WHERE player_id=?', (p['id'],))
+            db.execute('DELETE FROM bonuses WHERE player_id=?', (p['id'],))
+            db.execute('DELETE FROM point_transactions WHERE player_id=?', (p['id'],))
+            db.execute('DELETE FROM players WHERE id=?', (p['id'],))
+            _audit(db, 'bulk_delete_player', p['id'], p['name'], {'deleted': True})
+    else:
+        return jsonify({'error': 'Tuntematon bulk-toiminto.'}), 400
+    db.commit()
+    return jsonify({'ok': True, 'affected': len(found_ids), 'action': action})
 
 @app.route('/api/players/<int:pid>', methods=['PUT'])
 def update_player(pid):
@@ -367,15 +461,20 @@ def update_player(pid):
             (d['name'], d.get('email',''), d.get('phone',''),
              d.get('vip_level','Standard'), d.get('notes',''), pid)
         )
+    row = db.execute('SELECT name FROM players WHERE id=?', (pid,)).fetchone()
+    _audit(db, 'player_updated', pid, row['name'] if row else d.get('name',''), {'vip_level': d.get('vip_level','Standard')})
     db.commit()
     return jsonify({'ok': True})
 
 @app.route('/api/players/<int:pid>', methods=['DELETE'])
 def delete_player(pid):
     db = get_db()
+    row = db.execute('SELECT name FROM players WHERE id=?', (pid,)).fetchone()
     db.execute('DELETE FROM transactions WHERE player_id=?', (pid,))
     db.execute('DELETE FROM bonuses WHERE player_id=?', (pid,))
+    db.execute('DELETE FROM point_transactions WHERE player_id=?', (pid,))
     db.execute('DELETE FROM players WHERE id=?', (pid,))
+    _audit(db, 'player_deleted', pid, row['name'] if row else '', {'deleted': True})
     db.commit()
     return jsonify({'ok': True})
 
@@ -395,6 +494,7 @@ def grant_spins(pid):
     current = (row['spins_remaining'] or 0) if 'spins_remaining' in row.keys() else 0
     new_val = max(0, current + count)
     db.execute('UPDATE players SET spins_remaining=? WHERE id=?', (new_val, pid))
+    _audit(db, 'grant_spins', pid, row['name'], {'count': count, 'spins_remaining': new_val})
     db.commit()
     return jsonify({'ok': True, 'spins_remaining': new_val, 'granted': count})
 
@@ -421,15 +521,42 @@ def add_transaction(pid):
         'INSERT INTO transactions(player_id,amount,game_type,note) VALUES(?,?,?,?)',
         (pid, float(d['amount']), d.get('game_type','Muu'), d.get('note',''))
     )
+    p = db.execute('SELECT name FROM players WHERE id=?', (pid,)).fetchone()
+    _audit(db, 'transaction_added', pid, p['name'] if p else '', {'amount': float(d['amount']), 'game_type': d.get('game_type','Muu')})
     db.commit()
     return jsonify(dict(db.execute('SELECT * FROM transactions WHERE id=?', (cur.lastrowid,)).fetchone())), 201
 
 @app.route('/api/transactions/<int:tid>', methods=['DELETE'])
 def delete_transaction(tid):
     db = get_db()
+    row = db.execute('SELECT t.*, p.name AS player_name FROM transactions t LEFT JOIN players p ON p.id=t.player_id WHERE t.id=?', (tid,)).fetchone()
     db.execute('DELETE FROM transactions WHERE id=?', (tid,))
+    if row:
+        _audit(db, 'transaction_deleted', row['player_id'], row['player_name'] or '', {'amount': row['amount'], 'game_type': row['game_type']})
     db.commit()
     return jsonify({'ok': True})
+
+@app.route('/api/audit', methods=['GET'])
+def list_audit():
+    db = get_db()
+    action = request.args.get('action', '').strip()
+    q = request.args.get('q', '').strip().lower()
+    try:
+        limit = min(100, max(10, int(request.args.get('limit', 50))))
+    except (TypeError, ValueError):
+        limit = 50
+    where, args = [], []
+    if action:
+        where.append('action=?'); args.append(action)
+    if q:
+        where.append('(LOWER(player_name) LIKE ? OR LOWER(details) LIKE ? OR LOWER(action) LIKE ?)')
+        args.extend([f'%{q}%', f'%{q}%', f'%{q}%'])
+    sql = 'SELECT * FROM audit_events'
+    if where:
+        sql += ' WHERE ' + ' AND '.join(where)
+    sql += ' ORDER BY created_at DESC, id DESC LIMIT ?'
+    args.append(limit)
+    return jsonify([dict(r) for r in db.execute(sql, args).fetchall()])
 
 # ─── Bonuses API ─────────────────────────────────────────────────────────────
 
@@ -1374,6 +1501,7 @@ def grant_points(pid):
     actual_delta = new_val - current
     db.execute('UPDATE players SET points=? WHERE id=?', (new_val, pid))
     _log_points(db, pid, actual_delta, reason)
+    _audit(db, 'grant_points', pid, row['name'], {'delta': actual_delta, 'reason': reason, 'points': new_val})
     db.commit()
     return jsonify({'ok': True, 'points': new_val, 'granted': actual_delta})
 
@@ -1878,6 +2006,8 @@ def set_streak_mode(pid):
     if not db.execute('SELECT id FROM players WHERE id=?', (pid,)).fetchone():
         return jsonify({'error': 'Pelaajaa ei löydy.'}), 404
     db.execute('UPDATE players SET streak_mode=? WHERE id=?', (mode, pid))
+    row = db.execute('SELECT name FROM players WHERE id=?', (pid,)).fetchone()
+    _audit(db, 'set_streak', pid, row['name'] if row else '', {'mode': mode})
     db.commit()
     return jsonify({'ok': True, 'streak_mode': mode})
 
