@@ -6,7 +6,9 @@ import os
 import pytest
 import requests
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://management-dashboard-1.preview.emergentagent.com").rstrip("/")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL")
+if BASE_URL:
+    BASE_URL = BASE_URL.rstrip("/")
 PID = 1
 BET = 100
 
@@ -20,6 +22,8 @@ EXPECTED_KEYS = {
 
 @pytest.fixture(scope="module")
 def session():
+    if not BASE_URL:
+        pytest.skip("REACT_APP_BACKEND_URL is missing")
     s = requests.Session()
     s.headers.update({"Content-Type": "application/json"})
     return s

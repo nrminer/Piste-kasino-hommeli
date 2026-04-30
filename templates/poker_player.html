@@ -303,11 +303,23 @@ let pollId    = null;
 let showingCards = false;
 let prevCommCount = 0;
 
+// Each bonus wheel (wait / game) has its own rotation state.
+// Keep this before boot-time drawWheel() calls to avoid startup TDZ errors.
+const wheelState = {wait:{rot:0,spinning:false}, game:{rot:0,spinning:false}};
+
 // ── LocalStorage-avaimet ───────────────────────────────────────────────────
 const LS_NAME  = 'pp_name';
 const LS_PW    = 'pp_pw';
 const LS_ID    = 'pp_id';
 const LS_TOKEN = 'pp_token';
+
+const WHEEL_SEGS=[
+  {label:'10%',color:'#8b6914'},{label:'20%',color:'#888'},
+  {label:'10%',color:'#8b6914'},{label:'100%',color:'#7b2d8b'},
+  {label:'10%',color:'#8b6914'},{label:'50%',color:'#c9a84c'},
+  {label:'10%',color:'#8b6914'},{label:'20%',color:'#888'},
+];
+const PRIZE_SEGS = {0:[0,2,4,6],1:[1,7],2:[5],3:[3]};
 
 function saveCreds(name, pw, id){
   localStorage.setItem(LS_NAME, name);
@@ -637,17 +649,6 @@ function renderEmptyCard(size='md'){ return `<div class="card empty-slot ${size}
 function vipBadge(v){ return `<span class="vip vip-${v}">${v==='Whale'?'🐋 ':''}${v}</span>`; }
 
 // ── Bonuspyörä ─────────────────────────────────────────────────────────────
-const WHEEL_SEGS=[
-  {label:'10%',color:'#8b6914'},{label:'20%',color:'#888'},
-  {label:'10%',color:'#8b6914'},{label:'100%',color:'#7b2d8b'},
-  {label:'10%',color:'#8b6914'},{label:'50%',color:'#c9a84c'},
-  {label:'10%',color:'#8b6914'},{label:'20%',color:'#888'},
-];
-const PRIZE_SEGS = {0:[0,2,4,6],1:[1,7],2:[5],3:[3]};
-
-// Each wheel (wait / game) has its own rotation state
-const wheelState = {wait:{rot:0,spinning:false}, game:{rot:0,spinning:false}};
-
 function canvasId(which){ return which==='wait' ? 'wheel-canvas-wait' : 'wheel-canvas-game'; }
 
 function drawWheel(which, deg){
@@ -700,14 +701,29 @@ async function doSpin(which){
       body: JSON.stringify({player_id: player && player.id})
     });
     result = await r.json();
+    if(!r.ok || result.error || result.index === undefined){
+      ws.spinning = false;
+      const noSpins = r.status === 403 || result.spins_remaining === 0;
+      showSpinMessage(which, result.error || 'Pyöräytystä ei voi käyttää juuri nyt.');
+      document.getElementById(`spin-used-${which}`).style.display = noSpins ? 'block' : 'none';
+      document.getElementById(`spin-btn-${which}`).disabled = noSpins;
+      return;
+    }
   }catch(e){
     ws.spinning = false;
     document.getElementById(`spin-btn-${which}`).disabled = false;
+    showSpinMessage(which, 'Yhteys katkesi. Yritä hetken kuluttua uudelleen.');
     return;
   }
 
   const prizeIdx  = result.index;
   const matchSegs = PRIZE_SEGS[prizeIdx];
+  if(!matchSegs || !matchSegs.length){
+    ws.spinning = false;
+    document.getElementById(`spin-btn-${which}`).disabled = false;
+    showSpinMessage(which, 'Bonuspyörän tulos oli virheellinen. Yritä uudelleen.');
+    return;
+  }
   const targetSeg = matchSegs[Math.floor(Math.random()*matchSegs.length)];
   const segCenter = targetSeg*45+22.5;
   const needed    = (360-segCenter)%360;
@@ -734,6 +750,14 @@ async function doSpin(which){
     }
   }
   requestAnimationFrame(frame);
+}
+
+function showSpinMessage(which, message){
+  const el = document.getElementById(`prize-result-${which}`);
+  el.style.display = 'block';
+  el.className = 'prize-result';
+  document.getElementById(`prize-emoji-${which}`).textContent = '—';
+  document.getElementById(`prize-label-${which}`).textContent = message;
 }
 
 function showPrize(which, prize){
