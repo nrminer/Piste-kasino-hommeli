@@ -130,3 +130,23 @@ User requested real-slot-inspired free spins: Egypt like an expanding-symbol bon
 - Optional: expose a controlled demo trigger for previewing each free-spin mode without waiting for random scatters.
 #### P2
 - Split slot logic/styles from the large customer template for maintainability.
+
+## Slot RTP Calibration to 85%
+User requested verifying and adjusting slot RTP to 85% by running a Python simulation.
+
+### Implemented
+- Added `/app/scripts/slot_rtp_calibration.py`, a reusable Monte-Carlo script that imports the real server slot math.
+- Calibrated total RTP including base game wins, theme-specific free-spin features, and expected Bonus Vault pick value.
+- Reduced Bonus Vault expected value and tuned free-spin payout factors per theme to keep the real-slot-inspired bonuses around target RTP.
+
+### Calibration Result
+- Fruits: 85.18% RTP
+- Egypt: 84.98% RTP
+- Space: 85.12% RTP
+- Average: 85.09% RTP
+- Command used: `python3 /app/scripts/slot_rtp_calibration.py --spins 150000 --seed 850085`
+
+### Verification
+- Calibration script passed.
+- Final regression passed: 27/27 tests.
+- Python compile checks passed.

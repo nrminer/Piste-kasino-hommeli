@@ -193,7 +193,9 @@ def _create_slot_bonus_game(db, pid, theme_id, bet):
     """Create a server-authoritative pick bonus round.
     Rewards are pre-generated and hidden from the client until picked.
     """
-    mults = [0, 0.2, 0.35, 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 5]
+    # Low-variance pick bonus calibrated as part of total slot RTP.
+    # Sum=4.0, three random picks from 12 => EV ≈ 1× bet per bonus trigger.
+    mults = [0, 0, 0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.35, 0.50, 0.80, 1.60]
     random.shuffle(mults)
     rewards = []
     labels = ['Mystery', 'Spark', 'Gear', 'Crown', 'Vault', 'Nova', 'Gem', 'Wild', 'Key', 'Pulse', 'Mask', 'Finale']
@@ -1474,6 +1476,7 @@ def _slot_run_free_spins(theme_id, bet, theme):
     feature = {'theme': theme_id, 'name': 'Classic free spins'}
 
     if theme_id == 'egypt':
+        payout_scale = 0.325
         expanding_symbol = random.choice(_slot_regular_symbols(theme_id))
         feature = {
             'theme': theme_id,
@@ -1487,7 +1490,7 @@ def _slot_run_free_spins(theme_id, bet, theme):
             expanded_reels = _slot_expand_symbol_reels(fg, expanding_symbol)
             fw = _slot_calc_wins(fg, theme['payouts'])
             fm = sum(w['mult'] for w in fw)
-            fp = int(round(bet * fm * fs_mult))
+            fp = int(round(bet * fm * fs_mult * payout_scale))
             bonus_payout += fp
             fs_results.append({
                 'grid': fg, 'wins': fw, 'payout': fp,
@@ -1497,35 +1500,29 @@ def _slot_run_free_spins(theme_id, bet, theme):
                     'expanded_reels': expanded_reels,
                     'spin_index': spin_idx + 1,
                     'display_mult': fs_mult,
+                    'payout_scale': payout_scale,
                 }
             })
         return fs_results, bonus_payout, feature
 
     if theme_id == 'space':
+        payout_mult = 0.595
         feature = {
             'theme': theme_id,
             'type': 'expanding_wild_respins',
             'name': 'Nova Expanding Wilds',
             'description': 'Wilds expand to full reels and award respins when new reels ignite.',
         }
-        sticky_wild_reels = set()
         total_spins = fs_count
         spin_idx = 0
         while spin_idx < total_spins and spin_idx < fs_count + 7:
             spin_idx += 1
             fg = _slot_spin(theme_id, include_scatter=False)
-            # Existing sticky wild reels remain expanded.
-            for col in sticky_wild_reels:
-                for row in range(3):
-                    fg[col][row] = 'wild'
-            # New wilds expand the entire reel and retrigger one respin.
+            # Starburst-style: wilds expand on the current spin and award respins.
             new_wild_reels = []
             for col in range(5):
-                if col in sticky_wild_reels:
-                    continue
                 if any(fg[col][row] == 'wild' for row in range(3)):
                     new_wild_reels.append(col)
-                    sticky_wild_reels.add(col)
                     for row in range(3):
                         fg[col][row] = 'wild'
             extra_spin_awarded = bool(new_wild_reels) and total_spins < fs_count + 7
@@ -1533,19 +1530,19 @@ def _slot_run_free_spins(theme_id, bet, theme):
                 total_spins += 1
             fw = _slot_calc_wins(fg, theme['payouts'])
             fm = sum(w['mult'] for w in fw)
-            # Space is respin-driven, so use a gentler multiplier than classic ×3.
-            fp = int(round(bet * fm * 1.5))
+            # Space is respin-driven, so use calibrated pay strength for ~85% RTP.
+            fp = int(round(bet * fm * payout_mult))
             bonus_payout += fp
             fs_results.append({
                 'grid': fg, 'wins': fw, 'payout': fp,
                 'feature': {
                     'type': 'expanding_wild_respins',
-                    'expanded_wild_reels': sorted(sticky_wild_reels),
+                    'expanded_wild_reels': new_wild_reels,
                     'new_wild_reels': new_wild_reels,
                     'extra_spin_awarded': extra_spin_awarded,
                     'spin_index': spin_idx,
                     'total_spins': total_spins,
-                    'display_mult': 1.5,
+                    'display_mult': payout_mult,
                 }
             })
         return fs_results, bonus_payout, feature
@@ -1557,13 +1554,14 @@ def _slot_run_free_spins(theme_id, bet, theme):
         'name': 'Fire Joker Ladder',
         'description': 'Wins and jokers heat the multiplier ladder up to 5×.',
     }
+    payout_scale = 0.495
     current_mult = fs_mult
     for spin_idx in range(fs_count):
         fg = _slot_spin(theme_id, include_scatter=False)
         fire_jokers = _slot_symbol_positions(fg, 'wild')
         fw = _slot_calc_wins(fg, theme['payouts'])
         fm = sum(w['mult'] for w in fw)
-        fp = int(round(bet * fm * current_mult))
+        fp = int(round(bet * fm * current_mult * payout_scale))
         bonus_payout += fp
         heat_up = bool(fw) or bool(fire_jokers)
         next_mult = min(5, current_mult + 1) if heat_up else current_mult
@@ -1577,6 +1575,7 @@ def _slot_run_free_spins(theme_id, bet, theme):
                 'heat_up': heat_up,
                 'spin_index': spin_idx + 1,
                 'display_mult': current_mult,
+                'payout_scale': payout_scale,
             }
         })
         current_mult = next_mult
