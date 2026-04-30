@@ -5,33 +5,34 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Operaatiot // Pääte — Kasinon Hallinta</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<link href="https://fonts.googleapis.com/css2?family=Chivo:wght@400;700;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.cdnfonts.com/css/cabinet-grotesk" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  /* ── Auditor's Ledger palette (Swiss-Modernist / financial terminal) ── */
-  --bg:#EFEFE9;          /* warm ledger paper */
+  /* ── Control Room palette (clean management + operational clarity) ── */
+  --bg:#F6F7F4;          /* calm workspace */
   --bg2:#FFFFFF;         /* surface (cards, panels) */
-  --bg3:#E5E5DD;         /* subtle hover wash */
-  --bg4:#0A0A0A;         /* inverted (sidebar active fill) */
-  --gold:#3B00FF;        /* primary accent — electric blue */
-  --gold2:#5C2BFF;       /* darker blue, for hover/contrast on white */
-  --cream:#0A0A0A;       /* primary text */
-  --muted:#5C5C54;       /* secondary text */
-  --border:#0A0A0A;      /* hard structural border (1px black) */
-  --border-soft:#D2D2CA; /* hairline border */
-  --red:#FF2A00;         /* danger */
-  --red2:#FF2A00;
-  --green:#00B84D;       /* success */
-  --warn:#FFB800;
+  --bg3:#EEF1EA;         /* subtle hover wash */
+  --bg4:#111827;         /* inverted */
+  --gold:#111827;        /* primary ink */
+  --gold2:#334155;       /* secondary ink */
+  --cream:#111111;       /* primary text */
+  --muted:#667085;       /* secondary text */
+  --border:rgba(17,24,39,.16);
+  --border-soft:rgba(17,24,39,.09);
+  --red:#E5484D;
+  --red2:#E5484D;
+  --green:#11945A;
+  --warn:#D9822B;
   --sidebar:260px;
   --topbar:0px;
-  --radius:0px;          /* sharp corners across the system */
+  --radius:16px;
 }
 html,body{height:100%}
 body{
-  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-family:'Manrope','JetBrains Mono',sans-serif;
   background:var(--bg);color:var(--cream);
   display:flex;flex-direction:column;height:100vh;overflow:hidden;
   font-feature-settings:"tnum","ss01";
@@ -643,6 +644,12 @@ select.form-control option{background:var(--bg2);color:var(--cream)}
   letter-spacing:.1em;margin-bottom:.75rem;
   border-bottom:1px solid var(--border-soft);padding-bottom:.4rem;
 }
+
+/* ── 2026 management refresh: cleaner business control room ──────────────── */
+body{background:radial-gradient(circle at 12% 0%,rgba(17,24,39,.08),transparent 28%),linear-gradient(180deg,#fbfcf8,#eef1ea);}
+#sidebar{background:rgba(255,255,255,.74);backdrop-filter:blur(18px);border-right:1px solid var(--border-soft);box-shadow:12px 0 40px rgba(17,24,39,.05)}
+.sidebar-brand{border-bottom:1px solid var(--border-soft)}.sidebar-brand .logo,#topbar .logo,.page-header h1,.panel-header h3,.h3-sub,.hand-card-num{font-family:'Cabinet Grotesk','Manrope',sans-serif}.sidebar-brand .logo,.page-header h1{text-transform:none;letter-spacing:-.035em}.sidebar-brand .tagline,.page-header .subline{letter-spacing:.12em}nav ul li{border-radius:12px;margin:.25rem .75rem;padding:.85rem 1rem;border-left:0;font-family:'Manrope',sans-serif;text-transform:none;letter-spacing:0;font-weight:700}nav ul li:hover{background:#F1F5F9;color:var(--cream)}nav ul li.active{background:#111827;color:#fff}nav ul li.active .nav-icon,nav ul li:hover .nav-icon{color:currentColor}.sidebar-footer{border-top:1px solid var(--border-soft);text-transform:none;letter-spacing:.06em}
+.view{padding:2.25rem 2.5rem}.page-header{border-bottom:0;padding-bottom:0;margin-bottom:1.5rem}.page-header h1{font-size:2.4rem}.stat-grid{gap:1rem;background:transparent;border:0}.stat-card,.panel,.search-bar,.join-url-box,.modal-box,.hand-card,.seat-card{border:1px solid var(--border-soft);border-radius:var(--radius);box-shadow:0 10px 28px rgba(17,24,39,.05)}.stat-card{padding:1.25rem}.stat-card::after{height:3px;background:linear-gradient(90deg,#111827,#94a3b8)}.panel{overflow:hidden}.panel-header{background:#F8FAFC;border-bottom:1px solid var(--border-soft)}.panel-header h3{text-transform:none;letter-spacing:-.01em;font-size:1rem}.tbl-wrap{border-radius:var(--radius)}table{font-family:'Manrope',sans-serif}th{background:#F8FAFC;border-color:var(--border-soft);letter-spacing:.08em}td{border-color:var(--border-soft)}tbody tr:hover td{background:#F8FAFC}.btn,.form-control,.select-sm,.vip,.modal-close,.stage-pill,.cp-card,.comm-slot,.show-indicator,.hand-card-badge,.hand-name-tag,.bonus-tag,.pw-set-badge,.pw-none-badge{border-radius:12px}.btn{font-family:'Manrope',sans-serif;text-transform:none;letter-spacing:0;transition:transform .16s,background-color .16s,color .16s,border-color .16s}.btn:hover{transform:translateY(-1px)}.btn-gold{background:#111827;color:#fff;border-color:#111827}.btn-gold:hover{background:#334155;border-color:#334155}.btn-ghost:hover{background:#111827;color:#fff}.btn-red:hover{background:var(--red);color:#fff}.btn-green:hover{background:var(--green);color:#fff}.form-control{font-family:'Manrope',sans-serif;background:#fff;border-color:var(--border-soft)}.form-control:focus{box-shadow:0 0 0 4px rgba(17,24,39,.08);border-color:#111827}.search-bar{gap:.5rem;padding:.35rem;background:#fff}.search-input-wrap input{font-family:'Manrope',sans-serif}.search-bar select.form-control{border-left:1px solid var(--border-soft)}.modal-box{border-bottom:0}.modal-head,.modal-footer{background:#F8FAFC;border-color:var(--border-soft)}.toast{border-radius:14px;font-family:'Manrope',sans-serif;box-shadow:0 14px 35px rgba(17,24,39,.14)}.felt-table{border-radius:22px;background:radial-gradient(ellipse at center,#0f172a,#111827);border:1px solid rgba(255,255,255,.08);box-shadow:inset 0 0 40px rgba(0,0,0,.35),0 16px 36px rgba(17,24,39,.12)}.seats-grid{gap:.75rem;background:transparent;border:0}.seat-card{transition:transform .16s,box-shadow .16s}.seat-card:hover{transform:translateY(-2px);background:#fff;box-shadow:0 16px 34px rgba(17,24,39,.09)}.hand-log-list{border-radius:14px;border-color:var(--border-soft)}.hand-card{box-shadow:none;border-radius:0}.hand-card.expanded{background:#F8FAFC}.dash-cols{gap:1rem}
 
 /* ── Responsive: Tablet (≤1024px) ────────────────────────────────────────── */
 @media (max-width:1024px){

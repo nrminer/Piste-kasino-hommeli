@@ -695,7 +695,10 @@ async function doSpin(which){
 
   let result;
   try{
-    const r = await fetch('/api/poker/spin',{method:'POST'});
+    const r = await fetch('/api/poker/spin',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({player_id: player && player.id})
+    });
     result = await r.json();
   }catch(e){
     ws.spinning = false;
