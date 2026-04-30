@@ -1726,6 +1726,91 @@ def _hand_total(cards):
         aces  -= 1
     return total
 
+def _hand_total_soft(cards):
+    total = sum(_card_value_bj(c['rank']) for c in cards)
+    aces = sum(1 for c in cards if c['rank'] == 'A')
+    soft = False
+    while total > 21 and aces > 0:
+        total -= 10
+        aces -= 1
+    if any(c['rank'] == 'A' for c in cards) and total <= 21:
+        hard_total = sum(_card_value_bj(c['rank'], soft_ace=False) for c in cards)
+        soft = hard_total + 10 == total
+    return total, soft
+
+def _is_blackjack(cards):
+    return len(cards) == 2 and _hand_total(cards) == 21
+
+def _dealer_should_hit_blackjack(cards):
+    # Common casino rule used here: dealer stands on all 17s, including soft 17.
+    total, _soft = _hand_total_soft(cards)
+    return total < 17
+
+def _baccarat_value(rank):
+    if rank in ('J','Q','K','10'):
+        return 0
+    if rank == 'A':
+        return 1
+    return int(rank)
+
+def _baccarat_total(hand):
+    return sum(_baccarat_value(c['rank']) for c in hand) % 10
+
+def _baccarat_deal_result(deck):
+    p1, p2, b1, b2 = deck.pop(), deck.pop(), deck.pop(), deck.pop()
+    phand, bhand = [p1, p2], [b1, b2]
+    ptot, btot = _baccarat_total(phand), _baccarat_total(bhand)
+    draw_events = []
+    natural = ptot in (8, 9) or btot in (8, 9)
+    if not natural:
+        p3 = None
+        if ptot <= 5:
+            p3 = deck.pop(); phand.append(p3)
+            draw_events.append({'side': 'player', 'card': p3, 'reason': 'Player total 0–5 draws third card'})
+            ptot = _baccarat_total(phand)
+        draw_banker = False
+        reason = ''
+        if p3 is None:
+            draw_banker = btot <= 5
+            reason = 'Banker draws on 0–5 when player stands'
+        else:
+            p3v = _baccarat_value(p3['rank'])
+            if btot <= 2:
+                draw_banker = True; reason = 'Banker total 0–2 always draws'
+            elif btot == 3:
+                draw_banker = p3v != 8; reason = 'Banker 3 draws unless player third card is 8'
+            elif btot == 4:
+                draw_banker = p3v in (2,3,4,5,6,7); reason = 'Banker 4 draws against 2–7'
+            elif btot == 5:
+                draw_banker = p3v in (4,5,6,7); reason = 'Banker 5 draws against 4–7'
+            elif btot == 6:
+                draw_banker = p3v in (6,7); reason = 'Banker 6 draws against 6–7'
+        if draw_banker:
+            b3 = deck.pop(); bhand.append(b3)
+            draw_events.append({'side': 'banker', 'card': b3, 'reason': reason})
+            btot = _baccarat_total(bhand)
+    if ptot > btot:
+        winner = 'player'
+    elif btot > ptot:
+        winner = 'banker'
+    else:
+        winner = 'tie'
+    return {
+        'player_hand': phand, 'banker_hand': bhand,
+        'player_total': ptot, 'banker_total': btot,
+        'winner': winner, 'natural': natural, 'draw_events': draw_events,
+    }
+
+def _settle_blackjack_round(deck, pcards, dcards, bet):
+    while _dealer_should_hit_blackjack(dcards):
+        dcards.append(deck.pop())
+    ptot, dtot = _hand_total(pcards), _hand_total(dcards)
+    if dtot > 21 or ptot > dtot:
+        return 'done_win', 'win', bet * 2
+    if ptot == dtot:
+        return 'done_push', 'push', bet
+    return 'done_loss', 'loss', 0
+
 @app.route('/api/points/<int:pid>/coinflip', methods=['POST'])
 def game_coinflip(pid):
     d      = request.json or {}
@@ -1746,6 +1831,7 @@ def game_coinflip(pid):
         result  = 'tails' if choice == 'heads' else 'heads'
         outcome, payout = 'loss', 0
     else:
+        # Casino coinflip: unbiased visible coin, 96% RTP via small house-edge void.
         result = 'heads' if random.random() < 0.50 else 'tails'
         if choice == result and random.random() < 0.96:
             payout  = bet * 2
@@ -1758,6 +1844,7 @@ def game_coinflip(pid):
     return jsonify({
         'outcome': outcome, 'result': result, 'choice': choice,
         'bet': bet, 'payout': payout, 'net': payout - bet, 'points': bal,
+        'rules': {'name': 'Casino Coinflip', 'rtp_target': 0.96, 'payout': '1:1'},
     })
 
 @app.route('/api/points/<int:pid>/war', methods=['POST'])
@@ -1771,6 +1858,7 @@ def game_war(pid):
     pc, dc = deck.pop(), deck.pop()
     pv, dv = _RV[pc['rank']], _RV[dc['rank']]
     streak = _get_streak_mode(db, pid)
+    tie_breaker = None
     if streak == 'win':
         outcome = 'win';  payout = bet * 2
         _add_points(db, pid, payout, 'Sota-peli voitto')
@@ -1782,13 +1870,34 @@ def game_war(pid):
     elif pv < dv:
         outcome = 'loss'; payout = 0
     else:
-        outcome = 'push'; payout = bet
-        _add_points(db, pid, payout, 'Sota-peli tasapeli')
+        # Casino War tie: automatically goes to war when player can cover the raise.
+        # Ante pushes on war wins, raise pays even money; second tie pushes both bets.
+        can_raise = (db.execute('SELECT points FROM players WHERE id=?', (pid,)).fetchone()['points'] or 0) >= bet
+        if can_raise:
+            _atomic_deduct_points(db, pid, bet, 'Sota-peli war raise')
+            burn_player = [deck.pop() for _ in range(3)]
+            burn_dealer = [deck.pop() for _ in range(3)]
+            pc2, dc2 = deck.pop(), deck.pop()
+            pv2, dv2 = _RV[pc2['rank']], _RV[dc2['rank']]
+            tie_breaker = {'player_card': pc2, 'dealer_card': dc2, 'burn_count_each': 3}
+            if pv2 > dv2:
+                outcome = 'war_win'; payout = bet * 3
+                _add_points(db, pid, payout, 'Sota-peli war voitto')
+            elif pv2 < dv2:
+                outcome = 'war_loss'; payout = 0
+            else:
+                outcome = 'war_push'; payout = bet * 2
+                _add_points(db, pid, payout, 'Sota-peli war tasapeli')
+        else:
+            outcome = 'surrender'; payout = bet // 2
+            _add_points(db, pid, payout, 'Sota-peli surrender')
     db.commit()
     bal = db.execute('SELECT points FROM players WHERE id=?', (pid,)).fetchone()['points'] or 0
     return jsonify({
         'outcome': outcome, 'player_card': pc, 'dealer_card': dc,
+        'tie_breaker': tie_breaker,
         'bet': bet, 'payout': payout, 'net': payout - bet, 'points': bal,
+        'rules': {'name': 'Casino War', 'tie': 'auto war with matching raise when possible'},
     })
 
 @app.route('/api/points/<int:pid>/baccarat', methods=['POST'])
@@ -1801,38 +1910,11 @@ def game_baccarat(pid):
     bet, err = _get_bet(d, pid, db)
     if err: return err
     _atomic_deduct_points(db, pid, bet, f'Baccarat panos ({side})')
-    def val(r):
-        if r in ('J','Q','K','10'): return 0
-        if r == 'A': return 1
-        return int(r)
     deck = new_deck()
-    p1, p2, b1, b2 = deck.pop(), deck.pop(), deck.pop(), deck.pop()
-    ptot = (val(p1['rank']) + val(p2['rank'])) % 10
-    btot = (val(b1['rank']) + val(b2['rank'])) % 10
-    phand, bhand = [p1, p2], [b1, b2]
-    if ptot < 8 and btot < 8:
-        # Player third-card rule
-        p3 = None
-        if ptot <= 5:
-            p3 = deck.pop(); phand.append(p3)
-            ptot = (ptot + val(p3['rank'])) % 10
-        # Banker third-card rule (simplified)
-        draw_banker = False
-        if p3 is None:
-            draw_banker = btot <= 5
-        else:
-            p3v = val(p3['rank'])
-            if   btot <= 2: draw_banker = True
-            elif btot == 3: draw_banker = p3v != 8
-            elif btot == 4: draw_banker = p3v in (2,3,4,5,6,7)
-            elif btot == 5: draw_banker = p3v in (4,5,6,7)
-            elif btot == 6: draw_banker = p3v in (6,7)
-        if draw_banker:
-            b3 = deck.pop(); bhand.append(b3)
-            btot = (btot + val(b3['rank'])) % 10
-    if   ptot > btot: winner = 'player'
-    elif btot > ptot: winner = 'banker'
-    else:             winner = 'tie'
+    dealt = _baccarat_deal_result(deck)
+    phand, bhand = dealt['player_hand'], dealt['banker_hand']
+    ptot, btot = dealt['player_total'], dealt['banker_total']
+    winner = dealt['winner']
     # Streak override (cards still shown, only outcome changes)
     streak = _get_streak_mode(db, pid)
     if streak == 'win':
@@ -1862,6 +1944,8 @@ def game_baccarat(pid):
         'player_hand': phand, 'banker_hand': bhand,
         'player_total': ptot, 'banker_total': btot,
         'bet': bet, 'payout': payout, 'net': payout - bet, 'points': bal,
+        'natural': dealt['natural'], 'draw_events': dealt['draw_events'],
+        'rules': {'name': 'Punto Banco Baccarat', 'banker_commission': '5%', 'tie_pays': '8:1'},
     })
 
 # ── Blackjack (stateful) ──
@@ -1878,6 +1962,8 @@ def _bj_state(game):
         'dealer_cards': dcards if not active else [dcards[0]] + [{'rank':'?','suit':'?'}]*(len(dcards)-1),
         'player_total': _hand_total(pcards),
         'dealer_total': _hand_total(dcards) if not active else _hand_total([dcards[0]]),
+        'player_soft': _hand_total_soft(pcards)[1],
+        'dealer_soft': _hand_total_soft(dcards if not active else [dcards[0]])[1],
         'insurance_available': (
             active and
             len(pcards) == 2 and
@@ -1885,6 +1971,7 @@ def _bj_state(game):
             ins_bet == 0
         ),
         'insurance_bet': ins_bet,
+        'rules': {'name': 'Blackjack', 'blackjack_pays': '3:2', 'dealer': 'stands on all 17s', 'double': 'first two cards only'},
     }
 
 @app.route('/api/points/<int:pid>/blackjack/start', methods=['POST'])
@@ -1901,11 +1988,22 @@ def game_bj_start(pid):
     dc     = [deck.pop(), deck.pop()]
     status = 'active'
     streak = _get_streak_mode(db, pid)
-    # Natural blackjack — suppress on lose streak
-    if _hand_total(pc) == 21 and streak != 'lose':
-        status = 'done_blackjack'
-        payout = bet + int(bet * 1.5)  # 3:2
-        _add_points(db, pid, payout, 'Blackjack luonnollinen 21')
+    player_bj = _is_blackjack(pc)
+    dealer_bj = _is_blackjack(dc)
+    payout = 0
+    outcome = None
+    # Real natural handling: player BJ pays 3:2 unless dealer also has BJ; dealer natural ends round.
+    if player_bj or dealer_bj:
+        if player_bj and dealer_bj:
+            status = 'done_push'; outcome = 'push'; payout = bet
+            _add_points(db, pid, payout, 'Blackjack luonnollinen tasapeli')
+        elif player_bj and streak != 'lose':
+            status = 'done_blackjack'; outcome = 'blackjack'; payout = bet + int(bet * 1.5)
+            _add_points(db, pid, payout, 'Blackjack luonnollinen 21')
+        elif dealer_bj and dc[0]['rank'] != 'A':
+            status = 'done_loss'; outcome = 'loss'; payout = 0
+        # If dealer shows Ace with natural, keep the hand active until the
+        # player takes/declines insurance; the action endpoint then reveals BJ.
     cur = db.execute(
         '''INSERT INTO blackjack_games(player_id,bet,deck_json,player_cards_json,dealer_cards_json,status)
            VALUES(?,?,?,?,?,?)''',
@@ -1918,9 +2016,12 @@ def game_bj_start(pid):
     bal = db.execute('SELECT points FROM players WHERE id=?', (pid,)).fetchone()['points'] or 0
     state['points'] = bal
     if status.startswith('done'):
-        state['outcome'] = 'blackjack'
-        state['payout']  = bet + int(bet * 1.5)
-        state['net']     = int(bet * 1.5)
+        if outcome is None:
+            outcome = 'blackjack' if status == 'done_blackjack' else status.replace('done_', '')
+        state['outcome'] = outcome
+        state['payout']  = payout
+        state['net']     = payout - bet
+        state['dealer_has_bj'] = dealer_bj
     return jsonify(state)
 
 @app.route('/api/points/blackjack/<int:gid>/action', methods=['POST'])
@@ -1941,6 +2042,27 @@ def game_bj_action(gid):
 
     outcome = None; payout = 0
 
+    # Real insurance flow: if dealer shows Ace and has blackjack, any non-insurance
+    # action after the prompt reveals/settles the natural immediately.
+    if action != 'insurance' and len(pcards) == 2 and dcards[0]['rank'] == 'A' and _is_blackjack(dcards):
+        if _is_blackjack(pcards):
+            status = 'done_push'; outcome = 'push'; payout = bet
+        else:
+            status = 'done_loss'; outcome = 'loss'; payout = 0
+        if payout > 0:
+            _add_points(db, pid, payout, 'Blackjack dealer natural settlement')
+        db.execute(
+            '''UPDATE blackjack_games SET deck_json=?,player_cards_json=?,dealer_cards_json=?,status=?,bet=?
+               WHERE id=?''',
+            (json.dumps(deck), json.dumps(pcards), json.dumps(dcards), status, bet, gid)
+        )
+        db.commit()
+        game = db.execute('SELECT * FROM blackjack_games WHERE id=?', (gid,)).fetchone()
+        state = _bj_state(game)
+        bal = db.execute('SELECT points FROM players WHERE id=?', (pid,)).fetchone()['points'] or 0
+        state.update({'points': bal, 'outcome': outcome, 'payout': payout, 'net': payout - bet, 'dealer_has_bj': True})
+        return jsonify(state)
+
     if action == 'hit':
         pcards.append(deck.pop())
         total = _hand_total(pcards)
@@ -1950,15 +2072,7 @@ def game_bj_action(gid):
         else:
             status = 'active'
     elif action == 'stand':
-        while _hand_total(dcards) < 17:
-            dcards.append(deck.pop())
-        ptot, dtot = _hand_total(pcards), _hand_total(dcards)
-        if dtot > 21 or ptot > dtot:
-            status = 'done_win';  outcome = 'win';  payout = bet * 2
-        elif ptot == dtot:
-            status = 'done_push'; outcome = 'push'; payout = bet
-        else:
-            status = 'done_loss'; outcome = 'loss'
+        status, outcome, payout = _settle_blackjack_round(deck, pcards, dcards, bet)
     elif action == 'double':
         # Must have exactly 2 cards, and enough points for another bet
         if len(pcards) != 2:
@@ -1970,15 +2084,7 @@ def game_bj_action(gid):
         if _hand_total(pcards) > 21:
             status = 'done_bust'; outcome = 'bust'
         else:
-            while _hand_total(dcards) < 17:
-                dcards.append(deck.pop())
-            ptot, dtot = _hand_total(pcards), _hand_total(dcards)
-            if dtot > 21 or ptot > dtot:
-                status = 'done_win';  outcome = 'win';  payout = bet * 2
-            elif ptot == dtot:
-                status = 'done_push'; outcome = 'push'; payout = bet
-            else:
-                status = 'done_loss'; outcome = 'loss'
+            status, outcome, payout = _settle_blackjack_round(deck, pcards, dcards, bet)
     elif action == 'insurance':
         if len(pcards) != 2:
             return jsonify({'error': 'Vakuutus on mahdollinen vain pelin alussa.'}), 400

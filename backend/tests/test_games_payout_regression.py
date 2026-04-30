@@ -39,10 +39,11 @@ def test_war_play_success_and_cards_shape(api_client):
     )
     assert r.status_code == 200
     data = r.json()
-    assert data["outcome"] in {"win", "loss", "push"}
+    assert data["outcome"] in {"win", "loss", "push", "war_win", "war_loss", "war_push", "surrender"}
     assert set(data["player_card"].keys()) == {"rank", "suit"}
     assert set(data["dealer_card"].keys()) == {"rank", "suit"}
     assert isinstance(data["points"], int)
+    assert "rules" in data
 
 
 def test_pikapokeri_deal_then_draw_success(api_client):

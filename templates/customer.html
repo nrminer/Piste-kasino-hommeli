@@ -764,7 +764,7 @@ button.btn-primary,.pts-input-row button{background:linear-gradient(135deg,var(-
           <label>Panos (pistettä)</label>
           <input class="bet-inp" type="number" id="war-bet" value="100" min="10" max="10000" step="10" data-testid="war-bet-input">
         </div>
-        <p style="font-size:.83rem;color:var(--muted);margin-bottom:.75rem">Sinun korttisi vastaan jakajan kortti. Korkein kortti voittaa (Ässä korkein). Tasapelissä saat panoksen takaisin.</p>
+        <p style="font-size:.83rem;color:var(--muted);margin-bottom:.75rem">Casino War: korkein kortti voittaa. Tasapelissä peli menee automaattisesti “war”-jatkoon, jos pisteet riittävät lisäpanokseen; muuten surrender palauttaa puolet.</p>
         <button class="btn-primary" id="war-btn" onclick="doWar()" data-testid="war-play-button">Pelaa WAR</button>
         <div id="war-result" data-testid="war-result"></div>
       </div>
@@ -835,7 +835,7 @@ button.btn-primary,.pts-input-row button{background:linear-gradient(135deg,var(-
           </div>
           <div id="bj-insurance-area" style="display:none;margin-bottom:.6rem">
             <div style="background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);border-radius:8px;padding:.75rem;margin-bottom:.5rem;font-size:.85rem;text-align:center">
-              🛡 Jakajalla on ässä. Haluatko ottaa vakuutuksen?<br>
+              🛡 Jakajalla on ässä. Haluatko ottaa vakuutuksen ennen kuin kortti tarkistetaan?<br>
               <span style="color:var(--muted);font-size:.78rem" id="bj-ins-cost"></span>
             </div>
             <div class="bj-actions">
@@ -1686,7 +1686,14 @@ async function doWar(){
     const d=await r.json();
     if(!r.ok){alert(d.error);return;}
     player.points=d.points;
-    const playerWon=d.outcome==='win', dealerWon=d.outcome==='loss';
+    const playerWon=['win','war_win'].includes(d.outcome), dealerWon=['loss','war_loss','surrender'].includes(d.outcome);
+    const warExtra=d.tie_breaker?`<div class="war-side war-breaker">
+        <span class="war-label">War-kortit</span>
+        <div class="mini-cards" style="justify-content:center">
+          ${renderMiniCard(d.tie_breaker.player_card,'sm',260)}
+          ${renderMiniCard(d.tie_breaker.dealer_card,'sm',410)}
+        </div>
+      </div>`:'';
     const cardsHtml=`<div class="war-arena resolved ${d.outcome}" data-testid="war-animation-stage">
       <div class="war-side">
         <span class="war-label">Sinä</span>
@@ -1697,11 +1704,12 @@ async function doWar(){
         <span class="war-label">Jakaja</span>
         ${cardWithMotion(d.dealer_card,'md',180,`from-right ${dealerWon?'winner':''}`)}
       </div>
-      <div class="particle-field ${d.outcome==='win'?'burst':d.outcome==='loss'?'dust':'push'}"></div>
-    </div>`;
+      <div class="particle-field ${playerWon?'burst':dealerWon?'dust':'push'}"></div>
+    </div>${warExtra}`;
+    const warHeadlines={win:'Voitit!',loss:'Hävisit',push:'Tasapeli!',war_win:'War-voitto!',war_loss:'War-häviö',war_push:'War-tasapeli',surrender:'Surrender'};
     showGameResult('war-result', d.outcome,
-      d.outcome==='win'?'Voitit!':d.outcome==='push'?'Tasapeli!':'Hävisit',
-      `Sinun: ${d.player_card.rank}${d.player_card.suit} · Jakaja: ${d.dealer_card.rank}${d.dealer_card.suit}`,
+      warHeadlines[d.outcome]||d.outcome,
+      `Ante: ${d.player_card.rank}${d.player_card.suit} vs ${d.dealer_card.rank}${d.dealer_card.suit}${d.tie_breaker?' · Tie → war raise':''}`,
       d.net, cardsHtml
     );
   }catch(e){alert('Virhe.');}
@@ -1739,9 +1747,10 @@ async function doBaccarat(){
         <div class="mini-cards" style="justify-content:center">${bh}</div>
       </div>
     </div>`;
+    const drawText=(d.draw_events||[]).map(e=>`${e.side==='player'?'Pelaaja':'Bankeri'} nosti (${e.reason})`).join(' · ');
     showGameResult('bac-result', d.outcome,
       d.outcome==='win'?`Voitit! (${winnerLabel} voitti)`:d.outcome==='push'?`Tasapeli — palautus`:`Hävisit (${winnerLabel} voitti)`,
-      `Panos: ${bet} p · Voitto: ${d.payout} p`, d.net, cardsHtml
+      `${d.natural?'Natural 8/9 · ':''}${drawText?drawText+' · ':''}Panos: ${bet} p · Voitto: ${d.payout} p`, d.net, cardsHtml
     );
   }catch(e){alert('Virhe.');}
   finally{btn.disabled=false;btn.textContent='Pelaa Baccarat';}
@@ -1824,7 +1833,7 @@ async function doBlackjackStart(){
     $('bj-game-area').style.display='block';
     let resHtml='';
     if(d.outcome){
-      const outcomes={blackjack:'🃏 Blackjack!',win:'Voitit!',push:'Tasapeli!',loss:'Hävisit',bust:'Ylitit 21!'};
+      const outcomes={blackjack:'🃏 Luonnollinen Blackjack!',win:'Voitit!',push:'Tasapeli!',loss:'Jakajalla Blackjack',bust:'Ylitit 21!'};
       resHtml=`<div class="game-result ${d.outcome==='loss'||d.outcome==='bust'?'loss':d.outcome==='push'?'push':'win'}">
         <div class="res-emoji">${d.outcome==='blackjack'||d.outcome==='win'?'🏆':d.outcome==='push'?'🤝':'😞'}</div>
         <div class="res-outcome">${outcomes[d.outcome]||d.outcome}</div>
@@ -3443,9 +3452,10 @@ window.doBaccarat = async function(){
     // Also show the textual result below
     const sideLabels = {player:'Pelaaja', banker:'Bankeri', tie:'Tasapeli'};
     const winnerLabel = sideLabels[d.winner] || d.winner;
+    const drawText=(d.draw_events||[]).map(e=>`${e.side==='player'?'Pelaaja':'Bankeri'} nosti (${e.reason})`).join(' · ');
     showGameResult('bac-result', d.outcome,
       d.outcome==='win'?`Voitit! (${winnerLabel} voitti)`:d.outcome==='push'?`Tasapeli — palautus`:`Hävisit (${winnerLabel} voitti)`,
-      `Panos: ${bet} p · Voitto: ${d.payout} p`, d.net
+      `${d.natural?'Natural 8/9 · ':''}${drawText?drawText+' · ':''}Panos: ${bet} p · Voitto: ${d.payout} p`, d.net
     );
   }catch(e){ alert('Virhe.'); }
   finally{ btn.disabled = false; btn.textContent = 'Pelaa Baccarat'; }
