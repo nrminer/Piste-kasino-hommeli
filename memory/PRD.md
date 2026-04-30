@@ -150,3 +150,30 @@ User requested verifying and adjusting slot RTP to 85% by running a Python simul
 - Calibration script passed.
 - Final regression passed: 27/27 tests.
 - Python compile checks passed.
+
+## Table Games Realism Pass
+User requested all table games be made consistently realistic, with real casino rules, animations/result clarity, and odds simulations/tests.
+
+### Implemented
+- Coinflip: added explicit Casino Coinflip rules metadata and retained 96% RTP casino-edge behavior.
+- Casino War: replaced simple tie push with realistic auto-war behavior when the player can cover the raise; added war_win, war_loss, war_push, surrender outcomes and tie-breaker metadata.
+- Baccarat: extracted full Punto Banco third-card rules, natural 8/9 handling, draw-event metadata, banker 5% commission, tie 8:1, and player/banker push on tie.
+- Blackjack: corrected natural blackjack handling: player BJ pays 3:2, dealer natural ends the round, both naturals push; dealer stands on all 17s; double and insurance flows preserved.
+- Pikapokeri: verified full-pay 9/6 Jacks-or-Better payout table and draw flow remain intact.
+- Frontend: updated WAR and Baccarat guidance/result messaging to explain the more realistic rules and draw/war events.
+- Added `/app/scripts/table_games_simulation.py` for non-slot table-game return sanity checks.
+
+### Verification
+- QA Iteration 7 passed backend + frontend validation with no blocking issues.
+- Final self-regression passed: 39/39 tests including live table-game realism checks.
+- Browser smoke passed for WAR, Baccarat, Blackjack, and Pikapokeri; only non-blocking WebGL performance warnings appeared.
+- Python compile and inline JS/module syntax checks passed.
+
+### Backlog Updates
+#### P0
+- None currently known.
+#### P1
+- Optional: split `/app/app.py` and `/app/templates/customer.html` into smaller game-specific modules.
+- Optional: add a UI strategy/help drawer for Blackjack basic strategy and Baccarat third-card rules.
+#### P2
+- Optional: add admin-facing table-game simulation report screen.
