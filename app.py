@@ -64,6 +64,18 @@ CREATE TABLE IF NOT EXISTS audit_events (
     actor       TEXT DEFAULT 'management',
     created_at  TEXT DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS slot_bonus_games (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_id    INTEGER NOT NULL,
+    theme_id     TEXT DEFAULT 'fruits',
+    bet          INTEGER NOT NULL,
+    rewards_json TEXT NOT NULL,
+    picked_json  TEXT DEFAULT '[]',
+    total_reward INTEGER DEFAULT 0,
+    status       TEXT DEFAULT 'active',
+    created_at   TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (player_id) REFERENCES players(id)
+);
 CREATE TABLE IF NOT EXISTS poker_sessions (
     id                   INTEGER PRIMARY KEY AUTOINCREMENT,
     status               TEXT DEFAULT 'waiting',
@@ -125,6 +137,7 @@ def init_db():
         )""",
         "ALTER TABLE players ADD COLUMN streak_mode TEXT DEFAULT 'normal'",
         "CREATE TABLE IF NOT EXISTS audit_events (id INTEGER PRIMARY KEY AUTOINCREMENT, action TEXT NOT NULL, player_id INTEGER DEFAULT NULL, player_name TEXT DEFAULT '', details TEXT DEFAULT '', actor TEXT DEFAULT 'management', created_at TEXT DEFAULT CURRENT_TIMESTAMP)",
+        "CREATE TABLE IF NOT EXISTS slot_bonus_games (id INTEGER PRIMARY KEY AUTOINCREMENT, player_id INTEGER NOT NULL, theme_id TEXT DEFAULT 'fruits', bet INTEGER NOT NULL, rewards_json TEXT NOT NULL, picked_json TEXT DEFAULT '[]', total_reward INTEGER DEFAULT 0, status TEXT DEFAULT 'active', created_at TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (player_id) REFERENCES players(id))",
         """CREATE TABLE IF NOT EXISTS system_settings (
             key   TEXT PRIMARY KEY,
             value TEXT NOT NULL
@@ -175,6 +188,27 @@ def _audit(db, action, player_id=None, player_name='', details=None, actor='mana
         )
     except Exception:
         pass
+
+def _create_slot_bonus_game(db, pid, theme_id, bet):
+    """Create a server-authoritative pick bonus round.
+    Rewards are pre-generated and hidden from the client until picked.
+    """
+    mults = [0, 0.2, 0.35, 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 5]
+    random.shuffle(mults)
+    rewards = []
+    labels = ['Mystery', 'Spark', 'Gear', 'Crown', 'Vault', 'Nova', 'Gem', 'Wild', 'Key', 'Pulse', 'Mask', 'Finale']
+    for idx, mult in enumerate(mults):
+        rewards.append({
+            'tile': idx,
+            'label': labels[idx],
+            'mult': mult,
+            'reward': int(round(bet * mult)),
+        })
+    cur = db.execute(
+        'INSERT INTO slot_bonus_games(player_id,theme_id,bet,rewards_json) VALUES(?,?,?,?)',
+        (pid, theme_id, bet, json.dumps(rewards, ensure_ascii=False))
+    )
+    return {'id': cur.lastrowid, 'picks_remaining': 3, 'tile_count': len(rewards)}
 
 init_db()
 
@@ -1952,6 +1986,7 @@ def game_slots(pid):
     fs_mult     = theme['fs_mult']    if free_spins_triggered else 1
     fs_results  = []
     bonus_payout = 0
+    bonus_game = None
     if free_spins_triggered:
         for _ in range(fs_count):
             fg = _slot_spin(theme_id, include_scatter=False)
@@ -1960,6 +1995,7 @@ def game_slots(pid):
             fp = int(round(bet * fm * fs_mult))
             bonus_payout += fp
             fs_results.append({'grid': fg, 'wins': fw, 'payout': fp})
+        bonus_game = _create_slot_bonus_game(db, pid, theme_id, bet)
 
     # 6. Progressive jackpot.
     jackpot_payout = 0
@@ -1992,6 +2028,54 @@ def game_slots(pid):
         'jackpot_won':          jackpot_won,
         'jackpot_payout':       jackpot_payout,
         'jackpot_pool':         pool,
+        'bonus_game':           bonus_game,
+    })
+
+@app.route('/api/points/<int:pid>/slots/bonus/<int:gid>/pick', methods=['POST'])
+def slot_bonus_pick(pid, gid):
+    d = request.json or {}
+    try:
+        tile = int(d.get('tile'))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Virheellinen valinta.'}), 400
+    db = get_db()
+    game = db.execute('SELECT * FROM slot_bonus_games WHERE id=? AND player_id=?', (gid, pid)).fetchone()
+    if not game:
+        return jsonify({'error': 'Bonusroundia ei löydy.'}), 404
+    if game['status'] != 'active':
+        bal = db.execute('SELECT points FROM players WHERE id=?', (pid,)).fetchone()['points'] or 0
+        return jsonify({'error': 'Bonusroundi on jo päättynyt.', 'complete': True, 'points': bal}), 400
+    rewards = json.loads(game['rewards_json'])
+    picked = json.loads(game['picked_json'] or '[]')
+    if tile < 0 or tile >= len(rewards):
+        return jsonify({'error': 'Valintaa ei ole.'}), 400
+    if tile in picked:
+        return jsonify({'error': 'Tämä ruutu on jo avattu.'}), 400
+    picked.append(tile)
+    reward = rewards[tile]
+    amount = int(reward.get('reward') or 0)
+    total = (game['total_reward'] or 0) + amount
+    complete = len(picked) >= 3
+    status = 'complete' if complete else 'active'
+    if amount > 0:
+        _add_points(db, pid, amount, f"Slots bonus pick ({game['theme_id']})")
+    db.execute(
+        'UPDATE slot_bonus_games SET picked_json=?,total_reward=?,status=? WHERE id=?',
+        (json.dumps(picked), total, status, gid)
+    )
+    player = db.execute('SELECT name, points FROM players WHERE id=?', (pid,)).fetchone()
+    _audit(db, 'slot_bonus_pick', pid, player['name'] if player else '', {'tile': tile, 'reward': amount, 'complete': complete})
+    db.commit()
+    bal = db.execute('SELECT points FROM players WHERE id=?', (pid,)).fetchone()['points'] or 0
+    return jsonify({
+        'ok': True,
+        'tile': tile,
+        'reward': {'label': reward.get('label'), 'mult': reward.get('mult'), 'amount': amount},
+        'picked': picked,
+        'picks_remaining': max(0, 3 - len(picked)),
+        'total_reward': total,
+        'complete': complete,
+        'points': bal,
     })
 
 # ─── Streak mode (admin) ─────────────────────────────────────────────────────
