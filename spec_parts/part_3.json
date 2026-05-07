@@ -1,0 +1,339 @@
+{
+  "ui_wireframes": {
+    "game_lobby": "+----------------------------------------------------------------------+\n| AUDITOR'S LEDGER · KASINO                              [PROFIILI ▾]  |\n+----------------------------------------------------------------------+\n| TASE: 12 480 pts          ISTUNTO: 00:18:42       NETTO: +320 pts    |\n+----------------------------------------------------------------------+\n| ╔══════════╗  ╔══════════╗  ╔══════════╗  ╔══════════╗  ╔══════════╗ |\n| ║  HEDELMÄT║  ║   EGYPTI ║  ║ AVARUUS  ║  ║  TUMBLE  ║  ║HOLD & WIN║ |\n| ║   ◆ ◆ ◆  ║  ║   ▲ ▲ ▲  ║  ║  ✦ ✦ ✦   ║  ║   ⬡ ⬡ ⬡  ║  ║  ◉ ◉ ◉   ║ |\n| ║ RTP 90.0%║  ║ RTP 90.0%║  ║ RTP 90.0%║  ║ RTP 90.0%║  ║ RTP 90.0%║ |\n| ║ Vol L-M  ║  ║ Vol M-H  ║  ║ Vol H    ║  ║ Vol H    ║  ║ Vol M-H  ║ |\n| ╚══════════╝  ╚══════════╝  ╚══════════╝  ╚══════════╝  ╚══════════╝ |\n|                                                                       |\n| ╔══════════╗  ╔══════════╗  ╔══════════╗                              |\n| ║PIKAPOKERI║  ║BLACKJACK ║  ║  POKERI  ║                              |\n| ║   ♠ ♥ ♦  ║  ║   ♣ ♠ ♥  ║  ║  ♦ ♣ ♠   ║                              |\n| ║ RTP 89.9%║  ║ RTP 90.0%║  ║ TURNAUS  ║                              |\n| ╚══════════╝  ╚══════════╝  ╚══════════╝                              |\n|                                                                       |\n| [JATKA SESSIO]  [ASETUKSET]  [KESKEYTÄ PELI]                          |\n+----------------------------------------------------------------------+\nGrid: 12-col CSS grid, 5-col on >=1280px, 3-col on tablet, 1-col on mobile. Card: 1px solid #0A0A0A, no border-radius. Hover: invert background to #0A0A0A and text to #EFEFE9.",
+
+    "slot_game_screen": "+--------------------------------------------------------------------------+\n| < TAKAISIN  HEDELMÄT — RTP 90.0% (auditoitu)              TASE 12 480pts |\n+--------------------------------------------------------------------------+\n|                                                                          |\n|  ┌─────┬─────┬─────┬─────┬─────┐                                         |\n|  │  ◆  │  ★  │  ✿  │  ◆  │  ✿  │  ← reel 1..5 × 3 rows                   |\n|  ├─────┼─────┼─────┼─────┼─────┤                                         |\n|  │  ★  │  ✿  │  ◆  │  ★  │  ✿  │                                         |\n|  ├─────┼─────┼─────┼─────┼─────┤                                         |\n|  │  ✿  │  ◆  │  ★  │  ✿  │  ◆  │                                         |\n|  └─────┴─────┴─────┴─────┴─────┘                                         |\n|                                                                          |\n|  PANOS: [- 100 +]    LINJAT: 20    [PYÖRITÄ ▶]                           |\n|                                                                          |\n|  VIIMEISIN VOITTO: 0 pts                                                 |\n|                                                                          |\n|  [OSTA BONUS: 36 200 pts]   [TILASTOT]   [APUVÄLINEET]                   |\n+--------------------------------------------------------------------------+\n| 🛈 RG: ISTUNTO 00:18:42  NETTO +320  [KESKEYTÄ PELI]                     |\n+--------------------------------------------------------------------------+\nReels: each reel is a 1px solid #0A0A0A column, 5 columns × 3 rows = 15 cells, each 144×144px on desktop. Spin button: full-width on mobile. Bonus buy CTA outlined in --accent-primary.",
+
+    "bonus_buy_modal": "+----------------------------------------------------+\n| BONUS OSTO — HEDELMÄT (Bonus A: Onnenpyörä)        |\n+----------------------------------------------------+\n|                                                    |\n|  HINTA:           36 200 pts                       |\n|  ODOTETTU ARVO:   34 480 pts                       |\n|  TODENNÄKÖISYYS:  1/120 perustilassa               |\n|  TALON OSUUS:     5 % (auditoitu)                  |\n|                                                    |\n|  ⚠ Tämä on tulevaisuuden ansiot — ei takuu.        |\n|  ⚠ Jokainen pyöräytys on itsenäinen tapahtuma.     |\n|  ⚠ Maksimi 3 ostoa per istunto. Cooldown 60 s.     |\n|                                                    |\n|        [VAHVISTA OSTO]      [PERUUTA]              |\n+----------------------------------------------------+\nModal: dialog role=alertdialog, focus-trapped, ESC closes (focuses cancel). Buttons: 1px solid #0A0A0A, kebab-case data-testid. Confirm button is --accent-danger background.",
+
+    "blackjack_screen": "+--------------------------------------------------------------------+\n|  BLACKJACK — RTP 91.06% perussäännöt + sivupanokset                 |\n+--------------------------------------------------------------------+\n|                                                                    |\n|     JAKAJA                                                         |\n|     [card: K♠] [card: facedown]    SUMMA: ?                        |\n|                                                                    |\n|     - - - - - - - - - - - - - - - - - - - - - - - - - - - -        |\n|                                                                    |\n|     PELAAJA                                                        |\n|     [card: 9♥] [card: 7♣]          SUMMA: 16                       |\n|                                                                    |\n|  PERUSPANOS: [□ 100]  PERFECT PAIRS: [□ 0]  21+3: [□ 0]            |\n|                                                                    |\n|  [HIT]  [STAND]  [DOUBLE]  [SPLIT]  [SURRENDER]  [VAKUUTUS]        |\n|                                                                    |\n+--------------------------------------------------------------------+\n| CHIP-RACK: [25][100][500][1000][5000]                              |\n+--------------------------------------------------------------------+\nFelt: --bg-canvas inverted to dark felt color. Side bet boxes: 96×96px squares left of main bet. Action buttons: 120px width, --accent-primary outline.",
+
+    "pikapokeri_screen": "+----------------------------------------------------------+\n|  PIKAPOKERI — JOKERIT JA YLI (90% RTP)                   |\n+----------------------------------------------------------+\n|                                                          |\n|     ┌────┐ ┌────┐ ┌────┐ ┌────┐ ┌────┐                   |\n|     │ J♠ │ │ J♥ │ │ 4♣ │ │ 9♦ │ │ Q♠ │                   |\n|     └────┘ └────┘ └────┘ └────┘ └────┘                   |\n|     [PIDÄ] [PIDÄ] [    ] [    ] [    ]                   |\n|                                                          |\n|  PANOS: [- 100 +]    [JAA]    [KORTINVAIHTO]             |\n|                                                          |\n|  VOITTOTAULU:                                            |\n|   Royal Flush 800× | Straight Flush 50× | 4-of-a-kind 25×|\n|   Full House 9×   | Flush 5×            | Straight 3×    |\n|   3-of-a-kind 2×  | Two Pair 2×         | Jacks+ 1×      |\n|                                                          |\n|  VIIMEISIN VOITTO: 0 pts                                 |\n|  [TUPLAA?  enää 5/5 mahdollista]                         |\n+----------------------------------------------------------+\nHold buttons: toggle below each card; active state inverts colors. Double-up button appears only after a winning hand.",
+
+    "bonus_wheel_screen": "+----------------------------------------------------------+\n|  BONUS A — ONNENPYÖRÄ (HEDELMÄT)                         |\n+----------------------------------------------------------+\n|                                                          |\n|                  ▼ POINTER (brass)                       |\n|              ╔════════════════╗                          |\n|             ╔══   12 SEGMENT   ══╗                       |\n|             ║  PIE-WHEEL DISK    ║                       |\n|             ║   FREE_5 / MULT_2X ║                       |\n|             ║   FREE_8 / MULT_3X ║                       |\n|             ║   ... 9 more ...   ║                       |\n|             ╚══                  ══╝                     |\n|              ╚════════════════╝                          |\n|                                                          |\n|         [PYÖRITÄ PYÖRÄ]                                  |\n|                                                          |\n|  Palkinto näytetään pyörän pysähdyttyä.                  |\n+----------------------------------------------------------+\nWheel: 720×720px on desktop, 90vw on mobile. Segments hand-drawn SVG with stroke-dasharray separators.",
+
+    "settings_screen": "+--------------------------------------------------------+\n|  ASETUKSET                                             |\n+--------------------------------------------------------+\n|  □ Vähennetty liike (prefers-reduced-motion)           |\n|  □ Värisokeus-tila:  ◯ Pois  ◯ Protan  ◯ Deutan  ◯ Tritan |\n|  □ Haptiikka päällä                                    |\n|  □ Äänet päällä:  Mestari [████░░░░░░] 40%             |\n|                                                        |\n|  VASTUULLINEN PELAAMINEN                               |\n|  Istuntoraja (min):  [60] (oletus)                     |\n|  Tappioraja (pts):   [5000]                            |\n|  Voittoraja (pts):   [10000]                           |\n|                                                        |\n|  [TALLENNA]   [PERUUTA]                                |\n+--------------------------------------------------------+",
+
+    "responsible_gambling_interstitial": "+--------------------------------------------------------+\n|  TAUKO — VASTUULLINEN PELAAMINEN                        |\n+--------------------------------------------------------+\n|                                                        |\n|  Olet pelannut 60 minuuttia.                           |\n|  Tämän istunnon tilastot:                              |\n|     Pelattuja kierroksia:    143                       |\n|     Netto:                   −280 pts                  |\n|     Suurin voitto:           +1 250 pts                |\n|     Aika:                    01:00:14                  |\n|                                                        |\n|  [JATKA (5 s lukko)]      [LOPETA]                     |\n|                                                        |\n|  ⚠ JATKA-painike aktivoituu 5 s viiveen jälkeen.       |\n+--------------------------------------------------------+",
+
+    "free_spins_hud": "+----------------------------------------------------+\n|  ILMAISKIERROKSET                                  |\n|  Jäljellä:        7 / 8                            |\n|  Kerroin:         × 2                              |\n|  Vaihe:           [██░░░░] (1/3 — Stage 2)         |\n|  Tahmeat villit:  ░░░░░░ 0/5 reels                 |\n|  Voitettu yht.:   860 pts                          |\n+----------------------------------------------------+\nHUD: top-left absolutely positioned overlay; 1px solid #0A0A0A; bg #FFFFFF. Always visible during free spins."
+  },
+
+  "css_glsl_snippets": {
+    "specular_highlight": "/* CSS — PBR-style specular gloss on a symbol surface (gel highlight) */\n.symbol-pbr {\n  position: relative;\n  isolation: isolate;\n}\n.symbol-pbr::after {\n  content: \"\";\n  position: absolute;\n  inset: 6% 8% 50% 12%;\n  background: linear-gradient(160deg, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.18) 28%, rgba(255,255,255,0) 60%);\n  mix-blend-mode: screen;\n  pointer-events: none;\n  filter: blur(0.6px);\n  border-radius: 0;\n}",
+
+    "rim_lighting": "/* CSS — rim-light on a winning symbol; uses two box-shadows offset opposite */\n.symbol-rim-win {\n  --rim-color: var(--accent-warning, #FFB800);\n  outline: 1px solid #0A0A0A;\n  box-shadow:\n    inset 1px 1px 0 0 rgba(255,255,255,0.32),\n    inset -1px -1px 0 0 rgba(0,0,0,0.42),\n    0 0 0 2px var(--rim-color),\n    0 0 16px 2px color-mix(in srgb, var(--rim-color) 70%, transparent);\n  animation: rim-pulse 1100ms ease-in-out infinite alternate;\n}\n@keyframes rim-pulse {\n  from { filter: drop-shadow(0 0 4px var(--rim-color)); }\n  to   { filter: drop-shadow(0 0 14px var(--rim-color)); }\n}",
+
+    "cloth_displacement": "/* CSS — felt micro-displacement illusion via overlaid noise + multiplied gradient */\n.felt-surface {\n  background-color: #0F5132;\n  background-image:\n    radial-gradient(ellipse 80% 45% at 50% 55%, rgba(0,0,0,0.32) 0%, transparent 70%),\n    url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.34 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>\");\n  background-blend-mode: multiply;\n  image-rendering: pixelated;\n}",
+
+    "coin_metallic": "/* CSS — coin with milled-edge specular ring */\n.coin {\n  width: 64px; height: 64px;\n  background:\n    radial-gradient(circle at 35% 30%, #FFE9A8 0%, #C9A227 38%, #5A4310 100%);\n  border: 1px solid #0A0A0A;\n  position: relative;\n}\n.coin::before {\n  content: \"\";\n  position: absolute; inset: -2px;\n  background: repeating-conic-gradient(from 0deg, #2A1F08 0deg 4deg, #C9A227 4deg 8deg);\n  mask: radial-gradient(circle, transparent 47%, #000 49%, #000 51%, transparent 53%);\n  -webkit-mask: radial-gradient(circle, transparent 47%, #000 49%, #000 51%, transparent 53%);\n  pointer-events: none;\n}",
+
+    "particle_burst": "/* CSS — radial particle burst (12 spans cloned in a wrapper) */\n.particle-burst { position: relative; width: 0; height: 0; }\n.particle-burst > .p {\n  position: absolute; left: 0; top: 0;\n  width: 6px; height: 6px;\n  background: var(--accent-warning, #FFB800);\n  animation: burst 720ms cubic-bezier(0.22, 1, 0.36, 1) forwards;\n}\n.particle-burst > .p:nth-child(n) { --angle: calc(var(--i) * 30deg); }\n@keyframes burst {\n  0%   { transform: translate(0, 0) scale(1); opacity: 1; }\n  100% { transform: rotate(var(--angle)) translateX(160px) scale(0.2); opacity: 0; }\n}",
+
+    "reel_blur": "/* CSS — motion-blur on spinning reel column using filter + backdrop-fallback */\n.reel-column.spinning {\n  filter: blur(6px);\n  will-change: transform, filter;\n  transform: translate3d(0, var(--reel-y, 0), 0);\n  transition: filter 220ms ease-out;\n}\n.reel-column.stopping {\n  filter: blur(2px);\n}\n.reel-column.idle {\n  filter: blur(0);\n  transition: filter 120ms ease-out;\n}\n@supports (filter: blur(0)) {\n  .reel-column { transform: translateZ(0); /* compositor hint */ }\n}"
+  },
+
+  "db_migrations": [
+    "CREATE TABLE IF NOT EXISTS bonus_buy_log (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  player_id INTEGER NOT NULL,\n  game_theme TEXT NOT NULL,\n  bonus_type TEXT NOT NULL,\n  cost_points INTEGER NOT NULL,\n  payout_points INTEGER NOT NULL DEFAULT 0,\n  rng_seed TEXT,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  FOREIGN KEY (player_id) REFERENCES players(id)\n);",
+    "CREATE INDEX IF NOT EXISTS idx_bonus_buy_log_player_time ON bonus_buy_log(player_id, created_at);",
+    "ALTER TABLE blackjack_games ADD COLUMN side_bet_json TEXT;  -- safe: NULL by default for existing rows",
+    "CREATE TABLE IF NOT EXISTS blackjack_dealer_bias_log (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  player_id INTEGER NOT NULL,\n  hand_id INTEGER NOT NULL,\n  draw_count INTEGER NOT NULL,\n  biased_flag INTEGER NOT NULL DEFAULT 0,\n  streak_mode TEXT,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);",
+    "CREATE TABLE IF NOT EXISTS double_up_log (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  player_id INTEGER NOT NULL,\n  game_id TEXT NOT NULL,\n  step_index INTEGER NOT NULL,\n  pre_amount INTEGER NOT NULL,\n  post_amount INTEGER NOT NULL,\n  outcome TEXT NOT NULL,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);",
+    "CREATE TABLE IF NOT EXISTS tumble_games (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  player_id INTEGER NOT NULL,\n  bet_points INTEGER NOT NULL,\n  initial_grid_json TEXT NOT NULL,\n  cascades_json TEXT NOT NULL,\n  final_multiplier INTEGER NOT NULL DEFAULT 1,\n  total_payout_points INTEGER NOT NULL DEFAULT 0,\n  rng_seed TEXT,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);",
+    "CREATE TABLE IF NOT EXISTS hold_win_games (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  player_id INTEGER NOT NULL,\n  bet_points INTEGER NOT NULL,\n  initial_coins_json TEXT NOT NULL,\n  respins_log_json TEXT NOT NULL,\n  final_coins_json TEXT NOT NULL,\n  total_payout_points INTEGER NOT NULL DEFAULT 0,\n  jackpot_tier TEXT,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);",
+    "CREATE TABLE IF NOT EXISTS rg_session_state (\n  player_id INTEGER PRIMARY KEY,\n  session_started_at TIMESTAMP NOT NULL,\n  total_play_seconds INTEGER NOT NULL DEFAULT 0,\n  pause_acknowledged_at TIMESTAMP,\n  loss_limit_points INTEGER,\n  win_limit_points INTEGER,\n  net_points_session INTEGER NOT NULL DEFAULT 0,\n  FOREIGN KEY (player_id) REFERENCES players(id)\n);"
+  ],
+
+  "api_endpoints": [
+    {
+      "path": "/api/slots/<theme>/spin",
+      "method": "POST",
+      "request_body_schema": {"player_id": "int", "bet_points": "int", "use_bonus_buy": "bool (optional)"},
+      "response_body_schema": {"grid": "list[list[str]]", "wins": {"line_wins": "list", "scatter_count": "int", "expanding_wilds": "list[int]"}, "total_payout_points": "int", "animation_events": "list[{event, payload}]", "balance_after": "int", "free_spins_remaining": "int"},
+      "points_deduction_logic": "Use existing _atomic_deduct_points(player_id, bet_points) BEFORE generating grid; if deduction fails, return 402. Award payout via _atomic_credit_points after.",
+      "animation_event_emitted": "A1_REEL_SPIN per reel, A2_COIN_CASCADE on win, A8_FREE_SPINS_TRIGGER on scatter, A5_BIG_WIN if payout >= 50× bet"
+    },
+    {
+      "path": "/api/slots/<theme>/bonus-buy",
+      "method": "POST",
+      "request_body_schema": {"player_id": "int", "bet_points": "int", "bonus_id": "string (one of: bonus_a_wheel, bonus_b_pick, bonus_c_sticky)"},
+      "response_body_schema": {"price_points": "int", "outcome": "object", "total_payout_points": "int", "balance_after": "int", "cooldown_remaining_sec": "int"},
+      "points_deduction_logic": "Compute price from bonus_buy_price_units formula; check cooldown (60s) and session-cap (3); deduct atomically; insert into bonus_buy_log; trigger bonus directly bypassing base-game spin",
+      "animation_event_emitted": "Bonus-specific (A4_WHEEL_SPIN | A3_PICK_REVEAL ×N | A8 + free_spins_loop)",
+      "errors": [{"code": 402, "msg": "Insufficient points"}, {"code": 429, "msg": "Cooldown active"}, {"code": 409, "msg": "Session bonus-buy cap reached"}]
+    },
+    {
+      "path": "/api/blackjack/<game_id>/side-bets",
+      "method": "POST",
+      "request_body_schema": {"player_id": "int", "perfect_pairs_points": "int (optional)", "twenty_one_plus_three_points": "int (optional)"},
+      "response_body_schema": {"resolved": {"perfect_pairs": {"won": "bool", "payout": "int", "tier": "string"}, "twenty_one_plus_three": {"won": "bool", "payout": "int", "category": "string"}}, "side_bet_json": "string (stored back on blackjack_games row)"},
+      "points_deduction_logic": "Deduct side bet stakes atomically before deal; resolve immediately after first 3 cards visible (player 2 + dealer up); credit payout",
+      "animation_event_emitted": "perfect_pairs_halo, 21plus3_glow"
+    },
+    {
+      "path": "/api/pikapokeri/<game_id>/double-up",
+      "method": "POST",
+      "request_body_schema": {"player_id": "int", "guess": "string ('higher' | 'lower')"},
+      "response_body_schema": {"dealer_card": "object", "player_card": "object", "result": "string ('win' | 'lose')", "new_amount": "int", "double_ups_used": "int", "double_ups_remaining": "int"},
+      "points_deduction_logic": "Current win at risk; on lose -> credit 0; on win -> credit current * 2 (replacing prior credit if not yet committed)",
+      "animation_event_emitted": "double_up_present, double_up_win | double_up_lose"
+    },
+    {
+      "path": "/api/slots/tumble/spin",
+      "method": "POST",
+      "request_body_schema": {"player_id": "int", "bet_points": "int"},
+      "response_body_schema": {"initial_grid": "6x5 array", "cascades": "list[{cluster_cells, gem, pay, multiplier_at_step}]", "final_multiplier": "int", "total_payout_points": "int", "gem_storm_triggered": "bool"},
+      "animation_event_emitted": "A2 per cascade, multiplier_tick per step, gem_storm_intro on trigger"
+    },
+    {
+      "path": "/api/slots/hold-win/spin",
+      "method": "POST",
+      "request_body_schema": {"player_id": "int", "bet_points": "int"},
+      "response_body_schema": {"grid": "5x3", "coins_collected": "list[{position, value, tier}]", "hold_win_triggered": "bool", "respins_log": "list", "total_payout_points": "int", "jackpot_tier": "string|null"},
+      "animation_event_emitted": "coin_land, hold_win_lock, hold_win_respin, jackpot_grand_full_grid"
+    },
+    {
+      "path": "/api/rg/session-state",
+      "method": "GET",
+      "request_body_schema": {"player_id": "int"},
+      "response_body_schema": {"session_seconds": "int", "net_points_session": "int", "interstitial_due": "bool", "loss_limit_remaining": "int|null", "win_limit_remaining": "int|null"}
+    },
+    {
+      "path": "/api/rg/acknowledge-interstitial",
+      "method": "POST",
+      "request_body_schema": {"player_id": "int", "choice": "string ('continue' | 'quit')"},
+      "response_body_schema": {"pause_acknowledged_at": "iso8601", "next_interstitial_at": "iso8601 | null"}
+    }
+  ],
+
+  "performance_budget": {
+    "mobile_web": {
+      "texture_atlas_max_px": 2048,
+      "draw_calls_per_frame": 30,
+      "max_particles": 150,
+      "heap_mb": 64,
+      "target_fps": 30,
+      "fallback_fps": 24
+    },
+    "pwa": {
+      "texture_atlas_max_px": 2048,
+      "draw_calls_per_frame": 60,
+      "max_particles": 300,
+      "heap_mb": 128,
+      "target_fps": 60,
+      "fallback_fps": 45
+    },
+    "desktop": {
+      "texture_atlas_max_px": 4096,
+      "draw_calls_per_frame": 60,
+      "max_particles": 600,
+      "heap_mb": 256,
+      "target_fps": 60,
+      "fallback_fps": 45
+    },
+    "lod_switch_rules": {
+      "trigger_metric": "requestAnimationFrame delta_ms",
+      "trigger_threshold_ms": 24,
+      "trigger_consecutive_frames": 3,
+      "reduced_mode_actions": [
+        "disable all particle systems",
+        "replace CSS keyframe animations with state transitions (200ms ease-out only)",
+        "reel_spin becomes 400ms opacity reveal of final symbols",
+        "wheel jumps to result with 200ms fade",
+        "no camera shake",
+        "max draw calls clamped to 10/frame",
+        "skip backdrop-filter blur (replace with solid 0.85 alpha background)"
+      ],
+      "exit_mode_when": "delta_ms < 18ms for 60 consecutive frames"
+    },
+    "atlas_layout": {
+      "fruits.png":      {"size": "2048x2048 (mobile/PWA), 4096x4096 (desktop)", "symbols_count": 14, "mipmaps": true,  "compression": "PNG-8 quantized + WebP fallback for desktop"},
+      "egypt.png":       {"size": "2048x2048", "symbols_count": 14, "mipmaps": true,  "compression": "PNG-8 + WebP"},
+      "space.png":       {"size": "2048x2048", "symbols_count": 14, "mipmaps": true,  "compression": "PNG-8 + WebP"},
+      "card_games.png":  {"size": "2048x2048", "symbols_count": 60, "mipmaps": true,  "compression": "PNG-8 + WebP",  "_note": "52 cards + 4 backs + 4 chip denominations"},
+      "tumble_gems.png": {"size": "2048x2048", "symbols_count": 10, "mipmaps": true,  "compression": "PNG-8 + WebP"},
+      "ui_icons.png":    {"size": "1024x1024", "symbols_count": 24, "mipmaps": false, "compression": "SVG sprite sheet preferred (Lucide icons)"}
+    }
+  },
+
+  "accessibility": {
+    "reduced_motion_rules": {
+      "A1_REEL_SPIN":          {"fallback": "400ms opacity 0→1 reveal of final symbols, no translation, no blur"},
+      "A2_COIN_CASCADE":       {"fallback": "600ms text count-up only (no coin sprites)"},
+      "A3_PICK_REVEAL":        {"fallback": "instant lid swap + 250ms prize text fade-in"},
+      "A4_WHEEL_SPIN":         {"fallback": "200ms fade of selected segment with rim-light, no rotation"},
+      "A5_BIG_WIN":            {"fallback": "1500ms display of 'SUURI VOITTO' text + amount, no particles, no chromatic aberration, no scale change"},
+      "A6_CARD_DEAL":          {"fallback": "200ms opacity fade-in at seat, no flight, no flip"},
+      "A7_CHIP_IMPACT":        {"fallback": "instant placement, no bounce, no ripple"},
+      "A8_FREE_SPINS_TRIGGER": {"fallback": "400ms text overlay 'ILMAISKIERROKSET KÄYNNISSÄ', no banner motion, no scatter pulse"}
+    },
+    "colorblind_shape_tokens": {
+      "_principle": "Each symbol distinguishable by outline/contour shape alone; color is a secondary cue.",
+      "Protanopia": {
+        "cherry":   "double-circle cluster outline; 2px solid",
+        "lemon":    "ellipse outline + 3 radial dimples (shape pattern)",
+        "orange":   "circle outline + 6 segment-dividing radial lines",
+        "grape":    "triangular cluster of 6 small circles (shape pattern)",
+        "bell":     "trapezoidal outline + clapper dot",
+        "star":     "5-point star outline",
+        "jackpot":  "rectangle with chevron interior pattern",
+        "diamond":  "rhombus with horizontal girdle line",
+        "wild":     "double-bordered rectangle + 'WILD' text label",
+        "scatter":  "asterisk-cross 8-point shape"
+      },
+      "Deuteranopia": {
+        "_same_shape_tokens_as_Protanopia": true,
+        "_palette_overrides": {"jackpot": "#0A0A0A on white", "diamond": "#3B00FF on white"}
+      },
+      "Tritanopia": {
+        "_same_shape_tokens_as_Protanopia": true,
+        "_palette_overrides": {"grape": "#B43A1C on white (replaces blue-dominant palette)"}
+      },
+      "card_suits_shapes": {"spade": "leaf-with-stem outline", "heart": "heart outline", "diamond": "rhombus outline", "club": "trefoil outline", "_note": "Existing standard suit shapes already distinguishable; ensure stroke-width >= 2px"}
+    },
+    "responsible_gambling": {
+      "session_timer_ui": {
+        "placement": "fixed bottom-bar, full-width, height 36px",
+        "z_index": 9999,
+        "always_on_top": true,
+        "update_interval_ms": 1000,
+        "content_template": "RG: ISTUNTO {hh:mm:ss} · NETTO {±N} pts · [KESKEYTÄ PELI]",
+        "obscured_by_modals_allowed": false,
+        "css": "position: fixed; left:0; right:0; bottom:0; background:#FFFFFF; border-top:1px solid #0A0A0A; font-family:'JetBrains Mono'; font-size:12px;"
+      },
+      "interstitial_trigger_minutes": 60,
+      "interstitial_ui": {
+        "modal_role": "alertdialog",
+        "title_key": "rg.interstitial.title",
+        "body_key": "rg.interstitial.body_60min",
+        "stats_block": ["rg.stats.spins", "rg.stats.net_points", "rg.stats.biggest_win", "rg.stats.session_time"],
+        "continue_button_key": "rg.btn.continue",
+        "continue_button_unlock_after_seconds": 5,
+        "quit_button_key": "rg.btn.quit",
+        "log_action": "INSERT INTO rg_session_state SET pause_acknowledged_at = CURRENT_TIMESTAMP WHERE player_id = ?"
+      },
+      "bonus_buy_consent_ui": {
+        "modal_role": "alertdialog",
+        "title_key": "rg.bonusbuy.title",
+        "body_template_key": "rg.bonusbuy.body",
+        "body_template_value": "BONUS OSTO: Käytät {cost} pistettä. Odotettava arvo: {ev}p. Tämä on tulevaisuuden ansiot, ei takuu.",
+        "ev_display_formula": "round(avg_payout_units * bet_points)",
+        "confirm_key": "rg.btn.confirm_purchase",
+        "cancel_key": "rg.btn.cancel",
+        "log_table": "bonus_buy_log",
+        "log_columns": ["player_id", "game_theme", "bonus_type", "cost_points", "payout_points", "rng_seed", "created_at"]
+      },
+      "localizable_keys": [
+        "rg.interstitial.title",
+        "rg.interstitial.body_60min",
+        "rg.stats.spins",
+        "rg.stats.net_points",
+        "rg.stats.biggest_win",
+        "rg.stats.session_time",
+        "rg.btn.continue",
+        "rg.btn.quit",
+        "rg.btn.pause",
+        "rg.bonusbuy.title",
+        "rg.bonusbuy.body",
+        "rg.btn.confirm_purchase",
+        "rg.btn.cancel",
+        "rg.timer.session_label",
+        "rg.timer.net_label",
+        "rg.warning.bonus_max_per_session",
+        "rg.warning.cooldown_active"
+      ]
+    }
+  },
+
+  "sound_bank": [
+    {"event": "reel_tick",        "physical_description": "rotating reel detent click — short metallic tick",                  "web_audio_type": "oscillator (square, 1200Hz, 12ms)",         "duration_ms": 30,   "envelope": {"attack_ms": 1, "sustain_ms": 4,   "release_ms": 25},   "trigger_event": "per_symbol_pass_during_spin", "haptic": null},
+    {"event": "reel_stop",        "physical_description": "drum bearing snap with rubber gasket damping",                       "web_audio_type": "buffer (custom WAV) + low-pass filter @ 800Hz", "duration_ms": 180,  "envelope": {"attack_ms": 4, "sustain_ms": 30,  "release_ms": 146},  "trigger_event": "reel_stop_individual",        "haptic": "LIGHT"},
+    {"event": "win_small",        "physical_description": "coins on marble — high-pitched ping with 80ms decay",                "web_audio_type": "oscillator (sine, ascending 800→1600Hz)",   "duration_ms": 280,  "envelope": {"attack_ms": 2, "sustain_ms": 40,  "release_ms": 238},  "trigger_event": "win_under_5x_bet",            "haptic": "MEDIUM"},
+    {"event": "win_medium",       "physical_description": "brass chime + coin clatter",                                          "web_audio_type": "sample (chime.wav) + grain coin layer",     "duration_ms": 600,  "envelope": {"attack_ms": 6, "sustain_ms": 200, "release_ms": 394},  "trigger_event": "win_5x_to_30x_bet",           "haptic": "MEDIUM"},
+    {"event": "win_big",          "physical_description": "orchestral hit + cymbal swell + coin avalanche",                       "web_audio_type": "sample (orch_hit.wav) + reverb",            "duration_ms": 1800, "envelope": {"attack_ms": 12, "sustain_ms": 800, "release_ms": 988}, "trigger_event": "win_30x_to_100x_bet",         "haptic": "HEAVY_BURST"},
+    {"event": "jackpot_fanfare",  "physical_description": "trumpet fanfare + bell tower chord + applause distant",                "web_audio_type": "sample (fanfare.wav)",                       "duration_ms": 5500, "envelope": {"attack_ms": 30, "sustain_ms": 4000,"release_ms": 1470}, "trigger_event": "jackpot_5_wild_or_grand_reveal","haptic": "SUSTAINED"},
+    {"event": "bonus_trigger",    "physical_description": "deep gong + cloth banner unfurl swoosh",                              "web_audio_type": "sample (gong.wav) + filtered noise burst",  "duration_ms": 1200, "envelope": {"attack_ms": 16, "sustain_ms": 600, "release_ms": 584},  "trigger_event": "scatter_3plus_or_bonus_a_b_c_intro", "haptic": "HEAVY_BURST"},
+    {"event": "wheel_tick",       "physical_description": "bearing click — wood pawl on detent",                                  "web_audio_type": "oscillator (square, 1800Hz, 8ms)",          "duration_ms": 18,   "envelope": {"attack_ms": 1, "sustain_ms": 2,   "release_ms": 15},   "trigger_event": "per_30deg_wheel_rotation",    "haptic": null},
+    {"event": "wheel_stop",       "physical_description": "thud + pawl latch click",                                              "web_audio_type": "buffer (custom WAV)",                       "duration_ms": 240,  "envelope": {"attack_ms": 4, "sustain_ms": 60,  "release_ms": 176},  "trigger_event": "wheel_settle",                "haptic": "MEDIUM"},
+    {"event": "pick_open",        "physical_description": "wood lid creak + soft hinge squeak",                                   "web_audio_type": "sample (creak.wav)",                        "duration_ms": 320,  "envelope": {"attack_ms": 8, "sustain_ms": 80,  "release_ms": 232},  "trigger_event": "pick_object_lid_open",        "haptic": "STRONG"},
+    {"event": "pick_win",         "physical_description": "interior chime + sparkle shimmer",                                     "web_audio_type": "sample (sparkle.wav)",                      "duration_ms": 500,  "envelope": {"attack_ms": 4, "sustain_ms": 120, "release_ms": 376},  "trigger_event": "pick_reveal_credits_prize",   "haptic": "STRONG"},
+    {"event": "card_deal",        "physical_description": "cardstock sliding on felt — shh-thud",                                 "web_audio_type": "filtered noise burst (band-pass 2kHz, 60ms)","duration_ms": 90,   "envelope": {"attack_ms": 4, "sustain_ms": 20,  "release_ms": 66},   "trigger_event": "single_card_landing",         "haptic": "LIGHT"},
+    {"event": "card_flip",        "physical_description": "cardboard flick + faint paper rustle",                                 "web_audio_type": "filtered noise (HP 4kHz, 40ms)",            "duration_ms": 70,   "envelope": {"attack_ms": 2, "sustain_ms": 12,  "release_ms": 56},   "trigger_event": "card_face_reveal",            "haptic": "LIGHT"},
+    {"event": "chip_stack",       "physical_description": "ceramic chip clack + felt fiber settle",                               "web_audio_type": "sample (chip_clack.wav)",                   "duration_ms": 160,  "envelope": {"attack_ms": 2, "sustain_ms": 40,  "release_ms": 118},  "trigger_event": "chip_lands_on_felt",          "haptic": "MEDIUM"},
+    {"event": "double_up_win",    "physical_description": "rising whoosh + bell ding",                                            "web_audio_type": "oscillator sweep 400→1200Hz + chime",       "duration_ms": 700,  "envelope": {"attack_ms": 8, "sustain_ms": 200, "release_ms": 492},  "trigger_event": "double_up_correct_guess",     "haptic": "HEAVY_BURST"},
+    {"event": "double_up_lose",   "physical_description": "descending tonal sweep + soft thud",                                   "web_audio_type": "oscillator sweep 600→200Hz",                "duration_ms": 600,  "envelope": {"attack_ms": 4, "sustain_ms": 100, "release_ms": 496},  "trigger_event": "double_up_wrong_guess",       "haptic": "MEDIUM"}
+  ],
+
+  "voiceover_cues": [
+    {"cue_name": "stinger_bonus_trigger",     "description": "Brass quartet 4-note rising fanfare in F minor, no vocals", "trigger_event": "scatter_3plus", "duration_ms": 1400},
+    {"cue_name": "stinger_big_win",           "description": "Orchestral hit + sustained brass chord (4 seconds)",        "trigger_event": "win_30x_to_100x_bet", "duration_ms": 4000},
+    {"cue_name": "stinger_jackpot",           "description": "Full orchestra fanfare with bells, 6 seconds",              "trigger_event": "jackpot_grand_or_progressive", "duration_ms": 6000},
+    {"cue_name": "stinger_pick_reveal",       "description": "Single harp glissando ascending C2→C5",                    "trigger_event": "pick_object_lid_open", "duration_ms": 800},
+    {"cue_name": "stinger_wheel_stop",        "description": "Cymbal swell + low brass hit on segment-pulse moment",      "trigger_event": "wheel_settle", "duration_ms": 900},
+    {"cue_name": "stinger_free_spins_award",  "description": "Choir 'aah' chord (no lyrics) + harp arpeggio ascending",   "trigger_event": "free_spins_banner_unfurl", "duration_ms": 1800},
+    {"cue_name": "stinger_double_up_win",     "description": "High piano arpeggio C5→C7 + bell on landing",               "trigger_event": "double_up_correct_guess", "duration_ms": 700},
+    {"cue_name": "stinger_game_over_session", "description": "Soft piano descending minor 6th + sustained pad",           "trigger_event": "rg_quit_acknowledged", "duration_ms": 2400}
+  ],
+
+  "qa_checklist": [
+    {"category": "RNG_validation", "items": [
+      "Seed test: random.seed(42) → first 1000 outcomes match snapshot fixture per game",
+      "Distribution test: 1M draws per symbol → observed weights within ±0.5% of declared",
+      "Chi-square goodness-of-fit on symbol weights at p=0.05",
+      "Bonus segment distribution: 100k spins of bonus_a_wheel → segment counts match WHEEL_WEIGHTS within 1.0%"
+    ]},
+    {"category": "RTP_validation", "items": [
+      "Run 10M-spin Monte Carlo per slot game; observed RTP must be within ±0.1% of declared 90.0%",
+      "Pikapokeri: simulate optimal-hold strategy over 5M hands; RTP within ±0.15%",
+      "Blackjack: basic-strategy simulator over 1M hands per rule set; RTP within ±0.2%",
+      "Side bets: 100k stand-alone evaluations each; RTP matches paytable expectation"
+    ]},
+    {"category": "Animation_fallback", "items": [
+      "Set prefers-reduced-motion: reduce → all 8 animations (A1–A8) reach end state without translate/rotate/scale",
+      "LOD switch trigger: artificial 30ms RAF delay for 3 frames → reduced mode active within 100ms",
+      "All Lottie stubs render at 60fps on reference Pixel 7 / iPhone 13 / desktop Chrome 120"
+    ]},
+    {"category": "Accessibility_toggles", "items": [
+      "Colorblind mode toggles produce visually distinct symbols on monochrome filter",
+      "Keyboard navigation: every interactive element reachable via Tab; activated by Enter/Space",
+      "Screen reader announces game state changes (aria-live='polite' on win banner; 'assertive' on RG interstitial)",
+      "Focus trap on bonus_buy_modal and rg_interstitial; ESC dismisses (cancel)"
+    ]},
+    {"category": "Performance_budget", "items": [
+      "Mobile: 30 draw calls/frame max → measured via spectorJS or PerformanceObserver; fail if exceeded by >10%",
+      "JS heap: ≤ 64MB on mobile after 30 spins; check via performance.memory in Chrome DevTools",
+      "No memory leaks across 1000 spins (heap snapshot pre/post)",
+      "First-paint of slot screen ≤ 1500ms on 4G simulated"
+    ]},
+    {"category": "Responsible_gambling", "items": [
+      "60-min interstitial fires within ±5s of threshold; JATKA disabled for 5s after open",
+      "RG bottom-bar always rendered above modals (z-index audit)",
+      "rg_session_state row created on game start; total_play_seconds increments per minute",
+      "Loss-limit / win-limit enforced: when reached, all bet endpoints return 423 Locked with key 'rg.limit_reached'"
+    ]},
+    {"category": "Bonus_buy_abuse_prevention", "items": [
+      "Cooldown 60s enforced server-side; client cannot bypass via parallel requests (use SELECT FOR UPDATE pattern)",
+      "Max 3 bonus buys per session (24h or until pause_acknowledged_at) — verified against bonus_buy_log",
+      "Price recomputed server-side from authoritative formula; client-supplied price ignored",
+      "Atomic deduction: if bonus generation throws, points are refunded and bonus_buy_log row marked rolled_back"
+    ]},
+    {"category": "DB_migration_safety", "items": [
+      "All migrations use IF NOT EXISTS / IF NOT EXISTS variants; idempotent on re-run",
+      "ALTER TABLE blackjack_games ADD COLUMN side_bet_json TEXT — verify NULL on existing rows post-migration",
+      "Rollback script provided for each new table (DROP TABLE IF EXISTS …)",
+      "Post-migration smoke test: insert/select on each new table from app code"
+    ]}
+  ],
+
+  "implementation_notes": {
+    "streak_mode_integration": "When player.streak_mode='hot', multiply weights of high-tier symbols (jackpot, diamond, wild, expanding_wild) by 1.12 and reduce low-tier (cherry, lemon) by 0.94 before random.choices(); for 'cold' mode invert (0.88 high / 1.06 low). Bonus mechanics inherit the biased weight tables — expanding_wild trigger probability rises naturally in 'hot' mode without separate logic. For blackjack 'hot', bias dealer-bust card draws as defined in rtp_calculation.blackjack.streak_mode_hot_bias. Streak mode should be toggled by the existing hidden operator endpoint; never expose to player UI. Log every spin's effective weight vector hash to a streak_audit_log table for compliance review.",
+
+    "points_deduction_atomicity": "Pattern (existing _atomic_deduct_points): wrap (a) UPDATE players SET points = points - ? WHERE id = ? AND points >= ?, (b) check rowcount == 1, else raise InsufficientPoints; in a single SQLite transaction with BEGIN IMMEDIATE. For multi-step bonus rounds, deduct the full stake (or bonus-buy price) up-front; credit payouts via _atomic_credit_points after each bonus segment resolves. Never partially commit between deduct and play — wrap the entire spin/draw in a try/except where except triggers a refund SQL UPDATE players SET points = points + ?. Add a ledger_log table with (player_id, delta, reason, related_id) for forensic auditing.",
+
+    "bonus_rng_seeding": "Extend random.choices() calls to use a per-spin seeded random.Random instance: seed = hashlib.sha256(f'{player_id}:{spin_id}:{server_secret}'.encode()).digest()[:8]; rng = random.Random(int.from_bytes(seed, 'big')); store the spin_id (UUID4) and seed_hex in the relevant log row. This makes every outcome deterministically reproducible for audit while still uniformly distributed. For bonus rounds chained off a base spin, append a counter ':bonus_step:N' to the seed string per step. The server_secret must rotate per environment (dev/staging/prod) and never appear in logs.",
+
+    "frontend_animation_bridge": "Every Flask JSON response includes an 'animation_events' array: [{event, payload, delay_ms, sequence_id}]. Frontend JS listens and dispatches to a central animation registry (window.AnimationBus) that maps event names (e.g., 'A1_REEL_SPIN', 'A8_FREE_SPINS_TRIGGER') to concrete render functions. Each render function honors the prefers-reduced-motion media query. Sequence_id ensures ordering when multiple events arrive in one response. The bus also throttles to LOD constraints — if reduced mode is active, particle-heavy events are auto-downgraded to fallback variants. No DOM event names should leak through; everything is namespaced via 'casino:<event>'.",
+
+    "lottie_vs_css_decision": "Decision tree:\n  • Single-property tween (translate/rotate/opacity) — use CSS keyframes (lowest cost, GPU-composited).\n  • Multi-property choreography with timeline branching — use Lottie JSON (designer-editable, runtime-controllable).\n  • Particle systems (>50 elements with physics) — use Canvas2D or WebGL (Lottie not optimized for >100 nodes).\n  • Camera/scene transforms with lighting — use WebGL shader path (GLSL fragment shader for chromatic aberration, light rays).\n  • Cross-platform consistency required (iOS Safari + Android Chrome) — prefer Lottie over WebGL where possible.\n  • If reduced motion is active — bypass Lottie entirely, render only end-state DOM with opacity fade.\n  Default for this spec: A1/A4/A5 use CSS-driven reels/wheels with WebGL accent layers; A2/A8 use Lottie (banner unfurl, coin pile scaling); A3/A6/A7 use pure CSS + small particle CSS layer."
+  }
+}

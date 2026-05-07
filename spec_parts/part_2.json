@@ -1,0 +1,489 @@
+{
+  "animation_specs": [
+    {
+      "id": "A1",
+      "name": "REEL_SPIN",
+      "description": "Per-reel column blur-scroll with staggered start, snap-to-stop, overshoot bounce.",
+      "total_duration_ms": 1800,
+      "frame_count_at_60fps": 108,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)",
+      "stagger_per_reel_ms": 80,
+      "keyframes": [
+        {"t_pct": 0,   "property": "translateY",       "value": "0px",   "easing": "linear"},
+        {"t_pct": 8,   "property": "translateY",       "value": "-180px","easing": "ease-in"},
+        {"t_pct": 8,   "property": "filter",           "value": "blur(6px)","easing": "linear"},
+        {"t_pct": 80,  "property": "translateY",       "value": "-2520px","easing": "linear"},
+        {"t_pct": 88,  "property": "filter",           "value": "blur(2px)","easing": "ease-out"},
+        {"t_pct": 95,  "property": "translateY",       "value": "-2628px","easing": "cubic-bezier(0.34, 1.56, 0.64, 1)"},
+        {"t_pct": 100, "property": "translateY",       "value": "-2616px","easing": "ease-out"},
+        {"t_pct": 100, "property": "filter",           "value": "blur(0px)"}
+      ],
+      "gpu_technique": "CSS transform (translate3d) + will-change: transform; offload to compositor; filter:blur via CSS keyframes",
+      "particle_count": 0,
+      "particle_lifetime_ms": null,
+      "fallback_static_description": "If reduced-motion: 400ms opacity 0→1 fade reveal of final symbols, no translation"
+    },
+    {
+      "id": "A2",
+      "name": "COIN_CASCADE",
+      "description": "Winning coins fall from top edge to bottom-right pile with physics arc; pile grows with scale transform.",
+      "total_duration_ms": 2400,
+      "frame_count_at_60fps": 144,
+      "easing": "cubic-bezier(0.5, 0, 0.75, 0)",
+      "keyframes": [
+        {"t_pct": 0,   "property": "translateY",  "value": "-100vh"},
+        {"t_pct": 0,   "property": "rotate",      "value": "0deg"},
+        {"t_pct": 60,  "property": "translateY",  "value": "60vh", "easing": "cubic-bezier(0.5, 0, 0.75, 0)"},
+        {"t_pct": 60,  "property": "translateX",  "value": "calc(var(--target-x) - var(--start-x))", "easing": "linear"},
+        {"t_pct": 60,  "property": "rotate",      "value": "720deg"},
+        {"t_pct": 70,  "property": "translateY",  "value": "55vh", "easing": "ease-out"},
+        {"t_pct": 80,  "property": "translateY",  "value": "60vh"},
+        {"t_pct": 100, "property": "opacity",     "value": "1"},
+        {"t_pct": 100, "property": "scale_pile",  "value": "scale(calc(1 + var(--coin-count) * 0.012))"}
+      ],
+      "gpu_technique": "Canvas2D with object pool (reuse 200 coin sprites); physics integration: vy += 9.8 * dt, x = x0 + vx*t",
+      "particle_count": "1 coin per 5 win-points, capped at 200",
+      "particle_lifetime_ms": 2400,
+      "fallback_static_description": "If reduced-motion: counter ramp text 0→prize over 600ms; no coin sprites"
+    },
+    {
+      "id": "A3",
+      "name": "PICK_REVEAL",
+      "description": "Treasure object lid hinges open; interior glow expands; prize number counts up; haptic burst.",
+      "total_duration_ms": 1200,
+      "frame_count_at_60fps": 72,
+      "easing": "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+      "keyframes": [
+        {"t_pct": 0,  "property": "rotateX (lid)", "value": "0deg"},
+        {"t_pct": 25, "property": "rotateX (lid)", "value": "-110deg", "easing": "cubic-bezier(0.34, 1.56, 0.64, 1)"},
+        {"t_pct": 25, "property": "opacity (interior_glow)", "value": "0"},
+        {"t_pct": 58, "property": "opacity (interior_glow)", "value": "1", "easing": "ease-in-out"},
+        {"t_pct": 58, "property": "scale (interior_glow)",   "value": "0.4"},
+        {"t_pct": 58, "property": "scale (interior_glow)",   "value": "1.6", "easing": "ease-in-out"},
+        {"t_pct": 58, "property": "textContent (prize)",     "value": "0"},
+        {"t_pct": 100,"property": "textContent (prize)",     "value": "<final>", "easing": "linear (count-up)"}
+      ],
+      "gpu_technique": "CSS 3D transforms (preserve-3d, rotateX); SVG radial-gradient for glow; requestAnimationFrame text count-up",
+      "particle_count": 12,
+      "particle_lifetime_ms": 800,
+      "fallback_static_description": "If reduced-motion: instant lid disappear + prize text in 250ms"
+    },
+    {
+      "id": "A4",
+      "name": "WHEEL_SPIN",
+      "description": "Physics-driven angular deceleration; bearing tick per 30°; camera shake at stop; prize segment pulse.",
+      "total_duration_ms": 4500,
+      "frame_count_at_60fps": 270,
+      "easing": "cubic-bezier(0.16, 1, 0.3, 1)",
+      "keyframes": [
+        {"t_pct": 0,   "property": "rotate",       "value": "0deg",   "angular_velocity_dps": 1800},
+        {"t_pct": 20,  "property": "rotate",       "value": "1080deg", "angular_velocity_dps": 1500},
+        {"t_pct": 50,  "property": "rotate",       "value": "2520deg", "angular_velocity_dps": 950},
+        {"t_pct": 80,  "property": "rotate",       "value": "3300deg", "angular_velocity_dps": 280},
+        {"t_pct": 95,  "property": "rotate",       "value": "calc(<final_deg> + 8deg)", "easing": "ease-out"},
+        {"t_pct": 100, "property": "rotate",       "value": "<final_deg>", "easing": "cubic-bezier(0.25, 0.46, 0.45, 0.94)"},
+        {"t_pct": 100, "property": "filter (segment_pulse)", "value": "drop-shadow(0 0 8px var(--accent-warning))"}
+      ],
+      "tick_event_per_degrees": 30,
+      "tick_event_count_per_spin": "≈ 110 ticks (3300°/30°)",
+      "camera_shake_at_stop": {"max_offset_px": 4, "duration_ms": 800, "easing": "cubic-bezier(0.25, 0.46, 0.45, 0.94)"},
+      "gpu_technique": "CSS transform: rotate(); requestAnimationFrame-driven; ticks dispatched as Web Audio events",
+      "particle_count": 0,
+      "fallback_static_description": "If reduced-motion: 600ms fade-in of selected segment with highlight border, no rotation"
+    },
+    {
+      "id": "A5",
+      "name": "BIG_WIN_SEQUENCE",
+      "description": "Full-screen takeover; 1.8s counter ramp 0→prize; particle storm; light rays; chromatic aberration pulse.",
+      "total_duration_ms": 3500,
+      "frame_count_at_60fps": 210,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)",
+      "keyframes": [
+        {"t_pct": 0,  "property": "backdrop_opacity",     "value": "0"},
+        {"t_pct": 8,  "property": "backdrop_opacity",     "value": "0.85", "easing": "ease-out"},
+        {"t_pct": 8,  "property": "scale (counter)",      "value": "0.6"},
+        {"t_pct": 22, "property": "scale (counter)",      "value": "1.0",  "easing": "cubic-bezier(0.34, 1.56, 0.64, 1)"},
+        {"t_pct": 22, "property": "textContent (counter)","value": "0"},
+        {"t_pct": 70, "property": "textContent (counter)","value": "<prize>", "easing": "ease-out (count-up)"},
+        {"t_pct": 22, "property": "filter",                "value": "url(#chromaticAberration0)"},
+        {"t_pct": 35, "property": "filter",                "value": "url(#chromaticAberration6)"},
+        {"t_pct": 50, "property": "filter",                "value": "url(#chromaticAberration0)"},
+        {"t_pct": 95, "property": "opacity",               "value": "1"},
+        {"t_pct": 100,"property": "opacity",               "value": "0",    "easing": "ease-in"}
+      ],
+      "gpu_technique": "Canvas2D particle system + WebGL shader for light rays (radial gradient with conic-mask) + CSS backdrop-filter",
+      "particle_count": 320,
+      "particle_lifetime_ms": 2200,
+      "fallback_static_description": "If reduced-motion: text 'SUURI VOITTO' + final prize value, displayed 1500ms then fade"
+    },
+    {
+      "id": "A6",
+      "name": "CARD_DEAL",
+      "description": "Card slides from deck to seat; motion blur on travel arc; flip reveals face; cloth indent on land.",
+      "total_duration_ms": 700,
+      "frame_count_at_60fps": 42,
+      "easing": "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+      "keyframes": [
+        {"t_pct": 0,   "property": "translate",  "value": "var(--deck-x), var(--deck-y)"},
+        {"t_pct": 0,   "property": "rotateY",    "value": "180deg"},
+        {"t_pct": 0,   "property": "filter",     "value": "blur(0)"},
+        {"t_pct": 35,  "property": "translate",  "value": "calc((var(--deck-x) + var(--seat-x))/2 - 20px), calc((var(--deck-y) + var(--seat-y))/2 - 60px)"},
+        {"t_pct": 35,  "property": "filter",     "value": "blur(3px)"},
+        {"t_pct": 70,  "property": "translate",  "value": "var(--seat-x), var(--seat-y)"},
+        {"t_pct": 70,  "property": "filter",     "value": "blur(0)"},
+        {"t_pct": 70,  "property": "rotateY",    "value": "180deg"},
+        {"t_pct": 100, "property": "rotateY",    "value": "0deg",  "easing": "cubic-bezier(0.34, 1.56, 0.64, 1)"},
+        {"t_pct": 100, "property": "scale_indent","value": "scale(0.985) (cloth dimple) returning to scale(1) over 120ms"}
+      ],
+      "gpu_technique": "CSS 3D transforms; rotateY for flip; cloth indent via SVG filter feTurbulence on landing position",
+      "particle_count": 4,
+      "particle_lifetime_ms": 250,
+      "fallback_static_description": "If reduced-motion: instant placement at seat with 200ms opacity fade-in"
+    },
+    {
+      "id": "A7",
+      "name": "CHIP_IMPACT",
+      "description": "Chip tossed onto felt; micro-bounce; stack formation if multiple; cloth fiber displacement ripple.",
+      "total_duration_ms": 600,
+      "frame_count_at_60fps": 36,
+      "easing": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+      "keyframes": [
+        {"t_pct": 0,   "property": "translateY",  "value": "-120px"},
+        {"t_pct": 0,   "property": "rotate",      "value": "-12deg"},
+        {"t_pct": 60,  "property": "translateY",  "value": "0px",   "easing": "cubic-bezier(0.5, 0, 0.75, 0)"},
+        {"t_pct": 60,  "property": "rotate",      "value": "0deg"},
+        {"t_pct": 75,  "property": "translateY",  "value": "-8px",  "easing": "ease-out"},
+        {"t_pct": 90,  "property": "translateY",  "value": "0px"},
+        {"t_pct": 60,  "property": "ripple_scale","value": "0"},
+        {"t_pct": 100, "property": "ripple_scale","value": "1.8"},
+        {"t_pct": 60,  "property": "ripple_opacity","value": "0.6"},
+        {"t_pct": 100, "property": "ripple_opacity","value": "0"}
+      ],
+      "gpu_technique": "CSS transforms; ripple via radial-gradient SVG masking on felt layer",
+      "particle_count": 6,
+      "particle_lifetime_ms": 400,
+      "fallback_static_description": "If reduced-motion: instant chip placement, no bounce, no ripple"
+    },
+    {
+      "id": "A8",
+      "name": "FREE_SPINS_TRIGGER",
+      "description": "Scatters pulse in unison; vignette darkens; cloth banner unfurls from top; spins counter appears.",
+      "total_duration_ms": 2800,
+      "frame_count_at_60fps": 168,
+      "easing": "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+      "keyframes": [
+        {"t_pct": 0,   "property": "scatter_scale_pulse", "value": "1.0"},
+        {"t_pct": 8,   "property": "scatter_scale_pulse", "value": "1.25", "easing": "ease-out"},
+        {"t_pct": 16,  "property": "scatter_scale_pulse", "value": "1.0"},
+        {"t_pct": 24,  "property": "scatter_scale_pulse", "value": "1.25"},
+        {"t_pct": 32,  "property": "scatter_scale_pulse", "value": "1.0"},
+        {"t_pct": 0,   "property": "vignette_alpha",      "value": "0"},
+        {"t_pct": 35,  "property": "vignette_alpha",      "value": "0.78","easing": "ease-in"},
+        {"t_pct": 35,  "property": "banner_translateY",   "value": "-100%"},
+        {"t_pct": 75,  "property": "banner_translateY",   "value": "0",    "easing": "cubic-bezier(0.34, 1.56, 0.64, 1) (cloth unfurl uses 24-frame Lottie loop)"},
+        {"t_pct": 80,  "property": "counter_scale",       "value": "0.5"},
+        {"t_pct": 95,  "property": "counter_scale",       "value": "1.0",  "easing": "cubic-bezier(0.34, 1.56, 0.64, 1)"},
+        {"t_pct": 100, "property": "counter_opacity",     "value": "1"}
+      ],
+      "gpu_technique": "Lottie JSON for cloth banner (24-frame loop, 60fps) + CSS transforms for scatter pulse; SVG radial-gradient for vignette",
+      "particle_count": 24,
+      "particle_lifetime_ms": 1400,
+      "fallback_static_description": "If reduced-motion: text overlay 'ILMAISKIERROKSET KÄYNNISSÄ' fades in over 400ms, no banner motion"
+    }
+  ],
+
+  "bonus_definitions": [
+    {
+      "id": "fruits_bonus_a_wheel",
+      "game": "slots_fruits",
+      "type": "cinematic_wheel",
+      "props_theme": "Pie-wheel of giant lacquered fruit slices; brass pointer with rivet; rotating disk with milled-edge bezel",
+      "segments_count": 12,
+      "prize_table_with_weights": [
+        {"segment_index": 0,  "prize": "FREE_SPINS_5",   "weight": 18, "value_units": 5.0,  "ev_contrib": 0.075},
+        {"segment_index": 1,  "prize": "MULT_2X",         "weight": 15, "value_units": 2.0,  "ev_contrib": 0.025},
+        {"segment_index": 2,  "prize": "FREE_SPINS_8",   "weight": 14, "value_units": 8.0,  "ev_contrib": 0.093},
+        {"segment_index": 3,  "prize": "MULT_3X",         "weight": 12, "value_units": 3.0,  "ev_contrib": 0.030},
+        {"segment_index": 4,  "prize": "FREE_SPINS_12",  "weight": 10, "value_units": 12.0, "ev_contrib": 0.100},
+        {"segment_index": 5,  "prize": "CREDITS_25",      "weight": 9,  "value_units": 25.0, "ev_contrib": 0.188},
+        {"segment_index": 6,  "prize": "MULT_5X",         "weight": 7,  "value_units": 5.0,  "ev_contrib": 0.029},
+        {"segment_index": 7,  "prize": "FREE_SPINS_20",  "weight": 5,  "value_units": 20.0, "ev_contrib": 0.083},
+        {"segment_index": 8,  "prize": "CREDITS_50",      "weight": 4,  "value_units": 50.0, "ev_contrib": 0.167},
+        {"segment_index": 9,  "prize": "MULT_10X",        "weight": 3,  "value_units": 10.0, "ev_contrib": 0.025},
+        {"segment_index": 10, "prize": "MINI_GAME_PICK",  "weight": 2,  "value_units": 30.0, "ev_contrib": 0.050},
+        {"segment_index": 11, "prize": "JACKPOT",         "weight": 1,  "value_units": 250.0,"ev_contrib": 0.208}
+      ],
+      "_total_weight": 100,
+      "rng_pseudocode": "import random\nWHEEL_WEIGHTS = [18,15,14,12,10,9,7,5,4,3,2,1]\nrand_idx = random.choices(range(12), weights=WHEEL_WEIGHTS, k=1)[0]\nfinal_angle_deg = 720 + (rand_idx * 30) + random.uniform(-8, 8)  # 2 full rotations + segment offset\nemit_animation_event('A4_WHEEL_SPIN', {'final_deg': final_angle_deg, 'segment': rand_idx})\nprize = WHEEL_PRIZES[rand_idx]\nresolve_prize(player, prize)",
+      "animation_timeline": "t0=disk_accelerate (0–500ms, 0→1800°/s); t500=cruise (500–1500ms, decel to 950°/s); t1500=decel_phase_1 (1500–3300ms to 280°/s); t3300=settling (3300–4300ms to 0°/s, overshoot 8° then back); t4300=segment_pulse (drop-shadow grow 200ms then steady); t4500=prize_reveal_modal slide-in 300ms",
+      "rtp_contribution_pct": 1.000,
+      "trigger_frequency": 0.00800,
+      "avg_payout_units": 12.500,
+      "bonus_buy_price_formula": "ceil((avg_payout / trigger_p) * 1.05 * bet_per_spin)",
+      "bonus_buy_price_units_at_100bet": 164063,
+      "bonus_buy_cooldown_sec": 60,
+      "bonus_buy_max_per_session": 3
+    },
+    {
+      "id": "fruits_bonus_b_pick",
+      "game": "slots_fruits",
+      "type": "pick_and_animate",
+      "props_theme": "Cloth drawstring market bags on a worn wooden table; each bag tied with twine",
+      "objects_visible": 9,
+      "max_picks_default": 3,
+      "prize_table": [
+        {"prize_id": "CREDITS_5",   "value_units": 5,   "weight": 22},
+        {"prize_id": "CREDITS_10",  "value_units": 10,  "weight": 18},
+        {"prize_id": "CREDITS_15",  "value_units": 15,  "weight": 14},
+        {"prize_id": "CREDITS_25",  "value_units": 25,  "weight": 10},
+        {"prize_id": "CREDITS_50",  "value_units": 50,  "weight": 6},
+        {"prize_id": "CREDITS_100", "value_units": 100, "weight": 3},
+        {"prize_id": "MULT_ADD_2X", "value_units": 0,   "weight": 12, "applies_multiplier": 2},
+        {"prize_id": "MULT_ADD_3X", "value_units": 0,   "weight": 8,  "applies_multiplier": 3},
+        {"prize_id": "MULT_ADD_5X", "value_units": 0,   "weight": 3,  "applies_multiplier": 5},
+        {"prize_id": "CONTINUE",    "value_units": 0,   "weight": 3,  "adds_pick": 1},
+        {"prize_id": "COLLECT_END", "value_units": 0,   "weight": 1,  "ends_round": true}
+      ],
+      "_total_weight": 100,
+      "cascade_mechanic": "Multiplier prizes applied to ALL subsequent CREDITS_* picks within same round (multiplicative if multiple multipliers stack)",
+      "rng_pseudocode": "import random\nPRIZES = [...]\nWEIGHTS = [22,18,14,10,6,3,12,8,3,3,1]\npicks_remaining = 3\ncurrent_mult = 1\ntotal = 0\nwhile picks_remaining > 0:\n    prize = random.choices(PRIZES, weights=WEIGHTS, k=1)[0]\n    emit_animation_event('A3_PICK_REVEAL', prize)\n    if prize['prize_id'].startswith('CREDITS'):\n        total += prize['value_units'] * current_mult\n    elif prize.get('applies_multiplier'):\n        current_mult *= prize['applies_multiplier']\n    elif prize.get('adds_pick'):\n        picks_remaining += 1\n    elif prize.get('ends_round'):\n        break\n    picks_remaining -= 1\nresolve_prize(player, total)",
+      "animation_timeline_per_pick": "t0=lid_open(0–300ms, ease-out-cubic); t300=interior_glow_expand(300–700ms, ease-in-out, scale 0.4→1.6); t700=prize_number_countup(700–1200ms, linear, 0→prize_value); t1200=idle (wait for next pick)",
+      "rtp_contribution_pct": 0.700,
+      "trigger_frequency": 0.00500,
+      "avg_payout_units": 14.000
+    },
+    {
+      "id": "fruits_bonus_c_sticky_freespins",
+      "game": "slots_fruits",
+      "type": "free_spins_sticky_expanding_wilds",
+      "props_theme": "Golden cherries lock to position and grow climbing vines that fill the reel",
+      "stages": [
+        {
+          "stage": 1,
+          "description": "8 free spins, normal pays, expanding wilds appear naturally and lock as sticky.",
+          "free_spins": 8,
+          "expanding_wild_natural_p_per_spin": 0.05,
+          "retrigger_condition": "3 new scatters in stage 1 advances to stage 2"
+        },
+        {
+          "stage": 2,
+          "description": "+5 spins; ALL wilds become sticky for remainder; multiplier 2x.",
+          "free_spins_added": 5,
+          "global_multiplier": 2,
+          "retrigger_condition": "fully wild reel advances to stage 3"
+        },
+        {
+          "stage": 3,
+          "description": "GRAND REVEAL — all reels spin in reverse and stop with full-wild grid; pay grid_multiplier from RNG draw.",
+          "grid_multiplier_table": [
+            {"value": 50,  "weight": 50},
+            {"value": 75,  "weight": 25},
+            {"value": 100, "weight": 15},
+            {"value": 150, "weight": 8},
+            {"value": 200, "weight": 2}
+          ]
+        }
+      ],
+      "expanding_wild_animation": "On first land, wild covers single cell (scale 1.0); over 600ms with ease-out-cubic, scale-Y grows to 3.0 to fill column with vine growth particle effect (12 particles); stays sticky thereafter",
+      "progressive_meter": {
+        "segments": 6,
+        "fill_rule": "+1 segment per reel containing sticky wild",
+        "full_meter_action": "trigger_grand_reveal"
+      },
+      "rng_pseudocode": "STAGE_C_GRID_MULT = [50, 75, 100, 150, 200]\nSTAGE_C_WEIGHTS = [50, 25, 15, 8, 2]\ndef run_bonus_c(player, base_bet):\n    spins = 8\n    sticky_reels = set()\n    multiplier = 1\n    total = 0\n    stage = 1\n    while spins > 0:\n        result = spin_reels_with_sticky(sticky_reels)\n        for reel_idx in result.expanding_wild_landings:\n            if reel_idx not in sticky_reels:\n                emit_animation_event('expanding_wild_grow', reel_idx)\n                sticky_reels.add(reel_idx)\n        win = compute_payline_wins(result) * multiplier\n        total += win\n        if stage == 1 and result.scatters >= 3:\n            stage = 2; spins += 5; multiplier = 2\n        if len(sticky_reels) == 5:\n            grid_mult = random.choices(STAGE_C_GRID_MULT, weights=STAGE_C_WEIGHTS, k=1)[0]\n            emit_animation_event('grand_reveal', grid_mult)\n            total += base_bet * grid_mult\n            break\n        spins -= 1\n    resolve_prize(player, total)",
+      "rtp_contribution_pct": 0.660,
+      "trigger_frequency": 0.00400,
+      "avg_payout_units": 16.500
+    },
+    {
+      "id": "egypt_bonus_a_wheel",
+      "game": "slots_egypt",
+      "type": "cinematic_wheel",
+      "props_theme": "Stone cartouche disk with hieroglyphs; brass pointer with carved scarab",
+      "segments_count": 12,
+      "prize_table_summary": "Same structural template as fruits_bonus_a_wheel with prize values scaled +20%; total ev_contrib 0.0150",
+      "rtp_contribution_pct": 1.200,
+      "trigger_frequency": 0.00650,
+      "avg_payout_units": 18.460
+    },
+    {
+      "id": "egypt_bonus_b_pick",
+      "game": "slots_egypt",
+      "type": "pick_and_animate",
+      "props_theme": "Canopic jars on stone altar; each jar lid is animal-headed (jackal/falcon/baboon/human)",
+      "rtp_contribution_pct": 0.900,
+      "trigger_frequency": 0.00420,
+      "avg_payout_units": 21.430
+    },
+    {
+      "id": "egypt_bonus_c_sticky_freespins",
+      "game": "slots_egypt",
+      "type": "free_spins_sticky_expanding_wilds",
+      "props_theme": "Eye of Ra wilds expand horizontally across reels; gold radial light; hieroglyph particles",
+      "rtp_contribution_pct": 1.700,
+      "trigger_frequency": 0.00500,
+      "avg_payout_units": 34.000
+    },
+    {
+      "id": "space_bonus_a_wheel",
+      "game": "slots_space",
+      "type": "cinematic_wheel",
+      "props_theme": "Holographic star-chart disk with constellation segments; light-pulse along radial axes on stop",
+      "rtp_contribution_pct": 1.250,
+      "trigger_frequency": 0.00550,
+      "avg_payout_units": 22.730
+    },
+    {
+      "id": "space_bonus_b_pick",
+      "game": "slots_space",
+      "type": "pick_and_animate",
+      "props_theme": "Meteorite cases in cargo bay; each case has biometric lock animation (scan-line then lid hiss)",
+      "rtp_contribution_pct": 1.200,
+      "trigger_frequency": 0.00500,
+      "avg_payout_units": 24.000
+    },
+    {
+      "id": "space_bonus_c_sticky_freespins",
+      "game": "slots_space",
+      "type": "free_spins_sticky_expanding_wilds",
+      "props_theme": "Black holes that grow over reel and merge across reels; gravitational lensing CSS filter on adjacent symbols",
+      "rtp_contribution_pct": 2.900,
+      "trigger_frequency": 0.00450,
+      "avg_payout_units": 64.440
+    },
+    {
+      "id": "tumble_gem_storm",
+      "game": "slots_tumble",
+      "type": "gem_storm_cascade",
+      "props_theme": "Grid fills with 50 random gems; cascades until no clusters remain; carry-through multiplier",
+      "trigger_condition": "3 scatter geode symbols anywhere in 6x5 grid",
+      "rng_pseudocode": "import random\nGEMS = ['amethyst','topaz','onyx','pearl','emerald','sapphire','ruby','diamond']\nGEM_WEIGHTS = [18,16,15,14,12,10,8,6]\ndef gem_storm():\n    grid = [[random.choices(GEMS, weights=GEM_WEIGHTS, k=1)[0] for _ in range(5)] for _ in range(6)]\n    multiplier = 1\n    total = 0\n    while True:\n        clusters = find_clusters(grid, min_size=8)\n        if not clusters:\n            break\n        for cluster in clusters:\n            total += pay_for_cluster(cluster) * multiplier\n            for (r,c) in cluster.cells:\n                grid[r][c] = None\n        emit_animation_event('coin_cascade', clusters)\n        gravity_drop(grid)\n        refill(grid, GEMS, GEM_WEIGHTS)\n        multiplier = min(multiplier + 1, 10)\n    return total",
+      "rtp_contribution_pct": 10.980,
+      "trigger_frequency": 0.00370,
+      "avg_payout_units": 296.760,
+      "_high_variance_note": "Single GEM STORM can pay 0–8000+ units; design intent is rare, memorable, sharable"
+    },
+    {
+      "id": "hold_win_bonus",
+      "game": "slots_hold_win",
+      "type": "hold_and_win",
+      "props_theme": "Grid locks to coin positions + blanks; coins are antique brass with milled edges; respin counter rendered as brass wheel-counter",
+      "trigger_condition": "≥6 COIN symbols in single spin (5x3 grid)",
+      "respins": {"initial": 3, "reset_to_3_on_each_new_coin": true},
+      "special_coins": {
+        "MINI":  {"value_units": 10,  "appearance_rate": "1/500"},
+        "MINOR": {"value_units": 25,  "appearance_rate": "1/2000"},
+        "MAJOR": {"value_units": 100, "appearance_rate": "1/10000"},
+        "GRAND": {"value_units": 500, "appearance_rate": "1/500000"}
+      },
+      "max_grid_award_units": 2000,
+      "rng_pseudocode": "import random\ndef hold_win_bonus(initial_coins, base_bet):\n    grid = init_locked_grid(initial_coins)\n    respins = 3\n    while respins > 0 and not grid_full(grid):\n        result = spin_open_positions(grid)\n        new_coins = [c for c in result if c.is_coin]\n        if new_coins:\n            for c in new_coins:\n                c.value = roll_coin_value()\n                grid.add_coin(c)\n            respins = 3\n        else:\n            respins -= 1\n    if grid_full(grid):\n        emit_animation_event('grid_full_jackpot', 2000)\n        return 2000 * base_bet\n    return sum(c.value for c in grid.coins) * base_bet\n\ndef roll_coin_value():\n    types = ['credit_2x','credit_5x','MINI','MINOR','MAJOR','GRAND']\n    weights = [0.65, 0.22, 0.098, 0.02, 0.005, 0.0001]\n    weights = [w/sum(weights) for w in weights]\n    return random.choices(types, weights=weights, k=1)[0]",
+      "rtp_contribution_pct": 11.980,
+      "trigger_frequency": 0.00880,
+      "avg_payout_units": 136.140
+    },
+    {
+      "id": "blackjack_perfect_pairs",
+      "game": "blackjack",
+      "type": "side_bet",
+      "stake_independent_of_main": true,
+      "paytable": {"suited_pair": 25, "same_color_pair": 12, "mixed_pair": 6},
+      "rng_pseudocode": "from collections import namedtuple\nCard = namedtuple('Card', ['rank','suit','color'])\ndef resolve_perfect_pairs(player_two_cards, side_bet_units):\n    c1, c2 = player_two_cards\n    if c1.rank != c2.rank:\n        return -side_bet_units\n    if c1.suit == c2.suit:\n        return 25 * side_bet_units\n    if c1.color == c2.color:\n        return 12 * side_bet_units\n    return 6 * side_bet_units",
+      "animation": "On pair detect: cards slide together over 350ms, glow halo color matches tier (gold=suited, silver=same-color, bronze=mixed); halo radial-gradient pulse 2 cycles",
+      "rtp_pct": 89.580
+    },
+    {
+      "id": "blackjack_twenty_one_plus_three",
+      "game": "blackjack",
+      "type": "side_bet",
+      "paytable": {"suited_trips": 100, "straight_flush": 40, "three_of_a_kind": 30, "straight": 10, "flush": 5},
+      "rng_pseudocode": "def resolve_21plus3(player_two, dealer_up, side_bet_units):\n    cards = player_two + [dealer_up]\n    ranks = sorted(c.rank_value for c in cards)\n    suits = [c.suit for c in cards]\n    is_flush = len(set(suits)) == 1\n    is_straight = (ranks[2]-ranks[0] == 2 and len(set(ranks)) == 3) or set(ranks) == {1,12,13}\n    is_trips = len(set(c.rank for c in cards)) == 1\n    if is_trips and is_flush: return 100 * side_bet_units\n    if is_straight and is_flush: return 40 * side_bet_units\n    if is_trips: return 30 * side_bet_units\n    if is_straight: return 10 * side_bet_units\n    if is_flush: return 5 * side_bet_units\n    return -side_bet_units",
+      "rtp_pct": 95.520
+    },
+    {
+      "id": "pikapokeri_double_up",
+      "game": "pikapokeri",
+      "type": "gamble",
+      "trigger": "after any winning hand",
+      "max_consecutive": 5,
+      "rng_pseudocode": "def double_up(current_win, deck):\n    dealer_visible = deck.deal_one()\n    player_facedown = deck.deal_one()\n    user_choice = ui_prompt('higher_or_lower', dealer_visible)\n    correct = (user_choice == 'higher' and player_facedown.rank_value > dealer_visible.rank_value) or \\\n              (user_choice == 'lower' and player_facedown.rank_value < dealer_visible.rank_value)\n    if correct:\n        emit_animation_event('double_up_win', current_win * 2)\n        return current_win * 2\n    else:\n        emit_animation_event('double_up_lose', 0)\n        return 0",
+      "animation": "On trigger: table dims to vignette_alpha 0.78 over 250ms; single card center-screen scales 0.4→1.4 over 400ms; flips rotateY 180°→0° over 800ms with light-ray burst on correct outcome (Bonus A5 reduced variant)",
+      "rtp_neutral_or_slight_edge": -0.00040
+    }
+  ],
+
+  "lottie_stubs": [
+    {
+      "id": "lottie_reel_spin",
+      "skeleton": {"v": "5.7", "fr": 60, "ip": 0, "op": 108, "w": 1080, "h": 1920, "nm": "REEL_SPIN", "layers": [
+        {"ddd": 0, "ind": 1, "ty": 4, "nm": "reel_blur_strip", "ks": {"p": {"a": 1, "k": [{"t": 0, "s": [540, 0]}, {"t": 90, "s": [540, -2520]}, {"t": 105, "s": [540, -2628]}, {"t": 108, "s": [540, -2616]}]}, "r": {"a": 0, "k": 0}, "s": {"a": 0, "k": [100, 100]}}, "shapes": [{"ty": "gr", "it": [{"ty": "rc", "s": {"a": 0, "k": [200, 3000]}, "p": {"a": 0, "k": [0, 0]}}, {"ty": "fl", "c": {"a": 0, "k": [1, 1, 1, 1]}}]}], "ef": [{"ty": 29, "nm": "Gaussian Blur", "v": {"a": 1, "k": [{"t": 0, "s": [6]}, {"t": 95, "s": [2]}, {"t": 105, "s": [0]}]}}]},
+        {"ddd": 0, "ind": 2, "ty": 4, "nm": "stop_indicator_overlay", "ks": {"o": {"a": 1, "k": [{"t": 100, "s": [0]}, {"t": 108, "s": [100]}]}}}
+      ]}
+    },
+    {
+      "id": "lottie_coin_cascade",
+      "skeleton": {"v": "5.7", "fr": 60, "ip": 0, "op": 144, "w": 1080, "h": 1920, "nm": "COIN_CASCADE", "layers": [
+        {"ddd": 0, "ind": 1, "ty": 4, "nm": "coin_001", "ks": {"p": {"a": 1, "k": [{"t": 0, "s": [540, -100]}, {"t": 90, "s": [800, 1700]}, {"t": 110, "s": [800, 1640]}, {"t": 130, "s": [800, 1700]}]}, "r": {"a": 1, "k": [{"t": 0, "s": [0]}, {"t": 90, "s": [720]}]}}, "shapes": [{"ty": "el", "s": {"a": 0, "k": [60, 60]}, "p": {"a": 0, "k": [0, 0]}}, {"ty": "fl", "c": {"a": 0, "k": [0.84, 0.62, 0.18, 1]}}]},
+        {"ddd": 0, "ind": 2, "ty": 4, "nm": "coin_pile_scale", "ks": {"s": {"a": 1, "k": [{"t": 100, "s": [100, 100]}, {"t": 144, "s": [124, 124]}]}}}
+      ]}
+    },
+    {
+      "id": "lottie_pick_reveal",
+      "skeleton": {"v": "5.7", "fr": 60, "ip": 0, "op": 72, "w": 720, "h": 720, "nm": "PICK_REVEAL", "layers": [
+        {"ddd": 1, "ind": 1, "ty": 4, "nm": "lid", "ks": {"rx": {"a": 1, "k": [{"t": 0, "s": [0]}, {"t": 18, "s": [-110]}]}}},
+        {"ddd": 0, "ind": 2, "ty": 4, "nm": "interior_glow", "ks": {"o": {"a": 1, "k": [{"t": 18, "s": [0]}, {"t": 42, "s": [100]}]}, "s": {"a": 1, "k": [{"t": 18, "s": [40, 40]}, {"t": 42, "s": [160, 160]}]}}, "shapes": [{"ty": "rd", "s": {"a": 0, "k": [400, 400]}, "g": {"k": {"a": 0, "k": {"p": 3, "k": [0, 1, 1, 0.6, 0.5, 1, 0.84, 0.18, 1, 0, 0, 0]}}}}]},
+        {"ddd": 0, "ind": 3, "ty": 5, "nm": "prize_text", "tt": "0", "ks": {"o": {"a": 1, "k": [{"t": 42, "s": [0]}, {"t": 72, "s": [100]}]}}}
+      ]}
+    },
+    {
+      "id": "lottie_wheel_spin",
+      "skeleton": {"v": "5.7", "fr": 60, "ip": 0, "op": 270, "w": 1080, "h": 1080, "nm": "WHEEL_SPIN", "layers": [
+        {"ddd": 0, "ind": 1, "ty": 4, "nm": "wheel_disk", "ks": {"r": {"a": 1, "k": [{"t": 0, "s": [0]}, {"t": 54, "s": [1080]}, {"t": 135, "s": [2520]}, {"t": 216, "s": [3300]}, {"t": 256, "s": [3308]}, {"t": 270, "s": [3300]}]}, "p": {"a": 0, "k": [540, 540]}}},
+        {"ddd": 0, "ind": 2, "ty": 4, "nm": "pointer_brass", "ks": {"p": {"a": 0, "k": [540, 60]}}},
+        {"ddd": 0, "ind": 3, "ty": 4, "nm": "segment_pulse", "ks": {"o": {"a": 1, "k": [{"t": 256, "s": [0]}, {"t": 270, "s": [100]}]}}}
+      ]}
+    },
+    {
+      "id": "lottie_big_win_sequence",
+      "skeleton": {"v": "5.7", "fr": 60, "ip": 0, "op": 210, "w": 1080, "h": 1920, "nm": "BIG_WIN_SEQUENCE", "layers": [
+        {"ddd": 0, "ind": 1, "ty": 4, "nm": "backdrop", "ks": {"o": {"a": 1, "k": [{"t": 0, "s": [0]}, {"t": 17, "s": [85]}, {"t": 200, "s": [85]}, {"t": 210, "s": [0]}]}}},
+        {"ddd": 0, "ind": 2, "ty": 5, "nm": "counter_text", "ks": {"s": {"a": 1, "k": [{"t": 17, "s": [60, 60]}, {"t": 46, "s": [100, 100]}]}, "p": {"a": 0, "k": [540, 960]}}, "t": {"d": {"k": [{"t": 17, "s": {"t": "0", "f": "Chivo 900", "s": 220}}, {"t": 147, "s": {"t": "<prize>", "f": "Chivo 900", "s": 220}}]}}},
+        {"ddd": 0, "ind": 3, "ty": 4, "nm": "light_rays", "ks": {"r": {"a": 1, "k": [{"t": 0, "s": [0]}, {"t": 210, "s": [60]}]}}},
+        {"ddd": 0, "ind": 4, "ty": 4, "nm": "particle_storm_emitter", "_note": "320 particles spawned over t=22→200, lifetime 2200ms each"}
+      ]}
+    }
+  ],
+
+  "animation_timing_table": [
+    {"event": "reel_spin_per_reel",       "anim_id": "A1", "total_ms": 1800, "sound_event": "reel_tick + reel_stop", "haptic": "LIGHT", "key_frames": [{"pct": 0, "property": "translateY", "value": "0",      "easing": "linear"}, {"pct": 8, "property": "filter", "value": "blur(6px)"}, {"pct": 95, "property": "translateY", "value": "-2628px", "easing": "cubic-bezier(0.34, 1.56, 0.64, 1)"}, {"pct": 100, "property": "translateY", "value": "-2616px"}]},
+    {"event": "coin_cascade_win",         "anim_id": "A2", "total_ms": 2400, "sound_event": "win_small/win_medium",  "haptic": "MEDIUM", "key_frames": [{"pct": 0, "property": "translateY", "value": "-100vh"}, {"pct": 60, "property": "translateY", "value": "60vh", "easing": "cubic-bezier(0.5, 0, 0.75, 0)"}, {"pct": 100, "property": "scale_pile", "value": "scale(1+count*0.012)"}]},
+    {"event": "pick_reveal",              "anim_id": "A3", "total_ms": 1200, "sound_event": "pick_open + pick_win",  "haptic": "STRONG", "key_frames": [{"pct": 25, "property": "rotateX", "value": "-110deg"}, {"pct": 58, "property": "scale_glow", "value": "1.6"}, {"pct": 100, "property": "textContent", "value": "<final>"}]},
+    {"event": "wheel_spin",               "anim_id": "A4", "total_ms": 4500, "sound_event": "wheel_tick (per 30°) + wheel_stop", "haptic": "MEDIUM (on stop only)", "key_frames": [{"pct": 0, "property": "rotate", "value": "0deg"}, {"pct": 95, "property": "rotate", "value": "<final+8deg>"}, {"pct": 100, "property": "rotate", "value": "<final>", "easing": "cubic-bezier(0.25, 0.46, 0.45, 0.94)"}]},
+    {"event": "big_win",                  "anim_id": "A5", "total_ms": 3500, "sound_event": "win_big",                "haptic": "HEAVY_BURST", "key_frames": [{"pct": 8, "property": "backdrop_opacity", "value": "0.85"}, {"pct": 70, "property": "textContent", "value": "<prize>"}, {"pct": 100, "property": "opacity", "value": "0"}]},
+    {"event": "card_deal",                "anim_id": "A6", "total_ms": 700,  "sound_event": "card_deal + card_flip",  "haptic": "LIGHT", "key_frames": [{"pct": 0, "property": "translate", "value": "deck"}, {"pct": 70, "property": "translate", "value": "seat"}, {"pct": 100, "property": "rotateY", "value": "0deg"}]},
+    {"event": "chip_impact",              "anim_id": "A7", "total_ms": 600,  "sound_event": "chip_stack",             "haptic": "MEDIUM", "key_frames": [{"pct": 0, "property": "translateY", "value": "-120px"}, {"pct": 60, "property": "translateY", "value": "0"}, {"pct": 100, "property": "ripple_scale", "value": "1.8"}]},
+    {"event": "free_spins_trigger",       "anim_id": "A8", "total_ms": 2800, "sound_event": "bonus_trigger",          "haptic": "HEAVY_BURST", "key_frames": [{"pct": 8, "property": "scatter_pulse", "value": "1.25"}, {"pct": 75, "property": "banner_translateY", "value": "0"}, {"pct": 95, "property": "counter_scale", "value": "1.0"}]},
+    {"event": "jackpot_reveal",           "anim_id": "A5_extended", "total_ms": 5500, "sound_event": "jackpot_fanfare", "haptic": "SUSTAINED"},
+    {"event": "double_up_flip",           "anim_id": "A6_variant",  "total_ms": 800,  "sound_event": "double_up_win OR double_up_lose", "haptic": "MEDIUM"}
+  ],
+
+  "rng_to_animation_pseudocode": {
+    "slots_fruits_base_spin": "import random\nREEL_SYMBOLS = ['cherry','lemon','orange','grape','bell','star','jackpot','diamond','wild','scatter','expanding_wild','multiplier_wild']\nREEL_WEIGHTS = [12,10,9,8,6,5,3,2,2,2,0.7,0.3]\n\ndef spin_one_reel():\n    return [random.choices(REEL_SYMBOLS, weights=REEL_WEIGHTS, k=1)[0] for _ in range(3)]\n\ndef spin_5x3():\n    grid = [spin_one_reel() for _ in range(5)]\n    # emit per-reel animations with stagger\n    for reel_idx, column in enumerate(grid):\n        emit_animation_event('A1_REEL_SPIN', {'reel_idx': reel_idx, 'symbols': column, 'stagger_ms': reel_idx * 80})\n    # detect scatters\n    scatter_count = sum(1 for col in grid for s in col if s == 'scatter')\n    if scatter_count >= 3:\n        emit_animation_event('A8_FREE_SPINS_TRIGGER', {'count': scatter_count})\n        spawn_free_spins(scatter_count)\n    # detect expanding wild\n    for reel_idx, column in enumerate(grid):\n        if 'expanding_wild' in column:\n            emit_animation_event('expanding_wild_grow', {'reel_idx': reel_idx})\n            grid[reel_idx] = ['wild','wild','wild']\n    # compute payline wins\n    wins = compute_payline_wins(grid)\n    if wins['total'] > 0:\n        if wins['total'] >= 50 * BET:\n            emit_animation_event('A5_BIG_WIN', {'amount': wins['total']})\n        else:\n            emit_animation_event('A2_COIN_CASCADE', {'amount': wins['total']})\n    return wins",
+
+    "scatter_trigger_branch": "def on_scatter_trigger(scatter_count):\n    free_spins_award = {3: 8, 4: 12, 5: 20}[scatter_count]\n    emit_animation_event('A8_FREE_SPINS_TRIGGER', {'count': scatter_count, 'award': free_spins_award})\n    play_sound('bonus_trigger')\n    haptic_pattern([100,50,100,50,200])\n    show_banner('ILMAISKIERROKSET', free_spins_award)\n    state.free_spins_remaining += free_spins_award\n    state.global_multiplier = 2 if scatter_count == 3 else 3",
+
+    "bonus_a_wheel_full": "import random\nWHEEL_SEGMENTS = ['FREE_SPINS_5','MULT_2X','FREE_SPINS_8','MULT_3X','FREE_SPINS_12','CREDITS_25','MULT_5X','FREE_SPINS_20','CREDITS_50','MULT_10X','MINI_GAME_PICK','JACKPOT']\nWHEEL_WEIGHTS  = [18, 15, 14, 12, 10, 9, 7, 5, 4, 3, 2, 1]\ndef trigger_bonus_a():\n    rand_idx = random.choices(range(12), weights=WHEEL_WEIGHTS, k=1)[0]\n    final_deg = 720 + (rand_idx * 30) + random.uniform(-8, 8)\n    emit_animation_event('A4_WHEEL_SPIN', {'final_deg': final_deg, 'segment_index': rand_idx})\n    play_sound('wheel_tick', repeat_per_30deg=True)\n    schedule_at(4500, lambda: play_sound('wheel_stop'))\n    schedule_at(4500, lambda: haptic_pattern([100,50]))\n    prize = WHEEL_SEGMENTS[rand_idx]\n    schedule_at(4700, lambda: resolve_prize(player, prize))",
+
+    "bonus_b_pick_full": "import random\nPRIZES  = ['CREDITS_5','CREDITS_10','CREDITS_15','CREDITS_25','CREDITS_50','CREDITS_100','MULT_ADD_2X','MULT_ADD_3X','MULT_ADD_5X','CONTINUE','COLLECT_END']\nWEIGHTS = [22, 18, 14, 10, 6, 3, 12, 8, 3, 3, 1]\ndef run_bonus_b():\n    picks_remaining = 3\n    current_mult = 1\n    total = 0\n    while picks_remaining > 0:\n        prize = random.choices(PRIZES, weights=WEIGHTS, k=1)[0]\n        emit_animation_event('A3_PICK_REVEAL', {'prize': prize, 'current_mult': current_mult})\n        play_sound('pick_open')\n        schedule_at(700, lambda p=prize, m=current_mult: play_sound('pick_win' if 'CREDITS' in p else 'pick_open'))\n        if prize.startswith('CREDITS'):\n            credit_value = int(prize.split('_')[1])\n            total += credit_value * current_mult\n        elif prize.startswith('MULT_ADD'):\n            m = int(prize.split('_')[2].replace('X',''))\n            current_mult *= m\n        elif prize == 'CONTINUE':\n            picks_remaining += 1\n        elif prize == 'COLLECT_END':\n            break\n        picks_remaining -= 1\n    return total",
+
+    "bonus_c_sticky_full": "import random\nSTAGE_C_GRID_MULT = [50, 75, 100, 150, 200]\nSTAGE_C_WEIGHTS   = [50, 25, 15, 8, 2]\ndef run_bonus_c(base_bet):\n    spins = 8; sticky_reels = set(); multiplier = 1; total = 0; stage = 1\n    while spins > 0:\n        result = spin_reels_with_sticky(sticky_reels)\n        for reel_idx in result.expanding_wild_landings:\n            if reel_idx not in sticky_reels:\n                emit_animation_event('expanding_wild_grow', {'reel_idx': reel_idx, 'stage': stage})\n                play_sound('reel_stop'); haptic_pattern([100])\n                sticky_reels.add(reel_idx)\n        win = compute_payline_wins(result) * multiplier\n        total += win\n        if stage == 1 and result.scatters >= 3:\n            stage = 2; spins += 5; multiplier = 2\n            emit_animation_event('A8_FREE_SPINS_TRIGGER', {'count': result.scatters, 'stage': 2})\n        if len(sticky_reels) == 5:\n            grid_mult = random.choices(STAGE_C_GRID_MULT, weights=STAGE_C_WEIGHTS, k=1)[0]\n            emit_animation_event('grand_reveal', {'grid_mult': grid_mult})\n            play_sound('jackpot_fanfare'); haptic_pattern([300,100,300])\n            total += base_bet * grid_mult\n            break\n        spins -= 1\n    return total",
+
+    "tumble_cluster_with_cascade": "import random\nGEMS    = ['amethyst','topaz','onyx','pearl','emerald','sapphire','ruby','diamond']\nWEIGHTS = [18, 16, 15, 14, 12, 10, 8, 6]\ndef tumble_spin():\n    grid = [[random.choices(GEMS, weights=WEIGHTS, k=1)[0] for _ in range(5)] for _ in range(6)]\n    multiplier = 1\n    total = 0\n    cascade_count = 0\n    while True:\n        clusters = find_clusters(grid, min_size=8)\n        if not clusters:\n            break\n        for cluster in clusters:\n            pay = pay_for_cluster_size_and_gem(cluster) * multiplier\n            total += pay\n            for (r, c) in cluster.cells:\n                grid[r][c] = None\n            emit_animation_event('A2_COIN_CASCADE', {'cluster': cluster.cells, 'pay': pay})\n        gravity_drop(grid)\n        refill(grid, GEMS, WEIGHTS)\n        cascade_count += 1\n        multiplier = min(multiplier + 1, 10)\n        emit_animation_event('multiplier_tick', {'value': multiplier})\n    return {'total': total, 'cascades': cascade_count, 'final_mult': multiplier}",
+
+    "blackjack_deal_animation_branch": "import random\ndef start_blackjack_hand(player, bet, side_bets):\n    deck = build_shoe(decks=6); random.shuffle(deck)\n    player_cards = [deck.pop(), deck.pop()]\n    dealer_cards = [deck.pop(), deck.pop()]  # second card hole\n    for i, c in enumerate(player_cards):\n        emit_animation_event('A6_CARD_DEAL', {'card': c, 'seat': 'player', 'delay_ms': i * 250})\n    for i, c in enumerate(dealer_cards):\n        emit_animation_event('A6_CARD_DEAL', {'card': c, 'seat': 'dealer', 'face_down': i == 1, 'delay_ms': 500 + i * 250})\n    if side_bets.get('perfect_pairs'):\n        result = resolve_perfect_pairs(player_cards, side_bets['perfect_pairs'])\n        emit_animation_event('perfect_pairs_halo', {'tier': pair_tier(player_cards), 'win_units': result})\n    if side_bets.get('twenty_one_plus_three'):\n        result = resolve_21plus3(player_cards, dealer_cards[0], side_bets['twenty_one_plus_three'])\n        emit_animation_event('21plus3_glow', {'win_units': result})\n    return state.set_initial(deck, player_cards, dealer_cards, bet, side_bets)",
+
+    "pikapokeri_hold_draw_branch": "import random\ndef pikapokeri_deal_and_draw(player, bet, hold_indices):\n    if state.phase == 'deal':\n        deck = shuffled_52()\n        hand = [deck.pop() for _ in range(5)]\n        for i, c in enumerate(hand):\n            emit_animation_event('A6_CARD_DEAL', {'card': c, 'index': i, 'delay_ms': i * 150})\n        state.set_hand(hand, deck)\n        return hand\n    elif state.phase == 'draw':\n        new_hand = []\n        for i in range(5):\n            if i in hold_indices:\n                new_hand.append(state.hand[i])\n            else:\n                new_card = state.deck.pop()\n                new_hand.append(new_card)\n                emit_animation_event('A6_CARD_DEAL', {'card': new_card, 'index': i, 'replacement': True})\n        category = evaluate_hand(new_hand)\n        pay = PAYTABLE[category] * bet\n        if pay > 0:\n            emit_animation_event('A5_BIG_WIN' if pay >= 50*bet else 'A2_COIN_CASCADE', {'amount': pay})\n            offer_double_up(pay)\n        return {'hand': new_hand, 'category': category, 'pay': pay}",
+
+    "double_up_branch": "import random\ndef double_up(current_win):\n    if current_win == 0 or state.double_ups_used >= 5:\n        return current_win\n    deck = shuffled_52()\n    dealer_visible = deck.pop()\n    player_facedown = deck.pop()\n    emit_animation_event('double_up_present', {'dealer_card': dealer_visible})\n    user_choice = await_ui_input('higher_or_lower')\n    correct = (user_choice == 'higher' and player_facedown.rank_value > dealer_visible.rank_value) or \\\n              (user_choice == 'lower'  and player_facedown.rank_value < dealer_visible.rank_value)\n    if correct:\n        emit_animation_event('double_up_win', {'amount': current_win * 2, 'card': player_facedown})\n        play_sound('double_up_win'); haptic_pattern([100,50,100,50,200])\n        state.double_ups_used += 1\n        return current_win * 2\n    else:\n        emit_animation_event('double_up_lose', {'card': player_facedown})\n        play_sound('double_up_lose'); haptic_pattern([200])\n        return 0"
+  }
+}

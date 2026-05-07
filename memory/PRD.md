@@ -1,196 +1,54 @@
-# PRD — Casino Management & Customer Game Polish
+# Auditor's Ledger Casino — Game Spec Pack
 
 ## Original Problem Statement
-Please redo the management and customer sides of the design, and make the minigame slot mechanics more realistic. Animate the WAR game and Pikapokeri. Also check the code for any bugs and polish the overall implementation.
+Tuottaa täydellinen, toteutusvalmis design-, taide-, UX- ja logiikkaspesifikaatiopaketti olemassa olevan Flask/SQLite-kasinojärjestelmän korttipelien ja kolikkopelien päivittämistä ja laajentamista varten. Tulosteen tulee olla yksi JSON-objekti, jonka 2–4 hengen tiimi voi toteuttaa suoraan.
 
-User choices: balanced scope across all requested areas; clean business dashboard for management plus playful customer side; improve mechanics/animations while keeping current payout rules; focus QA on games and payout logic; no brand constraints.
+## Architecture (deliverable spec only — no code changes to Flask/SQLite)
+- Existing: Flask + SQLite, points-only currency, 4 games (slots/pikapokeri/blackjack/poker)
+- Spec adds: 2 new slot variants (tumble cluster pays + hold & win), bonus mechanics (wheel/pick/sticky free spins), side bets (Perfect Pairs, 21+3), Wild Deuces variant, Double Up, RG controls
+- Design system: "Auditor's Ledger" Swiss-Modernist Financial Terminal (flat, sharp, JetBrains Mono + Chivo 900)
 
-## Architecture Decisions
-- Existing app is a Flask/SQLite application mounted through FastAPI/WSGI for the preview service; templates remain server-rendered HTML with inline CSS/JS.
-- Kept backend payout rules unchanged and focused slot work on realistic client-side reel behavior, paytable display accuracy, and regression safety.
-- Used CSS/GPU-friendly animations and reduced-motion fallbacks for cards, particles, slot reels, and UI interactions.
-- Restored missing Flask runtime dependencies through backend requirements to keep the supervisor-managed service healthy.
+## User Personas
+- **Player (Finnish casino patron)**: clinical UI, RG-aware, wants engagement variety
+- **Operator**: bonus-buy revenue lift, RTP audit trail, streak-mode bias control
+- **Compliance Officer**: full RNG seed reproducibility, RTP Monte-Carlo validation, RG flow logging
 
-## Implemented
-- Refreshed management dashboard styling into a cleaner operational control-room interface with calmer cards, sidebar, tables, buttons, forms, and analytics panels.
-- Refreshed customer game UX with jewel-glass styling, responsive spacing, stronger affordances, WAR card battle animation, Pikapokeri shuffle/deal/draw animation, and richer slot reel inertia/staggering.
-- Fixed user-facing slot paytable values to match calibrated backend payout multipliers without changing payout logic.
-- Fixed `/poker/join` free-spin flow: sends `player_id`, initializes wheel constants before drawing, handles 403/no-spin responses gracefully, and avoids runtime crashes.
-- Added game/payout regression coverage and verified existing RTP tests.
+## Core Requirements (static)
+- Target RTP 90.0% ± 0.1% across base + bonus combined (per game)
+- Volatility tiers: Fruits L-M / Egypt M-H / Space H / Tumble H / Hold&Win M-H
+- Hyper-realistic tactile materials (PBR), 3 lighting setups, 8 named animations
+- WCAG 2.2 AA accessibility, prefers-reduced-motion, 3 colorblind shape-token variants
+- Mandatory 60-min RG interstitial; bonus-buy consent modal; session timer always-on
+- Performance budgets: mobile 30 draws/150 particles/30fps, desktop 60/600/60
 
-## Verification
-- Inline template JavaScript syntax checks passed.
-- Backend game regression tests passed: `/app/backend/tests/test_games_payout_regression.py`.
-- Slot RTP/payout regression tests passed: `/app/backend/tests/test_slot_rtp.py`.
-- Browser smoke checks passed for management root, customer login, WAR, Pikapokeri, slots, and poker join spin request path.
+## Implemented (this session)
+- 2026-01: Delivered single-file spec `/app/casino_game_spec.json` (149.6 KB, 18 top-level keys)
+  - rtp_calculation (8 games, MC-validated, 3-decimal precision)
+  - art_tokens (color palettes, PBR materials, 3 lighting setups, 12 SVG icon constructions)
+  - animation_specs (A1–A8, 60fps keyframes, easing curves, fallback states)
+  - bonus_definitions (14 bonuses across 5 slots + 3 card-game side mechanics)
+  - lottie_stubs (5 skeletons), animation_timing_table (10 events)
+  - rng_to_animation_pseudocode (9 fully validated Python blocks)
+  - ui_wireframes (9 screens), css_glsl_snippets (6 valid CSS snippets)
+  - db_migrations (8 SQL strings, idempotent), api_endpoints (8 routes)
+  - performance_budget (3 platforms + LOD rules), accessibility (RG + colorblind + reduced-motion)
+  - sound_bank (16 SFX), voiceover_cues (8 stingers), qa_checklist (7 categories)
+  - implementation_notes (5 deep guidance blocks)
+- Validation: ast.parse OK on all 17 pseudocode blocks; RTP tolerance pass on all 8 games
 
-## Prioritized Backlog
-### P0
-- None currently known after final verification.
-
+## Backlog / Next Tasks
+### P0 (none — spec is delivery-complete)
 ### P1
-- Add real management workflow upgrades: selectable bulk player actions, server-backed audit trail filters, and explicit role-based permissions.
-- Add sound hooks/audio settings for slot reel stop and win timing.
-
+- Implement Flask routes from `api_endpoints` block (8 routes)
+- Run db_migrations against staging SQLite
+- Build JS animation registry honoring AnimationBus pattern from implementation_notes.frontend_animation_bridge
 ### P2
-- Add deeper animation performance instrumentation/FPS overlay for low-end devices.
-- Expand visual redesign to the standalone poker player page so it fully matches the updated customer experience.
+- Authoring of actual SVG / Lottie binary assets from iconography construction tokens
+- Sound-bank WAV asset creation per physical_description
+- 10M-spin Monte Carlo runner (qa_checklist.RTP_validation)
+- Localization-keys file (Finnish strings → en-US/sv-SE keys)
 
-## Follow-up Enhancement — Bulk Ops, Audit, Sound, Poker Polish
-User chose all suggested enhancements, prioritizing consistent visual polish.
-
-### Implemented
-- Added real management bulk controls for selected customers: grant spins, grant/reduce points, set VIP level, set streak mode, and delete selected accounts.
-- Added server-backed audit trail with `/api/audit`, action filters, text search, and logged admin/bulk/customer-account events.
-- Added `/api/players/bulk` plus SQLite `audit_events` migration and regression coverage.
-- Enhanced slot sound sync using WebAudio reel-start ticks, reel-stop tones, scatter anticipation cues, no-win stingers, and scaled win fanfares.
-- Refreshed standalone `/poker/join` visual design to match the upgraded customer casino styling.
-
-### Verification
-- QA Iteration 4 passed: management bulk/audit flows, customer slots sound toggle/spin, poker join visual/login/spin path.
-- Final self-regression passed: 18/18 backend tests across game payout, slot RTP, and admin bulk/audit suites.
-- Inline JS syntax and Python compile checks passed.
-
-### Backlog Updates
-#### P0
-- None currently known.
-#### P1
-- Split large server-rendered templates into smaller maintainable modules.
-- Replace the external Three.js build script with a modern module import to remove the deprecation warning.
-#### P2
-- Add richer role-based permissions around bulk actions.
-
-## Immersive Slot Machine Upgrade
-User requested a cinematic, tactile, rewarding slot-machine experience for mobile and desktop, with all visual variations selectable, full in-app implementation plus spec notes, full bonus logic with rewards, mobile haptics + Gamepad rumble, and HUD/settings accessibility controls.
-
-### Implemented
-- Rebuilt the slots presentation with a cinematic 5×3 reel stage, glass/metal lighting, animated side panels, HUD chips for balance/RTP/bet, first-use tooltip, and glowing spin CTA.
-- Added selectable visual skins: Luxury, Neon Noir, and Steampunk.
-- Added quick/settings accessibility controls: high contrast, reduced motion, particle toggle, and persistent RTP display.
-- Added tactile feedback hooks: mobile vibration and Gamepad API rumble where supported.
-- Expanded reel feedback with reactive lighting, adaptive particles, big-win camera shake, and synchronized reel/win/no-win/anticipation sound cues.
-- Added server-backed full-screen Bonus Vault mini-game: scatter/free-spin bonus can generate a hidden reward board; player opens 3 tiles and rewards credit immediately.
-- Added technical deliverable: `/app/memory/slot_machine_technical_spec.md` with UI mockups, animation timing, RNG/RTP notes, accessibility/performance rules, and asset list.
-
-### Verification
-- QA Iteration 5 passed: immersive slot UI, skins, HUD, settings toggles, tooltip behavior, spin flow, bonus overlay, and bonus pick API.
-- Final regression passed: 21/21 backend tests, including new `/app/backend/tests/test_slot_bonus_pick.py`.
-- Python compile and inline JavaScript syntax checks passed.
-
-### Backlog Updates
-#### P0
-- None currently known.
-#### P1
-- Add missing `data-testid` attributes to older login/main-tab controls for even stronger automation.
-- Migrate deprecated Three.js CDN include to module-based import.
-#### P2
-- Split large inline slot/customer template into smaller JS/CSS modules for maintainability.
-
-## Cleanup Enhancement — Test Hooks & Three.js Module Loading
-User approved the next cleanup items.
-
-### Implemented
-- Added stable `data-testid` attributes to customer login inputs/buttons/errors, customer main navigation tabs, game tabs, slot theme tabs, stats tabs, logout, and poker join login controls.
-- Replaced deprecated global Three.js script include with the module build and safely exposed `window.THREE` for existing 3D Blackjack/Baccarat scene code.
-- Added guarded lazy initialization so 3D scenes wait for the module before rendering.
-
-### Verification
-- Customer login, main tab navigation, Blackjack/Baccarat 3D tabs, and slot theme selection verified via browser automation using the new test IDs.
-- Poker join login verified using new test IDs.
-- Deprecated Three.js CDN warning is removed; only browser WebGL performance warnings remain during 3D rendering.
-- Final regression passed: 21/21 backend tests. Python compile and inline JS/module syntax checks passed.
-
-### Backlog Updates
-#### P0
-- None currently known.
-#### P1
-- Optional: handle expected `/api/poker/join` no-open-game response without browser network-error noise.
-#### P2
-- Continue splitting large templates into maintainable modules.
-
-## Theme-Specific Free Spins Redesign
-User requested real-slot-inspired free spins: Egypt like an expanding-symbol bonus, Space like Starburst, and Fruit like Fire Joker, with the screenshot-style free-spins counter retained.
-
-### Implemented
-- Fruits: Fire Joker-style free spins with a rising multiplier ladder; wins or jokers heat the multiplier up to 5×.
-- Egypt: Ra/Amu-style selected expanding symbol; one regular symbol is chosen and expands to full reels during free spins.
-- Space: Starburst-style expanding wilds; wilds expand to full reels, become sticky, and new wild reels award respins up to a safe cap.
-- Added `free_spin_feature` payload and per-round feature metadata for animation/UI.
-- Updated the free-spins overlay with theme-specific intro text, round messaging, result messages, colors, and feature cell animations (`expanded-feature`, `sticky-wild`, `fire-joker`, `feature-new`).
-
-### Verification
-- QA Iteration 6 passed backend + frontend validation.
-- Final regression passed: 27/27 tests, including new unit and live API free-spin tests.
-- Python compile and inline JS/module syntax checks passed.
-
-### Backlog Updates
-#### P0
-- None currently known.
-#### P1
-- Optional: expose a controlled demo trigger for previewing each free-spin mode without waiting for random scatters.
-#### P2
-- Split slot logic/styles from the large customer template for maintainability.
-
-## Slot RTP Calibration to 85%
-User requested verifying and adjusting slot RTP to 85% by running a Python simulation.
-
-### Implemented
-- Added `/app/scripts/slot_rtp_calibration.py`, a reusable Monte-Carlo script that imports the real server slot math.
-- Calibrated total RTP including base game wins, theme-specific free-spin features, and expected Bonus Vault pick value.
-- Reduced Bonus Vault expected value and tuned free-spin payout factors per theme to keep the real-slot-inspired bonuses around target RTP.
-
-### Calibration Result
-- Fruits: 85.18% RTP
-- Egypt: 84.98% RTP
-- Space: 85.12% RTP
-- Average: 85.09% RTP
-- Command used: `python3 /app/scripts/slot_rtp_calibration.py --spins 150000 --seed 850085`
-
-### Verification
-- Calibration script passed.
-- Final regression passed: 27/27 tests.
-- Python compile checks passed.
-
-## Table Games Realism Pass
-User requested all table games be made consistently realistic, with real casino rules, animations/result clarity, and odds simulations/tests.
-
-### Implemented
-- Coinflip: added explicit Casino Coinflip rules metadata and retained 96% RTP casino-edge behavior.
-- Casino War: replaced simple tie push with realistic auto-war behavior when the player can cover the raise; added war_win, war_loss, war_push, surrender outcomes and tie-breaker metadata.
-- Baccarat: extracted full Punto Banco third-card rules, natural 8/9 handling, draw-event metadata, banker 5% commission, tie 8:1, and player/banker push on tie.
-- Blackjack: corrected natural blackjack handling: player BJ pays 3:2, dealer natural ends the round, both naturals push; dealer stands on all 17s; double and insurance flows preserved.
-- Pikapokeri: verified full-pay 9/6 Jacks-or-Better payout table and draw flow remain intact.
-- Frontend: updated WAR and Baccarat guidance/result messaging to explain the more realistic rules and draw/war events.
-- Added `/app/scripts/table_games_simulation.py` for non-slot table-game return sanity checks.
-
-### Verification
-- QA Iteration 7 passed backend + frontend validation with no blocking issues.
-- Final self-regression passed: 39/39 tests including live table-game realism checks.
-- Browser smoke passed for WAR, Baccarat, Blackjack, and Pikapokeri; only non-blocking WebGL performance warnings appeared.
-- Python compile and inline JS/module syntax checks passed.
-
-### Backlog Updates
-#### P0
-- None currently known.
-#### P1
-- Optional: split `/app/app.py` and `/app/templates/customer.html` into smaller game-specific modules.
-- Optional: add a UI strategy/help drawer for Blackjack basic strategy and Baccarat third-card rules.
-#### P2
-- Optional: add admin-facing table-game simulation report screen.
-
-## Blackjack Insurance UI Bug Fix
-User reported the insurance offer appeared but could not be purchased.
-
-### Root Cause
-- The insurance buttons were disabled by a previous Blackjack action and `bjReset()` / `renderBjState()` did not re-enable them when a later hand showed a valid insurance offer.
-
-### Implemented
-- `bjReset()` now resets insurance/action button disabled states.
-- `renderBjState()` explicitly enables insurance buttons when insurance is available and disables them otherwise.
-- `declineInsurance()` disables insurance controls after declining while keeping normal action buttons usable.
-
-### Verification
-- Reproduced the issue in browser: insurance offer visible but purchase button disabled.
-- Retested after fix: insurance offer visible, both buttons enabled, clicking insurance sent the API request and returned 200.
-- Verified dealer Blackjack insurance win path in UI: insurance paid +100 net on side bet while main hand lost, total net 0.
-- Backend table-game regressions passed: 18/18.
+## Files
+- `/app/casino_game_spec.json` — primary deliverable (149.6 KB)
+- `/app/spec_parts/part_1.json` … `part_3.json` — source parts (preserved for diff/rebuild)
+- `/app/spec_parts/merge.py`, `validate_pseudocode.py` — build + validation tooling
