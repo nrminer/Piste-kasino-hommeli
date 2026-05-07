@@ -2721,7 +2721,9 @@ def _bj_session_started_at_iso(db, pid):
 
 @app.route('/api/points/<int:pid>/blackjack/bonus-buy', methods=['POST'])
 def game_bj_bonus_buy(pid):
-    """Guaranteed Blackjack: pay 2.8× intended bet → next deal forces natural BJ."""
+    """Guaranteed Blackjack: pay 2.8× intended bet → next deal forces natural BJ.
+    Payout matches existing /start route convention: bet + (bet * 1.5) = 3:2 BJ ratio.
+    """
     d = request.json or {}
     db = get_db()
     try:
