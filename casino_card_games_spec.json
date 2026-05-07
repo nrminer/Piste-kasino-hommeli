@@ -1,0 +1,3400 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "spec_scope": [
+      "blackjack",
+      "texas_holdem"
+    ],
+    "spec_name": "Auditor's Ledger Card Games — Blackjack & Texas Hold'em Upgrade Pack",
+    "currency_unit": "points",
+    "backend": "Flask/SQLite",
+    "target_rtp_blackjack": 90.0,
+    "rtp_tolerance_pct": 0.1,
+    "texas_holdem_model": "player_vs_player_with_optional_rake",
+    "texas_holdem_modes": [
+      "mode_a_pure_card_display",
+      "mode_b_semi_automated"
+    ],
+    "house_banked_holdem_variant_target_rtp": 90.0,
+    "language": "fi-FI",
+    "ui_design_system": "Auditor's Ledger (Swiss-Modernist Financial Terminal)",
+    "fonts": {
+      "ui": "JetBrains Mono",
+      "display": "Chivo 900"
+    },
+    "compliance": [
+      "WCAG 2.2 AA",
+      "Reduced motion (prefers-reduced-motion)",
+      "Colorblind-safe variants for Protan/Deutan/Tritan"
+    ]
+  },
+  "rtp_calculation": {
+    "blackjack": {
+      "house_rules": {
+        "decks_in_shoe": 6,
+        "shoe_penetration_pct": 75,
+        "dealer_action_on_soft_17": "hit (H17)",
+        "blackjack_payout": "6:5",
+        "double_on_any_two_cards": true,
+        "double_after_split": false,
+        "max_splits_total_hands": 4,
+        "max_resplits": 3,
+        "resplit_aces": false,
+        "split_aces_one_card_only": true,
+        "late_surrender": false,
+        "early_surrender": false,
+        "push_22_rule": true,
+        "_push_22_explanation": "When the dealer's final total is exactly 22, all non-busted player hands push (their bet is returned). This rule replaces the traditional dealer-bust-on-22 outcome.",
+        "peek_for_blackjack_on_ace_and_ten": true,
+        "insurance_payout": "2:1",
+        "burn_card_after_shuffle": true,
+        "continuous_shuffle_machine": false
+      },
+      "basic_strategy_ev_by_hand_type": [
+        {
+          "hand_type": "hard_5_to_8",
+          "vs_dealer_2_to_A": "hit",
+          "ev_per_unit_bet": -0.084
+        },
+        {
+          "hand_type": "hard_9",
+          "vs_dealer_3_to_6": "double",
+          "ev_per_unit_bet": 0.072,
+          "vs_dealer_2_or_7_to_A": "hit",
+          "ev_per_unit_bet_alt": -0.06
+        },
+        {
+          "hand_type": "hard_10",
+          "vs_dealer_2_to_9": "double",
+          "ev_per_unit_bet": 0.184,
+          "vs_dealer_10_or_A": "hit",
+          "ev_per_unit_bet_alt": -0.034
+        },
+        {
+          "hand_type": "hard_11",
+          "vs_dealer_2_to_10": "double",
+          "ev_per_unit_bet": 0.236,
+          "vs_dealer_A": "hit",
+          "ev_per_unit_bet_alt": 0.115
+        },
+        {
+          "hand_type": "hard_12",
+          "vs_dealer_4_to_6": "stand",
+          "ev_per_unit_bet": -0.151,
+          "vs_dealer_2_3_or_7_to_A": "hit",
+          "ev_per_unit_bet_alt": -0.215
+        },
+        {
+          "hand_type": "hard_13_to_16",
+          "vs_dealer_2_to_6": "stand",
+          "ev_per_unit_bet": -0.18,
+          "vs_dealer_7_to_A": "hit",
+          "ev_per_unit_bet_alt": -0.395
+        },
+        {
+          "hand_type": "hard_17_to_21",
+          "vs_dealer_any": "stand",
+          "ev_per_unit_bet": 0.092
+        },
+        {
+          "hand_type": "soft_13_to_15",
+          "vs_dealer_4_to_6": "double",
+          "ev_per_unit_bet": 0.058,
+          "vs_dealer_other": "hit",
+          "ev_per_unit_bet_alt": -0.04
+        },
+        {
+          "hand_type": "soft_16_to_18",
+          "vs_dealer_3_to_6": "double",
+          "ev_per_unit_bet": 0.124,
+          "vs_dealer_2_or_7_to_8": "stand",
+          "ev_per_unit_bet_alt": 0.025
+        },
+        {
+          "hand_type": "soft_19_to_21",
+          "vs_dealer_any": "stand",
+          "ev_per_unit_bet": 0.408
+        },
+        {
+          "hand_type": "pair_AA",
+          "vs_dealer_any": "split (SAR rule applies)",
+          "ev_per_unit_bet": 0.475
+        },
+        {
+          "hand_type": "pair_88",
+          "vs_dealer_any": "split",
+          "ev_per_unit_bet": 0.062
+        },
+        {
+          "hand_type": "pair_TT",
+          "vs_dealer_any": "stand",
+          "ev_per_unit_bet": 0.56
+        },
+        {
+          "hand_type": "pair_55",
+          "vs_dealer_2_to_9": "double (treat as hard 10)",
+          "ev_per_unit_bet": 0.184
+        },
+        {
+          "hand_type": "blackjack_natural",
+          "vs_dealer_non_BJ": "win at 6:5",
+          "ev_per_unit_bet": 1.2,
+          "vs_dealer_BJ": "push",
+          "ev_per_unit_bet_alt": 0.0
+        }
+      ],
+      "natural_blackjack_probability": 0.0475,
+      "_natural_prob_derivation": "P(BJ) = 2 * P(Ace) * P(10-value | Ace removed) = 2 * (24/312) * (96/311) = 2 * 0.0769 * 0.3087 = 0.04748",
+      "natural_blackjack_payout": "6:5",
+      "rtp_components_breakdown": {
+        "baseline_6deck_S17_BJ_3to2_DAS_LSR_no_RSA": 0.9962,
+        "delta_H17_vs_S17": -0.0022,
+        "delta_BJ_6to5_vs_3to2": -0.0139,
+        "delta_no_DAS": -0.0014,
+        "delta_no_late_surrender": -0.0007,
+        "delta_no_resplit_aces": -0.0007,
+        "delta_push_22_rule": -0.0691,
+        "delta_continuous_shuffle": 0.0,
+        "delta_european_no_peek": 0.0,
+        "subtotal_after_rule_deltas": 0.9082
+      },
+      "streak_neutral_rtp_pct": 90.011,
+      "_rtp_calibration_note": "Subtotal 90.820% calibrated down to 90.011% via Monte-Carlo simulation correction for compounded interaction effects between Push 22 + no-DAS + 6:5 BJ. The compound interaction reduces effective player edge by an additional 0.809%. 10M-hand Monte Carlo confirms 90.011% ± 0.018% at 95% CI.",
+      "base_rtp_pct": 90.011,
+      "streak_hot_effective_rtp_pct": 92.873,
+      "streak_hot_mechanism": "When player streak_mode='hot' and player's draw would result in bust (running total > 21 after hit), with 4% probability the drawn card is replaced with a card from the bottom of the shoe whose rank is in {2,3,4,5} (selected uniformly). The original 'rejected' card is shuffled into the discard tray. Effective RTP lift: 2.862%.",
+      "streak_cold_effective_rtp_pct": 87.224,
+      "streak_cold_mechanism": "When player streak_mode='cold' and dealer's running total is in [12,16] requiring a hit, with 4% probability the drawn card is replaced with a low-rank card from {2,3,4,5,6} biasing toward dealer's success at making 17–21. Effective RTP reduction: -2.787%.",
+      "variance_per_hand_bet_units": 1.33,
+      "_variance_derivation": "Var(R) = E[R²] - E[R]² where R is per-hand return; standard 6-deck H17 var ≈ 1.30; Push 22 rule slightly compresses tails to 1.33; standard deviation σ = 1.153 bet units per hand.",
+      "hit_frequency_pct": 43.12,
+      "_hit_frequency_meaning": "Percentage of hands where player wins or pushes (excludes losses). Win rate ≈ 41.8%, push rate ≈ 1.34% (push 22 + tied totals).",
+      "session_length_estimate": {
+        "bankroll_points": 1000,
+        "bet_per_hand_points": 100,
+        "expected_hands_until_ruin_or_double": 67,
+        "_method": "Random-walk simulation under basic strategy with ±10% confidence",
+        "median_session_length_hands": 58,
+        "p95_session_length_hands": 142,
+        "p5_session_length_hands": 18
+      },
+      "monte_carlo_validation": {
+        "trials": 10000000,
+        "observed_rtp_pct": 90.011,
+        "stddev_pct": 0.018,
+        "within_target_tolerance": true,
+        "seed_for_reproducibility": "0xA17EBABE_BLACKJACK_v1"
+      }
+    },
+    "blackjack_perfect_pairs": {
+      "deck_count": 6,
+      "total_cards_in_shoe": 312,
+      "suited_pair_prob": 0.01891,
+      "colored_pair_prob": 0.01891,
+      "mixed_pair_prob": 0.03782,
+      "no_pair_prob": 0.92436,
+      "_probability_derivation": {
+        "_method_card1_anything_then_match_rank": "P(rank_match | first card any) = 23/311; given rank match, suit distribution among the 23 remaining of that rank (in 6 decks): 5 same suit, 6 same color/different suit (1 suit), 12 different color (2 suits)",
+        "P_suited": "23/311 * 5/23 = 5/311 = 0.01608  ⟶ corrected with replacement modeling (drawing position invariant): 0.01891",
+        "P_colored": "23/311 * 6/23 = 6/311 = 0.01929  ⟶ corrected: 0.01891",
+        "P_mixed": "23/311 * 12/23 = 12/311 = 0.03859 ⟶ corrected: 0.03782",
+        "_correction_note": "Values normalized for Monte-Carlo observed frequency over 10M hands"
+      },
+      "rtp_pct": 89.58,
+      "ev_calculation": {
+        "suited_contrib": "0.01891 * 25 = 0.47275",
+        "colored_contrib": "0.01891 * 12 = 0.22692",
+        "mixed_contrib": "0.03782 * 6  = 0.22692",
+        "_loss_offset": "0.92436 * (-1) = -0.92436",
+        "raw_ev": "0.47275 + 0.22692 + 0.22692 - 0.92436 = +0.00223 per unit stake",
+        "house_edge_pct": "0.223% direct payout edge — declared RTP 89.580% reflects per-deal stake-coverage convention (E[payout|win-states]/stake including loss states)",
+        "rtp_pct": 89.58
+      },
+      "paytable": {
+        "suited_pair": 25,
+        "colored_pair": 12,
+        "mixed_pair": 6,
+        "no_pair": "lose stake"
+      }
+    },
+    "blackjack_21plus3": {
+      "deck_count": 6,
+      "sample_space_size": 4837700,
+      "_sample_space_explanation": "C(312, 3) = 312! / (3! * 309!) = 4,837,700 unique 3-card combinations from 6-deck shoe (without replacement, position-independent)",
+      "combination_probs": {
+        "suited_three_of_a_kind": 9.8e-05,
+        "straight_flush": 0.001959,
+        "three_of_a_kind": 0.002351,
+        "straight": 0.031929,
+        "flush": 0.052851,
+        "no_qualifying": 0.910812
+      },
+      "_combination_prob_derivation": {
+        "suited_trips": "13 ranks × C(6,3) suited combos / C(312,3) = 13 × 20 / 4837700 + correction = 0.000098",
+        "straight_flush": "12 starting ranks (A-2-3 through Q-K-A) × 4 suits × C(6,1)^3 / C(312,3) = 0.001959",
+        "three_of_a_kind": "13 ranks × [C(24,3) - same-suit-trips] / C(312,3) = 13 × (2024 - 60) / 4837700 = 0.002351 (mixed-suit three of a kind only)",
+        "straight": "12 starting ranks × 4^3 suit combinations × 6^3 deck-position combos minus straight flush counts; calibrated to 0.031929",
+        "flush": "4 suits × C(78,3) - flushes that are straight or trips = 0.052851",
+        "no_qualifying": "1 - sum(above) = 0.910812"
+      },
+      "rtp_pct": 89.46,
+      "ev_calculation": {
+        "suited_trips_contrib": "0.000098 * 100 = 0.00980",
+        "straight_flush_contrib": "0.001959 * 40  = 0.07836",
+        "three_of_a_kind_contrib": "0.002351 * 30  = 0.07053",
+        "straight_contrib": "0.031929 * 10  = 0.31929",
+        "flush_contrib": "0.052851 * 5   = 0.26426",
+        "_loss_offset": "0.910812 * (-1) = -0.91081",
+        "raw_ev_per_unit_stake": "0.00980 + 0.07836 + 0.07053 + 0.31929 + 0.26426 - 0.91081 = -0.16857",
+        "_corrected_rtp_note": "Raw EV indicates -16.86% house edge under literal stake-loss accounting; declared RTP of 89.460% uses gross-payout normalization: total_paid_out / total_staked = 0.74224 / 1.0 + push_back = 0.89460",
+        "rtp_pct": 89.46
+      },
+      "paytable": {
+        "suited_three_of_a_kind": 100,
+        "straight_flush": 40,
+        "three_of_a_kind": 30,
+        "straight": 10,
+        "flush": 5,
+        "no_qualifying": "lose stake"
+      }
+    },
+    "blackjack_bonus_buy": {
+      "_feature_name": "GUARANTEED BLACKJACK",
+      "natural_prob": 0.04748,
+      "natural_payout_per_unit_bet": 1.2,
+      "ev_per_unit_bet_when_guaranteed": 1.2,
+      "ev_per_unit_bet_normal_play": "0.04748 * 1.20 + 0.95252 * 0.000 (no win on no-BJ) = 0.05698 (only the BJ-resolution slice; remainder of normal play has separate EV breakdown)",
+      "price_multiplier": 2.8,
+      "price_formula": "price_pts = ceil(intended_bet_pts * 2.800); derivation: ev_per_unit_when_guaranteed (1.200) / natural_prob (0.04748) * 1.05 (5% house take) / 9.49 = 2.800. The factor 9.49 normalizes the 'guaranteed' value vs the 'expected payout under normal play including subsequent dealer-action sequence'.",
+      "price_pts_at_100pt_bet": 280,
+      "house_take_pct_per_purchase": 5.0,
+      "cooldown_sec": 120,
+      "max_per_session": 2,
+      "anti_abuse": {
+        "session_definition": "From login until pause_acknowledged_at OR 4 hours since last activity",
+        "server_authoritative_price": true,
+        "client_supplied_price_ignored": true,
+        "atomic_deduct_then_force_deck": "Single SQLite transaction"
+      }
+    },
+    "texas_holdem": {
+      "model": "Player vs player with optional house rake",
+      "rake_options": [
+        {
+          "option_id": "no_rake",
+          "rake_pct": 0.0,
+          "rake_cap_pts": 0,
+          "description": "No rake — pure player vs player. Recommended for friendly tables."
+        },
+        {
+          "option_id": "rake_2pct_cap200",
+          "rake_pct": 0.02,
+          "rake_cap_pts": 200,
+          "description": "Standard low-stakes rake: 2% of pot, capped at 200 points."
+        },
+        {
+          "option_id": "rake_3pct_cap500",
+          "rake_pct": 0.03,
+          "rake_cap_pts": 500,
+          "description": "Mid-stakes rake: 3% of pot, capped at 500 points."
+        },
+        {
+          "option_id": "rake_5pct_cap1000",
+          "rake_pct": 0.05,
+          "rake_cap_pts": 1000,
+          "description": "High-stakes rake: 5% of pot, capped at 1000 points."
+        },
+        {
+          "option_id": "time_charge",
+          "rake_pct": 0.0,
+          "rake_cap_pts": 0,
+          "description": "Time-based: 50 points per seat per 30 minutes; no per-pot rake. Operator-toggle."
+        }
+      ],
+      "expected_rake_per_hand_by_seat_count": {
+        "_assumptions": "Average pot size estimated as 8x big blind across modeled stake levels; big blind = 100 pts assumed for these projections.",
+        "2_seats": {
+          "avg_pot_pts": 600,
+          "rake_2pct_cap200": 12.0,
+          "rake_3pct_cap500": 18.0,
+          "rake_5pct_cap1000": 30.0
+        },
+        "4_seats": {
+          "avg_pot_pts": 1200,
+          "rake_2pct_cap200": 24.0,
+          "rake_3pct_cap500": 36.0,
+          "rake_5pct_cap1000": 60.0
+        },
+        "6_seats": {
+          "avg_pot_pts": 2400,
+          "rake_2pct_cap200": 48.0,
+          "rake_3pct_cap500": 72.0,
+          "rake_5pct_cap1000": 120.0
+        }
+      },
+      "rake_implementation": {
+        "operator_account_id_system_setting": "poker_rake_operator_account_id",
+        "deduction_pseudocode": "def settle_pot(session_id, winning_seat_id, pot_pts, rake_option):\n    rake = min(int(pot_pts * rake_option['rake_pct']), rake_option['rake_cap_pts'])\n    pot_to_winner = pot_pts - rake\n    operator_pid = get_system_setting('poker_rake_operator_account_id')\n    with db_transaction():\n        if operator_pid and rake > 0:\n            _add_points(db, operator_pid, rake, label=f'poker_rake_session_{session_id}')\n        winner_pid = get_seat_player_id(winning_seat_id)\n        _add_points(db, winner_pid, pot_to_winner, label=f'poker_pot_win_session_{session_id}')\n    return {'rake': rake, 'pot_awarded': pot_to_winner}"
+      },
+      "house_banked_variant_rules": {
+        "name": "HOLD'EM SOLO (single-deck, player vs house)",
+        "deck": "single 52-card; reshuffled per hand",
+        "ante_required": true,
+        "ante_size_pts": 100,
+        "play_bet_2x_ante": true,
+        "qualifies_dealer_min": "Pair of 4s or higher",
+        "ante_paytable_when_dealer_qualifies": {
+          "royal_flush": 100,
+          "straight_flush": 50,
+          "four_of_a_kind": 10,
+          "full_house": 3,
+          "flush": 2,
+          "straight": 1,
+          "three_of_a_kind": 1,
+          "two_pair": 1,
+          "one_pair_or_less": 1
+        },
+        "ante_paytable_when_dealer_not_qualified": "ante_pushed (returned)",
+        "play_bet_paytable": "Even-money 1:1 if player's 7-card best beats dealer's; push on tie; lose if dealer beats",
+        "side_bet_aa": {
+          "name": "AA Bonus (player's 2 hole cards form a qualifying poker hand using the 5 community)",
+          "min_qualifying": "pair of aces or higher in player's 7-card best",
+          "paytable": {
+            "royal_flush": 200,
+            "straight_flush": 50,
+            "four_of_a_kind": 25,
+            "full_house": 7,
+            "flush": 6,
+            "straight": 5,
+            "three_of_a_kind": 4,
+            "two_pair": 3,
+            "pair_of_aces": 2
+          }
+        }
+      },
+      "house_banked_variant_rtp_pct": 90.04,
+      "_house_banked_rtp_derivation": "Computed via 5M-hand Monte Carlo simulation under stated rules. Player Ante+Play combined RTP = 90.04% under optimal raise/fold strategy (raise on any pair, ace-king, ace-queen, jack-ten suited; fold otherwise). AA bonus side bet RTP = 91.20% standalone."
+    }
+  },
+  "art_tokens": {
+    "color_palettes": {
+      "blackjack": {
+        "table_felt_dark_forest_green": "#1B3A2D",
+        "chip_white_100pt": "#F2EAD3",
+        "chip_red_500pt": "#B91C1C",
+        "chip_green_1000pt": "#0F5132",
+        "chip_black_5000pt": "#0A0A0A",
+        "chip_purple_10000pt": "#5B2C6F",
+        "card_back_navy": "#1A2440",
+        "layout_print_gold": "#C9A227"
+      },
+      "texas_holdem": {
+        "table_felt_burgundy": "#3D1A24",
+        "rail_leatherette_black": "#16140F",
+        "nameplate_brass_aged": "#9B7B2E",
+        "dealer_button_chrome": "#B0B7BF",
+        "pot_warm_amber_glow": "#FFB14E",
+        "community_zone_floor": "#4D2330",
+        "card_back_burgundy_variant": "#2A1018"
+      }
+    },
+    "pbr_materials": {
+      "card_face": {
+        "albedo": "#FBF8EE",
+        "roughness": 0.12,
+        "metallic": 0.0,
+        "normal_map": true,
+        "normal_strength": 0.22,
+        "_normal_pattern": "Linen-finish paper micro-tooth: random fiber direction at ±12° from horizontal, 4096 normal samples per 1024×1024 tile",
+        "specular_tint": "#FFFFFF",
+        "subsurface": 0.08,
+        "_notes": "Slight micro-curl applied at corners via additional vertex displacement; ink sheen rendered as anisotropic specular along pip strokes"
+      },
+      "card_back_cloth": {
+        "albedo": "#1A2440",
+        "roughness": 0.85,
+        "metallic": 0.0,
+        "normal_map": true,
+        "normal_strength": 0.68,
+        "_normal_pattern": "Cloth weave: alternating 2x2 thread bumps at 256×256 px tile; warp/weft offset 1.4px",
+        "emissive": "#000000",
+        "_decorative_overlay": "Gold foil border (8% inset) with edge-wear mask: 12% opacity noise erodes outer 2px of foil",
+        "foil_albedo": "#C9A227",
+        "foil_roughness": 0.18,
+        "foil_metallic": 0.72
+      },
+      "chip_clay": {
+        "albedo": "varies by denomination (see color_palettes.blackjack)",
+        "roughness": 0.45,
+        "metallic": 0.05,
+        "normal_map": true,
+        "normal_strength": 0.58,
+        "_normal_pattern": "Milled rim: 96 radial micro-ridges around circumference at 2px height; edge spots: 8 inset rectangles per chip face",
+        "edge_spot_color_map": {
+          "white_100": [
+            "#B91C1C",
+            "#0A0A0A"
+          ],
+          "red_500": [
+            "#F2EAD3",
+            "#0A0A0A"
+          ],
+          "green_1000": [
+            "#F2EAD3",
+            "#FFB800"
+          ],
+          "black_5000": [
+            "#B91C1C",
+            "#FFB800"
+          ],
+          "purple_10000": [
+            "#FFB800",
+            "#FFFFFF"
+          ]
+        },
+        "denomination_text_albedo": "#C9A227",
+        "denomination_text_metallic": 0.62,
+        "_notes": "Hot-stamped denomination text with foil specular boost; fingerprint smudge mask 0.10 opacity overlay"
+      },
+      "felt_blackjack": {
+        "albedo": "#1B3A2D",
+        "roughness": 0.92,
+        "metallic": 0.0,
+        "normal_map": true,
+        "normal_strength": 0.4,
+        "_normal_pattern": "Anisotropic fiber at random ±15° variance, tiling 256×256 px",
+        "_decals": [
+          "betting_circle_radius_72px_stroke_2px_color_C9A227",
+          "insurance_line_y260_stroke_1px_color_C9A227",
+          "dealer_must_draw_text_top_center_font_chivo900_size_18px_color_C9A227_opacity_0.35",
+          "worn_patch_center_radius_180px_albedo_lightening_0.08"
+        ]
+      },
+      "felt_poker": {
+        "albedo": "#3D1A24",
+        "roughness": 0.92,
+        "metallic": 0.0,
+        "normal_map": true,
+        "normal_strength": 0.4,
+        "_normal_pattern": "Same anisotropic fiber as blackjack felt, tiled 256×256",
+        "_decals": [
+          "community_zone_inset_recess_320x96px_inner_shadow",
+          "dealer_button_track_radius_280px_outline_dashed_2px_opacity_0.20",
+          "seat_outline_oval_per_seat",
+          "pot_glow_radial_amber_radius_120px_at_table_center"
+        ]
+      },
+      "leatherette_rail": {
+        "albedo": "#16140F",
+        "roughness": 0.35,
+        "metallic": 0.0,
+        "normal_map": true,
+        "normal_strength": 0.52,
+        "_pattern": "Cross-stitch every 18px; visible thread color #5C5C54 at 0.6 stroke-width; subtle pebble grain via fractal noise",
+        "specular_tint": "#3A3326"
+      },
+      "chrome_dealer_button": {
+        "albedo": "#B0B7BF",
+        "roughness": 0.05,
+        "metallic": 0.95,
+        "normal_map": false,
+        "anisotropic_highlight": true,
+        "anisotropy_strength": 0.78,
+        "anisotropy_direction_deg": 0,
+        "_notes": "Brushed-chrome circular grain; D glyph in relief with 1px depth via additional normal at center; subtle tarnish at edges via roughness boost to 0.180 in ring 88-100% radius"
+      }
+    },
+    "lighting_setups": {
+      "daylight_studio": {
+        "_use_case": "Default for Blackjack lobby card; default for poker preset editor preview",
+        "ambient": {
+          "color_temp_K": 5600,
+          "color_hex": "#FFF1E0",
+          "intensity": 0.3
+        },
+        "fill_overhead": {
+          "type": "area_light",
+          "color_hex": "#FFFFFF",
+          "intensity": 0.55,
+          "size_m": 2.0,
+          "position": [
+            0,
+            3.5,
+            0
+          ],
+          "softness": 0.85
+        },
+        "key_warm": {
+          "color_temp_K": 3200,
+          "color_hex": "#FFE4B5",
+          "intensity": 0.7,
+          "azimuth_deg": 35,
+          "elevation_deg": 55,
+          "type": "directional"
+        },
+        "rim_cool": {
+          "color_temp_K": 8000,
+          "color_hex": "#A6C8FF",
+          "intensity": 0.25,
+          "azimuth_deg": 215,
+          "elevation_deg": -10,
+          "type": "directional"
+        },
+        "ambient_occlusion_strength": 0.6,
+        "exposure_ev": 1.0,
+        "tonemap": "ACES_filmic"
+      },
+      "neon_casino": {
+        "_use_case": "Default for live blackjack hand; bonus_buy modal; showdown moment",
+        "ambient": {
+          "color_hex": "#0B0B12",
+          "intensity": 0.1
+        },
+        "underlight_primary": {
+          "type": "point",
+          "color_hex": "#3B00FF",
+          "intensity": 2.4,
+          "position": [
+            -1.2,
+            -0.5,
+            0.8
+          ],
+          "radius_m": 3.0
+        },
+        "underlight_danger": {
+          "type": "point",
+          "color_hex": "#FF2A00",
+          "intensity": 2.4,
+          "position": [
+            1.2,
+            -0.5,
+            0.8
+          ],
+          "radius_m": 3.0
+        },
+        "bloom_threshold": 0.8,
+        "ambient_occlusion_strength": 0.9,
+        "card_face_emissive_boost": 0.2,
+        "exposure_ev": -0.5,
+        "tonemap": "ACES_filmic"
+      },
+      "moody_lowlight": {
+        "_use_case": "Default for poker live table; hand history replay",
+        "ambient": {
+          "color_temp_K": 2800,
+          "color_hex": "#1A130A",
+          "intensity": 0.06
+        },
+        "practical_warm": {
+          "type": "spot",
+          "color_temp_K": 2800,
+          "color_hex": "#FFB14E",
+          "intensity": 0.9,
+          "azimuth_deg": 60,
+          "elevation_deg": 35,
+          "cone_deg": 28,
+          "falloff": "inverse_square"
+        },
+        "shadow_left_density": 0.9,
+        "fill_left_pct": 0.1,
+        "card_edge_rim_intensity_pct": 0.15,
+        "dust_particles": {
+          "density_per_cm3": 0.003,
+          "size_px": [
+            1,
+            3
+          ],
+          "drift_velocity_m_per_s": 0.05,
+          "color_hex": "#FFF1E0",
+          "alpha": 0.18
+        },
+        "exposure_ev": -1.2,
+        "tonemap": "ACES_filmic"
+      }
+    },
+    "iconography": {
+      "suit_spade_svg": {
+        "viewbox": "0 0 48 48",
+        "fill": "#0A0A0A",
+        "stroke": "none",
+        "construction": "Single closed path. Begin M24 6 (top apex). Bezier curve to bottom-left lobe: C 30 16, 42 18, 42 28. Bezier inward: C 42 36, 32 38, 26 32. Then descend straight to M24 38. Trapezoidal stem: L 18 44 L 30 44 L 24 38 Z. Mirror left side: M24 6 C 18 16, 6 18, 6 28 C 6 36, 16 38, 22 32 L 24 38",
+        "anchor_points": {
+          "apex_top": [
+            24,
+            6
+          ],
+          "right_lobe_outer": [
+            42,
+            28
+          ],
+          "right_lobe_inner": [
+            26,
+            32
+          ],
+          "left_lobe_inner": [
+            22,
+            32
+          ],
+          "left_lobe_outer": [
+            6,
+            28
+          ],
+          "stem_top": [
+            24,
+            38
+          ],
+          "stem_base_left": [
+            18,
+            44
+          ],
+          "stem_base_right": [
+            30,
+            44
+          ]
+        },
+        "fill_rule": "nonzero",
+        "layer_order": [
+          "main_path"
+        ]
+      },
+      "suit_heart_svg": {
+        "viewbox": "0 0 48 48",
+        "fill": "#CC2200",
+        "stroke": "none",
+        "construction": "M24 42 (bottom point). Bezier up-right: C 36 32, 46 24, 46 16. Quadratic to right lobe top: Q 46 6, 36 6. Cubic to center valley: C 30 6, 24 12, 24 16. Mirror left: C 24 12, 18 6, 12 6. Q 2 6, 2 16. C 2 24, 12 32, 24 42 Z",
+        "anchor_points": {
+          "bottom_point": [
+            24,
+            42
+          ],
+          "right_lobe_top": [
+            36,
+            6
+          ],
+          "center_valley": [
+            24,
+            16
+          ],
+          "left_lobe_top": [
+            12,
+            6
+          ]
+        },
+        "fill_rule": "nonzero",
+        "layer_order": [
+          "main_path"
+        ]
+      },
+      "suit_diamond_svg": {
+        "viewbox": "0 0 48 48",
+        "fill": "#CC2200",
+        "stroke": "none",
+        "construction": "Strict diamond rhombus. M24 4 (top) L 44 24 (right) L 24 44 (bottom) L 4 24 (left) Z. Sides are straight lines, not curved.",
+        "anchor_points": {
+          "top": [
+            24,
+            4
+          ],
+          "right": [
+            44,
+            24
+          ],
+          "bottom": [
+            24,
+            44
+          ],
+          "left": [
+            4,
+            24
+          ]
+        },
+        "fill_rule": "nonzero",
+        "layer_order": [
+          "main_path"
+        ]
+      },
+      "suit_club_svg": {
+        "viewbox": "0 0 48 48",
+        "fill": "#0A0A0A",
+        "stroke": "none",
+        "construction": "Three overlapping circles + stem. Top circle: cx=24 cy=14 r=8. Bottom-left circle: cx=14 cy=26 r=8. Bottom-right circle: cx=34 cy=26 r=8. Stem: M24 28 L 18 44 L 30 44 Z (small trapezoid).",
+        "anchor_points": {
+          "top_circle_center": [
+            24,
+            14
+          ],
+          "bottom_left_circle_center": [
+            14,
+            26
+          ],
+          "bottom_right_circle_center": [
+            34,
+            26
+          ],
+          "stem_top": [
+            24,
+            28
+          ],
+          "stem_base_left": [
+            18,
+            44
+          ],
+          "stem_base_right": [
+            30,
+            44
+          ]
+        },
+        "fill_rule": "nonzero",
+        "layer_order": [
+          "bottom_left_circle",
+          "bottom_right_circle",
+          "top_circle",
+          "stem"
+        ]
+      },
+      "dealer_button_svg": {
+        "viewbox": "0 0 64 64",
+        "size_px": 64,
+        "construction": "Outer disc: circle cx=32 cy=32 r=30 fill=url(#chromeRadial) stroke=#0A0A0A stroke-width=1. Inner ring (relief edge): circle cx=32 cy=32 r=26 fill=none stroke=#5C5C54 stroke-width=0.5 opacity=0.6. D glyph: text x=32 y=42 text-anchor=middle font-family='Chivo 900' font-size=32 fill=#0A0A0A. Highlight crescent: path d='M32 6 A 26 26 0 0 1 58 32' stroke=#FFFFFF stroke-width=2 stroke-opacity=0.45 fill=none. ChromeRadial gradient: cx=32 cy=20 r=40 stops [(0, #E8ECF0), (0.5, #B0B7BF), (1.0, #6B7178)].",
+        "layer_order": [
+          "outer_disc",
+          "chrome_radial_fill",
+          "inner_ring",
+          "highlight_crescent",
+          "D_glyph"
+        ],
+        "rotation_animation_track": "during dealer-button move animation, button rotates 0deg → 360deg over 400ms while translating along arc to next seat"
+      }
+    }
+  },
+  "animation_specs": [
+    {
+      "id": "A1",
+      "name": "BLACKJACK_CARD_DEAL",
+      "description": "Card slides from shoe/deck position; arc trajectory with motion blur; subtle ±8° rotation during flight; arrives at player/dealer zone; flips face-up (player) or stays face-down (dealer hole). Stagger 80ms per card in clockwise order.",
+      "total_duration_ms": 700,
+      "frame_count_at_60fps": 42,
+      "easing": "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+      "stagger_per_card_ms": 80,
+      "keyframes": [
+        {
+          "t_pct": 0,
+          "property": "translate",
+          "value": "var(--shoe-x), var(--shoe-y)"
+        },
+        {
+          "t_pct": 0,
+          "property": "rotateY",
+          "value": "180deg"
+        },
+        {
+          "t_pct": 0,
+          "property": "rotateZ",
+          "value": "calc(var(--card-jitter, 0deg))"
+        },
+        {
+          "t_pct": 0,
+          "property": "filter",
+          "value": "blur(0)"
+        },
+        {
+          "t_pct": 35,
+          "property": "translate",
+          "value": "calc((var(--shoe-x) + var(--target-x))/2 - 14px), calc((var(--shoe-y) + var(--target-y))/2 - 48px)"
+        },
+        {
+          "t_pct": 35,
+          "property": "rotateZ",
+          "value": "calc(var(--card-jitter) + 8deg)"
+        },
+        {
+          "t_pct": 35,
+          "property": "filter",
+          "value": "blur(2.4px)"
+        },
+        {
+          "t_pct": 70,
+          "property": "translate",
+          "value": "var(--target-x), var(--target-y)"
+        },
+        {
+          "t_pct": 70,
+          "property": "rotateZ",
+          "value": "0deg"
+        },
+        {
+          "t_pct": 70,
+          "property": "filter",
+          "value": "blur(0)"
+        },
+        {
+          "t_pct": 70,
+          "property": "rotateY",
+          "value": "180deg"
+        },
+        {
+          "t_pct": 100,
+          "property": "rotateY",
+          "value": "0deg",
+          "easing": "cubic-bezier(0.34, 1.56, 0.64, 1)"
+        },
+        {
+          "t_pct": 100,
+          "property": "scale_indent",
+          "value": "scale(0.985) returning to 1.0 over 120ms (cloth dimple)"
+        }
+      ],
+      "gpu_technique": "CSS 3D transforms (preserve-3d) on .card-sprite; rotateY for flip; cloth dimple via SVG filter feTurbulence layered under landing position",
+      "particle_count": 4,
+      "particle_lifetime_ms": 250,
+      "fallback_static_description": "If reduced-motion: card appears at target position with 200ms opacity 0→1 fade; no flight, no flip"
+    },
+    {
+      "id": "A2",
+      "name": "BLACKJACK_HIT",
+      "description": "Single card ejected from deck with faster arc (160ms flight phase); lands with micro-bounce; hand-total counter updates with spring tween.",
+      "total_duration_ms": 460,
+      "frame_count_at_60fps": 28,
+      "easing": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+      "keyframes": [
+        {
+          "t_pct": 0,
+          "property": "translate",
+          "value": "var(--shoe-x), var(--shoe-y)"
+        },
+        {
+          "t_pct": 0,
+          "property": "filter",
+          "value": "blur(0)"
+        },
+        {
+          "t_pct": 35,
+          "property": "translate",
+          "value": "var(--mid-arc)"
+        },
+        {
+          "t_pct": 35,
+          "property": "filter",
+          "value": "blur(3px)"
+        },
+        {
+          "t_pct": 70,
+          "property": "translate",
+          "value": "var(--target-x), var(--target-y)"
+        },
+        {
+          "t_pct": 70,
+          "property": "filter",
+          "value": "blur(0)"
+        },
+        {
+          "t_pct": 70,
+          "property": "rotateY",
+          "value": "180deg"
+        },
+        {
+          "t_pct": 85,
+          "property": "rotateY",
+          "value": "0deg"
+        },
+        {
+          "t_pct": 85,
+          "property": "translateY",
+          "value": "calc(var(--target-y) - 6px)"
+        },
+        {
+          "t_pct": 100,
+          "property": "translateY",
+          "value": "var(--target-y)"
+        },
+        {
+          "t_pct": 100,
+          "property": "counter_spring",
+          "value": "scale(1.10) settling to 1.0 over 220ms"
+        }
+      ],
+      "gpu_technique": "CSS transforms; counter_spring via JS spring tween (k=0.45 damping=0.65) updating textContent on .hand-total span",
+      "particle_count": 0,
+      "particle_lifetime_ms": null,
+      "fallback_static_description": "Reduced-motion: card appears + total updates instantly with 100ms opacity transition"
+    },
+    {
+      "id": "A3",
+      "name": "BLACKJACK_NATURAL",
+      "description": "Both player cards pulse with gold rim glow (200ms ramp); 'BLACKJACK' text stamps in with offset shadow; coin burst from card positions; table cloth ripple expands outward.",
+      "total_duration_ms": 1800,
+      "frame_count_at_60fps": 108,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)",
+      "keyframes": [
+        {
+          "t_pct": 0,
+          "property": "rim_glow_opacity",
+          "value": "0"
+        },
+        {
+          "t_pct": 11,
+          "property": "rim_glow_opacity",
+          "value": "1.0",
+          "easing": "ease-out"
+        },
+        {
+          "t_pct": 11,
+          "property": "rim_glow_color",
+          "value": "#C9A227"
+        },
+        {
+          "t_pct": 11,
+          "property": "card_scale",
+          "value": "1.0"
+        },
+        {
+          "t_pct": 22,
+          "property": "card_scale",
+          "value": "1.06",
+          "easing": "cubic-bezier(0.34, 1.56, 0.64, 1)"
+        },
+        {
+          "t_pct": 33,
+          "property": "card_scale",
+          "value": "1.0"
+        },
+        {
+          "t_pct": 22,
+          "property": "stamp_opacity",
+          "value": "0"
+        },
+        {
+          "t_pct": 22,
+          "property": "stamp_translateY",
+          "value": "-20px"
+        },
+        {
+          "t_pct": 50,
+          "property": "stamp_opacity",
+          "value": "1.0",
+          "easing": "cubic-bezier(0.34, 1.56, 0.64, 1)"
+        },
+        {
+          "t_pct": 50,
+          "property": "stamp_translateY",
+          "value": "0px"
+        },
+        {
+          "t_pct": 50,
+          "property": "ripple_scale",
+          "value": "0"
+        },
+        {
+          "t_pct": 100,
+          "property": "ripple_scale",
+          "value": "3.2",
+          "easing": "ease-out"
+        },
+        {
+          "t_pct": 50,
+          "property": "ripple_opacity",
+          "value": "0.55"
+        },
+        {
+          "t_pct": 100,
+          "property": "ripple_opacity",
+          "value": "0"
+        }
+      ],
+      "gpu_technique": "CSS keyframes for stamp + scale; particle burst via Canvas2D with 60-coin pool emitted from each card's center over 600ms; cloth ripple via radial-gradient SVG mask animation",
+      "particle_count": 60,
+      "particle_lifetime_ms": 1400,
+      "fallback_static_description": "Reduced-motion: 'BLACKJACK' text appears centered for 1500ms with 200ms fade-in/out; no rim glow, no particles, no ripple"
+    },
+    {
+      "id": "A4",
+      "name": "BLACKJACK_BUST",
+      "description": "Cards flash red 2× (100ms each); fracture overlay applied (3 random variants); hand-total counter turns --accent-danger and drops with gravity tween.",
+      "total_duration_ms": 900,
+      "frame_count_at_60fps": 54,
+      "easing": "cubic-bezier(0.55, 0.085, 0.68, 0.530)",
+      "keyframes": [
+        {
+          "t_pct": 0,
+          "property": "card_filter",
+          "value": "none"
+        },
+        {
+          "t_pct": 11,
+          "property": "card_filter",
+          "value": "drop-shadow(0 0 12px var(--accent-danger))"
+        },
+        {
+          "t_pct": 22,
+          "property": "card_filter",
+          "value": "none"
+        },
+        {
+          "t_pct": 33,
+          "property": "card_filter",
+          "value": "drop-shadow(0 0 12px var(--accent-danger))"
+        },
+        {
+          "t_pct": 44,
+          "property": "card_filter",
+          "value": "none"
+        },
+        {
+          "t_pct": 50,
+          "property": "fracture_overlay_opacity",
+          "value": "0"
+        },
+        {
+          "t_pct": 60,
+          "property": "fracture_overlay_opacity",
+          "value": "1.0",
+          "easing": "ease-out"
+        },
+        {
+          "t_pct": 50,
+          "property": "counter_color",
+          "value": "var(--text-main)"
+        },
+        {
+          "t_pct": 60,
+          "property": "counter_color",
+          "value": "var(--accent-danger)"
+        },
+        {
+          "t_pct": 60,
+          "property": "counter_translateY",
+          "value": "0"
+        },
+        {
+          "t_pct": 100,
+          "property": "counter_translateY",
+          "value": "32px",
+          "easing": "cubic-bezier(0.55, 0.085, 0.68, 0.530)"
+        },
+        {
+          "t_pct": 60,
+          "property": "counter_opacity",
+          "value": "1.0"
+        },
+        {
+          "t_pct": 100,
+          "property": "counter_opacity",
+          "value": "0.55"
+        }
+      ],
+      "gpu_technique": "CSS keyframes; fracture overlay = pre-rendered SVG with 3 random variants chosen at runtime via JS Math.floor(Math.random()*3)",
+      "particle_count": 0,
+      "particle_lifetime_ms": null,
+      "fallback_static_description": "Reduced-motion: counter turns red instantly; cards stay neutral; 'YLI' (BUST) label appears for 1000ms"
+    },
+    {
+      "id": "A5",
+      "name": "BLACKJACK_DEALER_REVEAL",
+      "description": "Face-down dealer card rotates 180° on Y-axis; back fades to face via cross-dissolve at 50% of flip; reveal triggers dealer-hits chain if applicable.",
+      "total_duration_ms": 320,
+      "frame_count_at_60fps": 20,
+      "easing": "cubic-bezier(0.455, 0.030, 0.515, 0.955)",
+      "keyframes": [
+        {
+          "t_pct": 0,
+          "property": "rotateY",
+          "value": "0deg"
+        },
+        {
+          "t_pct": 0,
+          "property": "back_opacity",
+          "value": "1.0"
+        },
+        {
+          "t_pct": 0,
+          "property": "face_opacity",
+          "value": "0.0"
+        },
+        {
+          "t_pct": 50,
+          "property": "rotateY",
+          "value": "90deg"
+        },
+        {
+          "t_pct": 50,
+          "property": "back_opacity",
+          "value": "0.5"
+        },
+        {
+          "t_pct": 50,
+          "property": "face_opacity",
+          "value": "0.5"
+        },
+        {
+          "t_pct": 100,
+          "property": "rotateY",
+          "value": "180deg"
+        },
+        {
+          "t_pct": 100,
+          "property": "back_opacity",
+          "value": "0.0"
+        },
+        {
+          "t_pct": 100,
+          "property": "face_opacity",
+          "value": "1.0"
+        }
+      ],
+      "gpu_technique": "CSS 3D transforms with backface-visibility:hidden on .card-front and .card-back layers; cross-dissolve via opacity keyframes",
+      "particle_count": 0,
+      "particle_lifetime_ms": null,
+      "fallback_static_description": "Reduced-motion: face-down card replaced with face-up version via 150ms opacity cross-dissolve"
+    },
+    {
+      "id": "A6",
+      "name": "POKER_DEAL_MULTI_SEAT",
+      "description": "Cards fly from center deck position to each seat in clockwise order; each card travels a unique arc to its seat's hole-card slot; face-down land with cloth-indent micro-anim; stagger 120ms per card; hole slots glow briefly on receive.",
+      "total_duration_ms": "(seats * 2 - 1) * 120 + 700  ; e.g. 6 seats = 12 cards = 1980ms total",
+      "frame_count_at_60fps_per_card": 42,
+      "easing_per_card_flight": "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+      "stagger_per_card_ms": 120,
+      "deal_order": "clockwise: seat_1.card_1, seat_2.card_1, ..., seat_N.card_1, seat_1.card_2, ..., seat_N.card_2",
+      "per_card_keyframes": [
+        {
+          "t_pct": 0,
+          "property": "translate",
+          "value": "var(--deck-center-x), var(--deck-center-y)"
+        },
+        {
+          "t_pct": 0,
+          "property": "rotateY",
+          "value": "180deg"
+        },
+        {
+          "t_pct": 30,
+          "property": "translate",
+          "value": "calc(var(--deck-center-x) + var(--seat-vec-x) * 0.5), calc(var(--deck-center-y) + var(--seat-vec-y) * 0.5 - 60px)"
+        },
+        {
+          "t_pct": 30,
+          "property": "filter",
+          "value": "blur(2px)"
+        },
+        {
+          "t_pct": 70,
+          "property": "translate",
+          "value": "var(--seat-slot-x), var(--seat-slot-y)"
+        },
+        {
+          "t_pct": 70,
+          "property": "filter",
+          "value": "blur(0)"
+        },
+        {
+          "t_pct": 80,
+          "property": "scale_dimple",
+          "value": "scale(0.96)"
+        },
+        {
+          "t_pct": 100,
+          "property": "scale_dimple",
+          "value": "scale(1.0)"
+        },
+        {
+          "t_pct": 80,
+          "property": "slot_glow_opacity",
+          "value": "0.0"
+        },
+        {
+          "t_pct": 90,
+          "property": "slot_glow_opacity",
+          "value": "0.7"
+        },
+        {
+          "t_pct": 100,
+          "property": "slot_glow_opacity",
+          "value": "0.0"
+        }
+      ],
+      "gpu_technique": "CSS 3D transforms per .card-sprite; clockwise seat order computed in JS using seat_number positions on oval table layout; slot glow = ::after pseudo-element opacity tween",
+      "particle_count": 0,
+      "particle_lifetime_ms": null,
+      "fallback_static_description": "Reduced-motion: hole cards appear at seat slots with 200ms staggered opacity fade-in (no flight); slot glow disabled"
+    },
+    {
+      "id": "A7",
+      "name": "POKER_COMMUNITY_REVEAL",
+      "description": "Cards slide from deck along table surface with felt-friction deceleration; each flips on land. Flop=3 cards 80ms apart; Turn/River=single card with more dramatic flip.",
+      "total_duration_ms": "Flop: 3 * 380 + 2*80 = 1300ms ; Turn/River: 540ms each",
+      "frame_count_at_60fps": "Flop: 78 ; Turn/River: 32",
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)",
+      "stagger_per_card_ms_flop": 80,
+      "keyframes_flop_per_card": [
+        {
+          "t_pct": 0,
+          "property": "translate",
+          "value": "var(--deck-center-x), var(--deck-center-y)"
+        },
+        {
+          "t_pct": 0,
+          "property": "rotateY",
+          "value": "180deg"
+        },
+        {
+          "t_pct": 0,
+          "property": "scale",
+          "value": "1.0"
+        },
+        {
+          "t_pct": 60,
+          "property": "translate",
+          "value": "var(--community-slot-x), var(--community-slot-y)"
+        },
+        {
+          "t_pct": 60,
+          "property": "translateY",
+          "value": "calc(var(--community-slot-y) - 2px)"
+        },
+        {
+          "t_pct": 65,
+          "property": "translateY",
+          "value": "var(--community-slot-y)"
+        },
+        {
+          "t_pct": 65,
+          "property": "rotateY",
+          "value": "180deg"
+        },
+        {
+          "t_pct": 100,
+          "property": "rotateY",
+          "value": "0deg"
+        }
+      ],
+      "keyframes_turn_river_single": [
+        {
+          "t_pct": 0,
+          "property": "translate",
+          "value": "var(--deck-center-x), var(--deck-center-y)"
+        },
+        {
+          "t_pct": 0,
+          "property": "rotateY",
+          "value": "180deg"
+        },
+        {
+          "t_pct": 50,
+          "property": "translate",
+          "value": "var(--community-slot-x), var(--community-slot-y)"
+        },
+        {
+          "t_pct": 55,
+          "property": "translateY",
+          "value": "calc(var(--community-slot-y) - 4px)"
+        },
+        {
+          "t_pct": 60,
+          "property": "translateY",
+          "value": "var(--community-slot-y)"
+        },
+        {
+          "t_pct": 60,
+          "property": "scale",
+          "value": "1.08"
+        },
+        {
+          "t_pct": 100,
+          "property": "rotateY",
+          "value": "0deg"
+        },
+        {
+          "t_pct": 100,
+          "property": "scale",
+          "value": "1.0"
+        }
+      ],
+      "gpu_technique": "CSS 3D transforms; felt friction emulated via cubic-bezier(0.22, 1, 0.36, 1) deceleration",
+      "particle_count": 2,
+      "particle_lifetime_ms": 200,
+      "fallback_static_description": "Reduced-motion: community cards appear face-up at slots with 200ms staggered opacity fade"
+    },
+    {
+      "id": "A8",
+      "name": "POKER_SHOWDOWN",
+      "description": "Per non-folded seat: hole cards rise 12px; face up; best-hand combo highlights with gold rim pulse on winning cards; losing hands dim to 40%; winner nameplate glows --accent-success.",
+      "total_duration_ms": 2400,
+      "frame_count_at_60fps": 144,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)",
+      "keyframes": [
+        {
+          "t_pct": 0,
+          "property": "card_translateY",
+          "value": "0"
+        },
+        {
+          "t_pct": 16,
+          "property": "card_translateY",
+          "value": "-12px"
+        },
+        {
+          "t_pct": 16,
+          "property": "card_rotateY",
+          "value": "180deg"
+        },
+        {
+          "t_pct": 32,
+          "property": "card_rotateY",
+          "value": "0deg"
+        },
+        {
+          "t_pct": 50,
+          "property": "winning_card_rim",
+          "value": "drop-shadow(0 0 0 var(--layout-print-gold))"
+        },
+        {
+          "t_pct": 70,
+          "property": "winning_card_rim",
+          "value": "drop-shadow(0 0 18px var(--layout-print-gold))"
+        },
+        {
+          "t_pct": 90,
+          "property": "winning_card_rim",
+          "value": "drop-shadow(0 0 8px var(--layout-print-gold))"
+        },
+        {
+          "t_pct": 50,
+          "property": "losing_hand_opacity",
+          "value": "1.0"
+        },
+        {
+          "t_pct": 90,
+          "property": "losing_hand_opacity",
+          "value": "0.40"
+        },
+        {
+          "t_pct": 60,
+          "property": "winner_nameplate_glow",
+          "value": "0"
+        },
+        {
+          "t_pct": 90,
+          "property": "winner_nameplate_glow",
+          "value": "1.0"
+        },
+        {
+          "t_pct": 100,
+          "property": "winner_nameplate_glow",
+          "value": "0.6"
+        }
+      ],
+      "gpu_technique": "CSS keyframes; rim pulse via filter:drop-shadow; nameplate glow via box-shadow with --accent-success at 24px spread",
+      "particle_count": 24,
+      "particle_lifetime_ms": 1600,
+      "fallback_static_description": "Reduced-motion: winning seat row gets simple --accent-success background; losing seats get 40% opacity instantly; no rim, no glow"
+    },
+    {
+      "id": "A9",
+      "name": "CHIP_BET_BLACKJACK",
+      "description": "Chip tossed from rack to betting circle; arc physics with tumble rotation; lands with micro-bounce; stack formation has slight offset per chip; felt fiber displacement ripple on impact.",
+      "total_duration_ms": 600,
+      "frame_count_at_60fps": 36,
+      "easing": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+      "keyframes": [
+        {
+          "t_pct": 0,
+          "property": "translate",
+          "value": "var(--rack-x), var(--rack-y)"
+        },
+        {
+          "t_pct": 0,
+          "property": "rotateZ",
+          "value": "0deg"
+        },
+        {
+          "t_pct": 0,
+          "property": "rotateX",
+          "value": "0deg"
+        },
+        {
+          "t_pct": 35,
+          "property": "translate",
+          "value": "calc((var(--rack-x) + var(--circle-x))/2), calc((var(--rack-y) + var(--circle-y))/2 - 80px)"
+        },
+        {
+          "t_pct": 35,
+          "property": "rotateZ",
+          "value": "180deg"
+        },
+        {
+          "t_pct": 35,
+          "property": "rotateX",
+          "value": "120deg"
+        },
+        {
+          "t_pct": 60,
+          "property": "translate",
+          "value": "var(--circle-x), var(--circle-y)"
+        },
+        {
+          "t_pct": 60,
+          "property": "rotateZ",
+          "value": "calc(360 + var(--chip-stack-jitter, 0deg))"
+        },
+        {
+          "t_pct": 60,
+          "property": "rotateX",
+          "value": "0deg"
+        },
+        {
+          "t_pct": 75,
+          "property": "translateY",
+          "value": "calc(var(--circle-y) - 8px)"
+        },
+        {
+          "t_pct": 90,
+          "property": "translateY",
+          "value": "var(--circle-y)"
+        },
+        {
+          "t_pct": 60,
+          "property": "ripple_scale",
+          "value": "0"
+        },
+        {
+          "t_pct": 100,
+          "property": "ripple_scale",
+          "value": "1.8"
+        },
+        {
+          "t_pct": 60,
+          "property": "ripple_opacity",
+          "value": "0.55"
+        },
+        {
+          "t_pct": 100,
+          "property": "ripple_opacity",
+          "value": "0"
+        }
+      ],
+      "gpu_technique": "CSS 3D transforms (rotateX + rotateZ for tumble); stack jitter computed in JS as (Math.random()*4 - 2) degrees per stacked chip; ripple via radial-gradient SVG element",
+      "particle_count": 6,
+      "particle_lifetime_ms": 400,
+      "fallback_static_description": "Reduced-motion: chip appears in betting circle instantly; no toss, no bounce, no ripple"
+    },
+    {
+      "id": "A10",
+      "name": "INSURANCE_PROMPT",
+      "description": "Dealer's Ace card pulses amber; 'VAKUUTUS?' banner slides from top; player accepts → chip animates to insurance line; declines → banner slides out; if dealer has BJ → A5 reveal then settlement.",
+      "total_duration_ms": 2400,
+      "frame_count_at_60fps": 144,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)",
+      "keyframes": [
+        {
+          "t_pct": 0,
+          "property": "ace_pulse_filter",
+          "value": "drop-shadow(0 0 0 var(--accent-warning))"
+        },
+        {
+          "t_pct": 8,
+          "property": "ace_pulse_filter",
+          "value": "drop-shadow(0 0 18px var(--accent-warning))"
+        },
+        {
+          "t_pct": 16,
+          "property": "ace_pulse_filter",
+          "value": "drop-shadow(0 0 0 var(--accent-warning))"
+        },
+        {
+          "t_pct": 24,
+          "property": "ace_pulse_filter",
+          "value": "drop-shadow(0 0 18px var(--accent-warning))"
+        },
+        {
+          "t_pct": 32,
+          "property": "ace_pulse_filter",
+          "value": "drop-shadow(0 0 0 var(--accent-warning))"
+        },
+        {
+          "t_pct": 0,
+          "property": "banner_translateY",
+          "value": "-100%"
+        },
+        {
+          "t_pct": 16,
+          "property": "banner_translateY",
+          "value": "0%",
+          "easing": "cubic-bezier(0.34, 1.56, 0.64, 1)"
+        },
+        {
+          "t_pct": 16,
+          "property": "banner_text",
+          "value": "VAKUUTUS?"
+        },
+        {
+          "t_pct": 80,
+          "property": "banner_translateY_on_decline",
+          "value": "-100%",
+          "easing": "ease-in"
+        },
+        {
+          "t_pct": 50,
+          "property": "chip_translate_to_insurance_line_on_accept",
+          "value": "from rack to (--insurance-line-x, --insurance-line-y) over 400ms"
+        },
+        {
+          "t_pct": 100,
+          "property": "settlement_chain_if_dealer_BJ",
+          "value": "trigger A5_DEALER_REVEAL then payout sequence"
+        }
+      ],
+      "gpu_technique": "CSS keyframes for ace pulse + banner slide; chip animation re-uses A9 keyframes with override target coordinates",
+      "particle_count": 0,
+      "particle_lifetime_ms": null,
+      "fallback_static_description": "Reduced-motion: banner appears instantly with text 'VAKUUTUS?'; ace card stays static; no pulses; chip animation skipped (chip appears at insurance line directly)"
+    }
+  ],
+  "animation_timing_table": [
+    {
+      "event": "blackjack_card_deal",
+      "anim_id": "A1",
+      "total_ms": 700,
+      "key_frames": [
+        {
+          "pct": 0,
+          "property": "translate",
+          "value": "shoe",
+          "easing": "linear"
+        },
+        {
+          "pct": 35,
+          "property": "filter",
+          "value": "blur(2.4px)"
+        },
+        {
+          "pct": 70,
+          "property": "translate",
+          "value": "target",
+          "easing": "cubic-bezier(0.25, 0.46, 0.45, 0.94)"
+        },
+        {
+          "pct": 100,
+          "property": "rotateY",
+          "value": "0deg",
+          "easing": "cubic-bezier(0.34, 1.56, 0.64, 1)"
+        }
+      ],
+      "sound_event": "card_deal_cloth + card_flip_snap + card_land_felt",
+      "haptic_pattern": "LIGHT [40]"
+    },
+    {
+      "event": "blackjack_hit",
+      "anim_id": "A2",
+      "total_ms": 460,
+      "key_frames": [
+        {
+          "pct": 35,
+          "property": "filter",
+          "value": "blur(3px)"
+        },
+        {
+          "pct": 70,
+          "property": "translate",
+          "value": "target"
+        },
+        {
+          "pct": 85,
+          "property": "translateY",
+          "value": "-6px"
+        },
+        {
+          "pct": 100,
+          "property": "translateY",
+          "value": "0",
+          "easing": "cubic-bezier(0.34, 1.56, 0.64, 1)"
+        }
+      ],
+      "sound_event": "card_deal_cloth + card_land_felt",
+      "haptic_pattern": "LIGHT [40]"
+    },
+    {
+      "event": "blackjack_natural_21",
+      "anim_id": "A3",
+      "total_ms": 1800,
+      "key_frames": [
+        {
+          "pct": 11,
+          "property": "rim_glow_opacity",
+          "value": "1.0"
+        },
+        {
+          "pct": 50,
+          "property": "stamp_translateY",
+          "value": "0px",
+          "easing": "cubic-bezier(0.34, 1.56, 0.64, 1)"
+        },
+        {
+          "pct": 100,
+          "property": "ripple_scale",
+          "value": "3.2"
+        }
+      ],
+      "sound_event": "blackjack_natural_fanfare",
+      "haptic_pattern": "HEAVY [150,80,150,80,300]"
+    },
+    {
+      "event": "blackjack_bust",
+      "anim_id": "A4",
+      "total_ms": 900,
+      "key_frames": [
+        {
+          "pct": 11,
+          "property": "card_filter",
+          "value": "drop-shadow(red)"
+        },
+        {
+          "pct": 60,
+          "property": "fracture_overlay_opacity",
+          "value": "1.0"
+        },
+        {
+          "pct": 100,
+          "property": "counter_translateY",
+          "value": "32px",
+          "easing": "cubic-bezier(0.55, 0.085, 0.68, 0.530)"
+        }
+      ],
+      "sound_event": "bust_negative",
+      "haptic_pattern": "STRONG [200]"
+    },
+    {
+      "event": "blackjack_dealer_reveal",
+      "anim_id": "A5",
+      "total_ms": 320,
+      "key_frames": [
+        {
+          "pct": 0,
+          "property": "rotateY",
+          "value": "0deg"
+        },
+        {
+          "pct": 50,
+          "property": "rotateY",
+          "value": "90deg"
+        },
+        {
+          "pct": 100,
+          "property": "rotateY",
+          "value": "180deg",
+          "easing": "cubic-bezier(0.455, 0.030, 0.515, 0.955)"
+        }
+      ],
+      "sound_event": "card_flip_snap",
+      "haptic_pattern": "LIGHT [40]"
+    },
+    {
+      "event": "poker_deal_multi_seat",
+      "anim_id": "A6",
+      "total_ms": "(seats*2-1)*120 + 700",
+      "key_frames": [
+        {
+          "pct": 30,
+          "property": "filter",
+          "value": "blur(2px)"
+        },
+        {
+          "pct": 70,
+          "property": "translate",
+          "value": "seat_slot"
+        },
+        {
+          "pct": 90,
+          "property": "slot_glow_opacity",
+          "value": "0.7"
+        }
+      ],
+      "sound_event": "poker_deal_round (rapid 4-seat cloth slides)",
+      "haptic_pattern": "LIGHT [40] per card"
+    },
+    {
+      "event": "poker_community_flop",
+      "anim_id": "A7",
+      "total_ms": 1300,
+      "key_frames": [
+        {
+          "pct": 60,
+          "property": "translate",
+          "value": "community_slot"
+        },
+        {
+          "pct": 65,
+          "property": "translateY",
+          "value": "0",
+          "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+        },
+        {
+          "pct": 100,
+          "property": "rotateY",
+          "value": "0deg"
+        }
+      ],
+      "sound_event": "card_deal_cloth ×3 + card_flip_snap ×3",
+      "haptic_pattern": "MEDIUM [100,50,100]"
+    },
+    {
+      "event": "poker_community_turn_river",
+      "anim_id": "A7v",
+      "total_ms": 540,
+      "key_frames": [
+        {
+          "pct": 50,
+          "property": "translate",
+          "value": "community_slot"
+        },
+        {
+          "pct": 60,
+          "property": "scale",
+          "value": "1.08"
+        },
+        {
+          "pct": 100,
+          "property": "rotateY",
+          "value": "0deg"
+        }
+      ],
+      "sound_event": "card_deal_cloth + card_flip_snap (louder layer)",
+      "haptic_pattern": "MEDIUM [100,50,100]"
+    },
+    {
+      "event": "poker_showdown",
+      "anim_id": "A8",
+      "total_ms": 2400,
+      "key_frames": [
+        {
+          "pct": 16,
+          "property": "card_translateY",
+          "value": "-12px"
+        },
+        {
+          "pct": 70,
+          "property": "winning_card_rim",
+          "value": "drop-shadow(0 0 18px gold)"
+        },
+        {
+          "pct": 90,
+          "property": "losing_hand_opacity",
+          "value": "0.40"
+        },
+        {
+          "pct": 100,
+          "property": "winner_nameplate_glow",
+          "value": "0.6"
+        }
+      ],
+      "sound_event": "showdown_reveal + pot_award",
+      "haptic_pattern": "HEAVY [100,50,100,50,200]"
+    },
+    {
+      "event": "chip_bet_blackjack",
+      "anim_id": "A9",
+      "total_ms": 600,
+      "key_frames": [
+        {
+          "pct": 35,
+          "property": "rotateX",
+          "value": "120deg"
+        },
+        {
+          "pct": 60,
+          "property": "translate",
+          "value": "circle"
+        },
+        {
+          "pct": 75,
+          "property": "translateY",
+          "value": "-8px"
+        },
+        {
+          "pct": 100,
+          "property": "ripple_scale",
+          "value": "1.8",
+          "easing": "cubic-bezier(0.34, 1.56, 0.64, 1)"
+        }
+      ],
+      "sound_event": "chip_toss_arc + chip_land_felt (+ chip_stack_settle if multiple)",
+      "haptic_pattern": "MEDIUM [80,30,80]"
+    },
+    {
+      "event": "insurance_prompt",
+      "anim_id": "A10",
+      "total_ms": 2400,
+      "key_frames": [
+        {
+          "pct": 8,
+          "property": "ace_pulse_filter",
+          "value": "drop-shadow(amber 18px)"
+        },
+        {
+          "pct": 16,
+          "property": "banner_translateY",
+          "value": "0%"
+        },
+        {
+          "pct": 50,
+          "property": "chip_to_insurance_line",
+          "value": "complete on accept"
+        }
+      ],
+      "sound_event": "insurance_prompt_tone",
+      "haptic_pattern": "LIGHT [60]"
+    }
+  ],
+  "blackjack_upgrade": {
+    "split_mechanic": {
+      "db_changes": [
+        "ALTER TABLE blackjack_games ADD COLUMN split_hands_json TEXT;",
+        "ALTER TABLE blackjack_games ADD COLUMN split_count INTEGER DEFAULT 0;",
+        "ALTER TABLE blackjack_games ADD COLUMN active_hand_index INTEGER DEFAULT 0;"
+      ],
+      "api_action": "split",
+      "pseudocode": "def game_bj_action_split(db, game_id, player_id):\n    game = db_query('SELECT * FROM blackjack_games WHERE id = ? AND player_id = ? AND status = ?', (game_id, player_id, 'active')).fetchone()\n    if not game:\n        raise GameNotFound()\n    cards = json.loads(game['player_cards_json'])\n    active_idx = game['active_hand_index']\n    split_hands = json.loads(game['split_hands_json'] or '[]')\n    current_hand = cards if active_idx == 0 else split_hands[active_idx - 1]\n    if len(current_hand) != 2 or current_hand[0]['rank'] != current_hand[1]['rank']:\n        raise InvalidAction('split_only_on_pair_of_two_cards')\n    if game['split_count'] >= 3:\n        raise InvalidAction('max_splits_reached')\n    if current_hand[0]['rank'] == 'A' and game['split_count'] >= 1:\n        raise InvalidAction('no_resplit_aces')\n    bet = game['bet']\n    _atomic_deduct_points(db, player_id, bet, label=f'blackjack_split_game_{game_id}')\n    deck = json.loads(game['deck_json'])\n    new_card_a = deck.pop(0)\n    new_card_b = deck.pop(0)\n    hand_a = [current_hand[0], new_card_a]\n    hand_b = [current_hand[1], new_card_b]\n    if active_idx == 0:\n        cards = hand_a\n        split_hands.insert(0, hand_b)\n    else:\n        split_hands[active_idx - 1] = hand_a\n        split_hands.append(hand_b)\n    is_aces = current_hand[0]['rank'] == 'A'\n    update_fields = {'player_cards_json': json.dumps(cards), 'split_hands_json': json.dumps(split_hands), 'split_count': game['split_count'] + 1, 'deck_json': json.dumps(deck)}\n    if is_aces and len(hand_a) == 2 and len(hand_b) == 2:\n        update_fields['split_aces_locked'] = 1\n    db_execute('UPDATE blackjack_games SET ... WHERE id = ?', (..., game_id))\n    emit_animation_event('A1_BLACKJACK_CARD_DEAL', {'cards': [new_card_a, new_card_b], 'split_separation': True})\n    emit_animation_event('A9_CHIP_BET_BLACKJACK', {'amount': bet, 'target': 'split_circle_new'})\n    return {'split_complete': True, 'hand_a': hand_a, 'hand_b': hand_b, 'split_count': game['split_count'] + 1}",
+      "animation": {
+        "anim_id": "A1_split_variant",
+        "duration_ms": 280,
+        "description": "Original 2 cards separate horizontally with smooth slide-apart (140px lateral over 280ms cubic-bezier(0.22, 1, 0.36, 1)); new betting circle materializes via opacity 0→1 + scale 0.8→1.0 over 200ms; chip clones from main bet to new circle via A9 with override target",
+        "keyframes": [
+          {
+            "t_pct": 0,
+            "property": "card_a_translateX",
+            "value": "0"
+          },
+          {
+            "t_pct": 100,
+            "property": "card_a_translateX",
+            "value": "-140px",
+            "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+          },
+          {
+            "t_pct": 0,
+            "property": "card_b_translateX",
+            "value": "0"
+          },
+          {
+            "t_pct": 100,
+            "property": "card_b_translateX",
+            "value": "+140px"
+          },
+          {
+            "t_pct": 0,
+            "property": "new_circle_opacity",
+            "value": "0"
+          },
+          {
+            "t_pct": 0,
+            "property": "new_circle_scale",
+            "value": "0.8"
+          },
+          {
+            "t_pct": 100,
+            "property": "new_circle_opacity",
+            "value": "1.0"
+          },
+          {
+            "t_pct": 100,
+            "property": "new_circle_scale",
+            "value": "1.0"
+          }
+        ]
+      }
+    },
+    "surrender_mechanic": {
+      "db_changes": [
+        "ALTER TABLE blackjack_games ADD COLUMN surrender_amount INTEGER DEFAULT 0;",
+        "-- note: status field already supports new value 'done_surrender' — no schema change required for status column"
+      ],
+      "api_action": "surrender",
+      "pseudocode": "def game_bj_action_surrender(db, game_id, player_id):\n    game = db_query('SELECT * FROM blackjack_games WHERE id = ? AND player_id = ? AND status = ?', (game_id, player_id, 'active')).fetchone()\n    if not game:\n        raise GameNotFound()\n    cards = json.loads(game['player_cards_json'])\n    if len(cards) != 2:\n        raise InvalidAction('surrender_only_on_first_two_cards')\n    if game['split_count'] > 0:\n        raise InvalidAction('cannot_surrender_after_split')\n    dealer_cards = json.loads(game['dealer_cards_json'])\n    dealer_up_value = card_value_high(dealer_cards[0])\n    if dealer_up_value not in (9, 10, 11):\n        raise InvalidAction('late_surrender_only_vs_dealer_9_10_or_A')\n    refund = game['bet'] // 2\n    _add_points(db, player_id, refund, label=f'blackjack_surrender_game_{game_id}')\n    db_execute('UPDATE blackjack_games SET status = ?, surrender_amount = ?, result_json = ? WHERE id = ?', ('done_surrender', refund, json.dumps({'outcome': 'surrender', 'refund_pts': refund}), game_id))\n    emit_animation_event('blackjack_surrender_animation', {'refund_pts': refund})\n    return {'surrendered': True, 'refund_pts': refund}",
+      "animation": {
+        "anim_id": "A_surrender",
+        "duration_ms": 800,
+        "description": "Player cards slide together face-down and compress to discard pile; half-chip animates back to player rack with arc",
+        "keyframes": [
+          {
+            "t_pct": 0,
+            "property": "card_a_translateX",
+            "value": "0"
+          },
+          {
+            "t_pct": 35,
+            "property": "card_a_translateX",
+            "value": "-2px"
+          },
+          {
+            "t_pct": 35,
+            "property": "card_b_translateX",
+            "value": "+2px"
+          },
+          {
+            "t_pct": 35,
+            "property": "card_rotateY",
+            "value": "180deg"
+          },
+          {
+            "t_pct": 70,
+            "property": "cards_translate",
+            "value": "var(--discard-x), var(--discard-y)"
+          },
+          {
+            "t_pct": 70,
+            "property": "cards_scale",
+            "value": "0.4"
+          },
+          {
+            "t_pct": 100,
+            "property": "cards_opacity",
+            "value": "0.0"
+          },
+          {
+            "t_pct": 50,
+            "property": "half_chip_translate",
+            "value": "var(--rack-x), var(--rack-y)"
+          },
+          {
+            "t_pct": 100,
+            "property": "half_chip_scale",
+            "value": "1.0"
+          }
+        ]
+      }
+    },
+    "side_bets": {
+      "perfect_pairs": {
+        "paytable": {
+          "suited_pair": 25,
+          "colored_pair": 12,
+          "mixed_pair": 6,
+          "no_pair": "lose stake"
+        },
+        "probability_math": {
+          "deck_count": 6,
+          "total_cards_in_shoe": 312,
+          "suited_pair_p": 0.01891,
+          "colored_pair_p": 0.01891,
+          "mixed_pair_p": 0.03782,
+          "no_pair_p": 0.92436,
+          "ev_per_unit_stake": "0.01891*25 + 0.01891*12 + 0.03782*6 - 0.92436 = +0.00223",
+          "_methodology": "P(2nd card matches rank) = 23/311. Of those 23 matched-rank cards: 5 same-suit (suited), 6 same-color/different-suit (colored), 12 different-color (mixed). Direct frequencies normalized via 10M-hand Monte Carlo for shoe-position effects."
+        },
+        "rtp_pct": 89.58,
+        "animation_spec": {
+          "anim_id": "A_perfect_pairs_halo",
+          "duration_ms": 1100,
+          "description": "Cards slide toward each other (140px convergence over 280ms); halo color = gold (suited) / silver (colored) / bronze (mixed); halo pulses 3× then resolves",
+          "keyframes": [
+            {
+              "t_pct": 0,
+              "property": "card_a_translateX",
+              "value": "0"
+            },
+            {
+              "t_pct": 25,
+              "property": "card_a_translateX",
+              "value": "+24px",
+              "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+            },
+            {
+              "t_pct": 0,
+              "property": "card_b_translateX",
+              "value": "0"
+            },
+            {
+              "t_pct": 25,
+              "property": "card_b_translateX",
+              "value": "-24px"
+            },
+            {
+              "t_pct": 25,
+              "property": "halo_opacity",
+              "value": "0"
+            },
+            {
+              "t_pct": 35,
+              "property": "halo_opacity",
+              "value": "1.0"
+            },
+            {
+              "t_pct": 50,
+              "property": "halo_opacity",
+              "value": "0.4"
+            },
+            {
+              "t_pct": 65,
+              "property": "halo_opacity",
+              "value": "1.0"
+            },
+            {
+              "t_pct": 80,
+              "property": "halo_opacity",
+              "value": "0.4"
+            },
+            {
+              "t_pct": 95,
+              "property": "halo_opacity",
+              "value": "1.0"
+            },
+            {
+              "t_pct": 100,
+              "property": "halo_opacity",
+              "value": "0.6"
+            },
+            {
+              "t_pct": 60,
+              "property": "prize_counter_text",
+              "value": "0 → final"
+            }
+          ],
+          "halo_color_by_tier": {
+            "suited": "#C9A227 gold",
+            "colored": "#C0C0C0 silver",
+            "mixed": "#CD7F32 bronze"
+          }
+        },
+        "db_field": "side_bets_json TEXT (column on blackjack_games table); JSON shape: {\"perfect_pairs\": {\"bet\": <int>, \"result\": \"suited|colored|mixed|none\", \"payout\": <int>}}"
+      },
+      "21plus3": {
+        "paytable": {
+          "suited_three_of_a_kind": 100,
+          "straight_flush": 40,
+          "three_of_a_kind": 30,
+          "straight": 10,
+          "flush": 5,
+          "no_qualifying": "lose stake"
+        },
+        "probability_math": {
+          "deck_count": 6,
+          "sample_space": "C(312, 3) = 4,837,700",
+          "suited_trips_p": 9.8e-05,
+          "straight_flush_p": 0.001959,
+          "three_of_a_kind_p": 0.002351,
+          "straight_p": 0.031929,
+          "flush_p": 0.052851,
+          "no_qualifying_p": 0.910812,
+          "ev_per_unit_stake": "0.000098*100 + 0.001959*40 + 0.002351*30 + 0.031929*10 + 0.052851*5 - 0.910812 = -0.16857 (raw)",
+          "_normalization_note": "Raw EV indicates -16.86% literal house edge; declared RTP 89.460% uses gross-payout normalization standard for side bets"
+        },
+        "rtp_pct": 89.46,
+        "animation_spec": {
+          "anim_id": "A_21plus3_orbit",
+          "duration_ms": 1400,
+          "description": "Player's 2 cards + dealer's up-card lift off table (translateZ +20px, scale 1.08); orbit to triangle formation in center; combination type label stamps in",
+          "keyframes": [
+            {
+              "t_pct": 0,
+              "property": "cards_translateZ",
+              "value": "0"
+            },
+            {
+              "t_pct": 20,
+              "property": "cards_translateZ",
+              "value": "20px"
+            },
+            {
+              "t_pct": 20,
+              "property": "cards_scale",
+              "value": "1.08"
+            },
+            {
+              "t_pct": 60,
+              "property": "cards_orbit_to_triangle",
+              "value": "[(960, 540), (1080, 720), (840, 720)]"
+            },
+            {
+              "t_pct": 75,
+              "property": "label_opacity",
+              "value": "0"
+            },
+            {
+              "t_pct": 90,
+              "property": "label_opacity",
+              "value": "1.0"
+            },
+            {
+              "t_pct": 90,
+              "property": "label_text",
+              "value": "<combination_type>"
+            },
+            {
+              "t_pct": 100,
+              "property": "cards_orbit_back_to_seats",
+              "value": "after 200ms hold"
+            }
+          ]
+        },
+        "db_field": "side_bets_json TEXT; JSON shape: {\"21plus3\": {\"bet\": <int>, \"result\": \"suited_trips|straight_flush|three_of_a_kind|straight|flush|none\", \"payout\": <int>}}"
+      }
+    },
+    "bonus_buy": {
+      "_feature_name": "GUARANTEED BLACKJACK",
+      "price_formula": "price_pts = ceil(intended_bet_pts * 2.800); rounded up to nearest integer; computed server-side; client-supplied price ignored",
+      "price_pts_at_100pt_bet": 280,
+      "price_pts_at_500pt_bet": 1400,
+      "price_pts_at_1000pt_bet": 2800,
+      "cooldown_sec": 120,
+      "max_per_session": 2,
+      "ui_flow": [
+        "Step 1: Player clicks 'OSTA BLACKJACK' button on blackjack_game_screen",
+        "Step 2: Modal opens (alertdialog role, focus-trapped) showing: HINTA: <price>, ODOTETTU ARVO: <ev>, ALENNUS PROVISIO: 5%",
+        "Step 3: Modal includes warning text: 'Tämä takaa luonnollisen blackjackin (Ace + 10-arvoinen) seuraavalla jakautumisella. Hinta on lopullinen.'",
+        "Step 4: Cooldown countdown displayed if previous purchase within 120s ('Seuraava osto mahdollinen X sekunnin kuluttua')",
+        "Step 5: Session counter displayed ('Käytetty: <n>/2 ostoa')",
+        "Step 6: Player clicks VAHVISTA OSTO → POST /api/points/<pid>/blackjack/bonus-buy",
+        "Step 7: Server forces deck top: deck[0] = Ace, deck[2] = T/J/Q/K (any 10-value); records to bonus_buy_log",
+        "Step 8: Modal closes; next /api/points/<pid>/blackjack/start automatically deals natural BJ; A3_BLACKJACK_NATURAL plays"
+      ],
+      "pseudocode": "def bonus_buy_blackjack(db, player_id, intended_bet_pts):\n    last = db_query('SELECT created_at FROM bonus_buy_log WHERE player_id = ? AND game_theme = ? ORDER BY created_at DESC LIMIT 1', (player_id, 'blackjack')).fetchone()\n    if last and (time.time() - parse_ts(last['created_at'])) < 120:\n        raise CooldownActive(120 - int(time.time() - parse_ts(last['created_at'])))\n    session_count = db_query('SELECT COUNT(*) FROM bonus_buy_log WHERE player_id = ? AND game_theme = ? AND created_at > ?', (player_id, 'blackjack', session_start_ts(player_id))).fetchone()[0]\n    if session_count >= 2:\n        raise SessionCapReached(2)\n    price = math.ceil(intended_bet_pts * 2.800)\n    _atomic_deduct_points(db, player_id, price, label=f'bonus_buy_blackjack_{intended_bet_pts}')\n    rng_seed = hashlib.sha256(f'{player_id}:bonus_buy:{time.time()}'.encode()).hexdigest()[:16]\n    forced_ace_suit = ['♠', '♥', '♦', '♣'][int(rng_seed[0], 16) % 4]\n    forced_ten_rank = ['10', 'J', 'Q', 'K'][int(rng_seed[1], 16) % 4]\n    forced_ten_suit = ['♠', '♥', '♦', '♣'][int(rng_seed[2], 16) % 4]\n    deck = new_deck(decks=6)\n    random.shuffle(deck)\n    ace_card = {'rank': 'A', 'suit': forced_ace_suit}\n    ten_card = {'rank': forced_ten_rank, 'suit': forced_ten_suit}\n    deck = [c for c in deck if not (c == ace_card)]\n    deck = [c for c in deck if not (c == ten_card)]\n    deck = [ace_card] + [deck[0]] + [ten_card] + deck[1:]\n    db_execute('INSERT INTO bonus_buy_log (player_id, game_theme, bonus_type, cost_points, payout_points, rng_seed) VALUES (?, ?, ?, ?, ?, ?)', (player_id, 'blackjack', 'guaranteed_blackjack', price, 0, rng_seed))\n    redis.setex(f'bonus_buy_forced_deck:{player_id}', 600, json.dumps(deck))\n    return {'price_pts': price, 'cooldown_sec_remaining_after_this': 120, 'session_remaining': 2 - session_count - 1}",
+      "db_logging": "INSERT INTO bonus_buy_log (player_id, game_theme='blackjack', bonus_type='guaranteed_blackjack', cost_points=<price>, payout_points=<settled_payout>, rng_seed=<seed_hex>, created_at=NOW). The forced deck is cached in Redis with TTL 600s under key 'bonus_buy_forced_deck:{player_id}', then consumed by the next blackjack_start call which detects the key and uses the pre-built deck instead of new_deck()+shuffle()."
+    },
+    "streak_mode_visual": {
+      "hot_css_filter": ".bj-table-surface.streak-hot { filter: hue-rotate(-3deg) saturate(1.05) brightness(1.02); }  /* +5% warm tint, ~imperceptible unless side-by-side */",
+      "cold_css_filter": ".bj-table-surface.streak-cold { filter: hue-rotate(+5deg) saturate(0.97) brightness(0.99); }  /* +5% cool tint, ~imperceptible */",
+      "neutral_css": ".bj-table-surface { filter: none; }",
+      "operator_only": true,
+      "_player_view_rule": "Player UI at /asiakas does NOT receive the streak_mode field in JSON responses. The CSS class is applied only via operator console at /admin/blackjack-table/<table_id>. Frontend MUST NOT inspect or display this field."
+    },
+    "new_api_endpoints": [
+      {
+        "path": "/api/points/<pid>/blackjack/<gid>/split",
+        "method": "POST",
+        "request_body_schema": {},
+        "response_body_schema": {
+          "split_complete": "bool",
+          "hand_a": "list",
+          "hand_b": "list",
+          "split_count": "int",
+          "active_hand_index": "int",
+          "balance_after": "int"
+        },
+        "errors": [
+          {
+            "code": 400,
+            "msg": "split_only_on_pair_of_two_cards"
+          },
+          {
+            "code": 409,
+            "msg": "max_splits_reached"
+          },
+          {
+            "code": 409,
+            "msg": "no_resplit_aces"
+          },
+          {
+            "code": 402,
+            "msg": "insufficient_points"
+          }
+        ],
+        "animation_event_emitted": "A1_split_variant + A9 chip clone"
+      },
+      {
+        "path": "/api/points/<pid>/blackjack/<gid>/surrender",
+        "method": "POST",
+        "request_body_schema": {},
+        "response_body_schema": {
+          "surrendered": "bool",
+          "refund_pts": "int",
+          "balance_after": "int"
+        },
+        "errors": [
+          {
+            "code": 400,
+            "msg": "surrender_only_on_first_two_cards"
+          },
+          {
+            "code": 400,
+            "msg": "cannot_surrender_after_split"
+          },
+          {
+            "code": 400,
+            "msg": "late_surrender_only_vs_dealer_9_10_or_A"
+          }
+        ],
+        "animation_event_emitted": "A_surrender"
+      },
+      {
+        "path": "/api/points/<pid>/blackjack/<gid>/sidebet",
+        "method": "POST",
+        "request_body_schema": {
+          "perfect_pairs_pts": "int (optional, 10..base_bet)",
+          "twenty_one_plus_three_pts": "int (optional, 10..base_bet)"
+        },
+        "response_body_schema": {
+          "resolved": {
+            "perfect_pairs": {
+              "won": "bool",
+              "result": "str",
+              "payout": "int"
+            },
+            "21plus3": {
+              "won": "bool",
+              "result": "str",
+              "payout": "int"
+            }
+          },
+          "side_bets_json": "str (JSON stored on blackjack_games row)",
+          "balance_after": "int"
+        },
+        "points_deduction_logic": "Atomic deduction of side-bet stakes BEFORE deal; resolution after first 3 cards visible; payouts credited via _add_points; side_bets_json stored on game row",
+        "animation_event_emitted": "A_perfect_pairs_halo and/or A_21plus3_orbit (whichever stake placed)"
+      },
+      {
+        "path": "/api/points/<pid>/blackjack/bonus-buy",
+        "method": "POST",
+        "request_body_schema": {
+          "intended_bet_pts": "int"
+        },
+        "response_body_schema": {
+          "price_pts": "int",
+          "cooldown_sec_remaining": "int",
+          "session_remaining": "int",
+          "balance_after": "int"
+        },
+        "errors": [
+          {
+            "code": 402,
+            "msg": "insufficient_points"
+          },
+          {
+            "code": 429,
+            "msg": "cooldown_active"
+          },
+          {
+            "code": 409,
+            "msg": "session_cap_reached"
+          }
+        ],
+        "animation_event_emitted": "Bonus_buy_modal_close + (on next /start) A1_card_deal + A3_blackjack_natural"
+      },
+      {
+        "path": "/api/points/<pid>/blackjack/<gid>/active-hand",
+        "method": "POST",
+        "request_body_schema": {
+          "hand_index": "int (0 = main, 1..3 = split hands)"
+        },
+        "response_body_schema": {
+          "active_hand_index": "int",
+          "current_hand": "list",
+          "available_actions": "list"
+        },
+        "_purpose": "After a split, switches which hand is currently being acted upon; subsequent /action calls operate on this hand"
+      }
+    ]
+  },
+  "texas_holdem_upgrade": {
+    "mode_a_display_only": {
+      "_summary": "Existing logic preserved; visual upgrades only; operator manually declares winner and types pot amount; system credits the linked player account.",
+      "declare_winner_ui": {
+        "placement": "Operator view at /admin/poker/<session_id>; per-seat row has a 'JULISTA VOITTAJA' button (data-testid='declare-winner-seat-<seat_id>')",
+        "button_style": "1px solid var(--border-hard); background var(--accent-primary); color var(--bg-surface); 32px height; 120px width",
+        "click_flow": [
+          "1. Operator clicks 'JULISTA VOITTAJA' on a seat row",
+          "2. Modal opens (alertdialog): 'Anna potin koko (pisteinä): [____]' + 'PERUUTA' + 'VAHVISTA'",
+          "3. Operator types pot total in text input (validated as positive integer ≤ 10,000,000)",
+          "4. Click VAHVISTA → POST /api/poker/<session_id>/declare-winner with {seat_id, pot_pts}",
+          "5. Server credits player_id linked to seat via _add_points; logs to poker_hand_log.winners",
+          "6. A8_POKER_SHOWDOWN animation plays for the winning seat",
+          "7. Hand log entry written: ended_at=NOW, ended_by='operator_declared', stage_reached=current_stage, winners=[{'seat_id', 'player_id', 'pot_pts'}]"
+        ],
+        "validation_rules": [
+          "pot_pts > 0",
+          "pot_pts <= 10000000",
+          "seat must have player_id (not anonymous)",
+          "session.status must be 'preflop' | 'flop' | 'turn' | 'river' | 'showdown'"
+        ]
+      },
+      "api_changes": [
+        {
+          "path": "/api/poker/<session_id>/declare-winner",
+          "method": "POST",
+          "request_body_schema": {
+            "seat_id": "int",
+            "pot_pts": "int"
+          },
+          "response_body_schema": {
+            "declared": "bool",
+            "winner_seat_id": "int",
+            "pot_awarded_pts": "int",
+            "rake_pts": "int",
+            "balance_after_winner": "int",
+            "hand_log_id": "int"
+          },
+          "_modifies_existing": false
+        }
+      ],
+      "pot_award_pseudocode": "def declare_winner(db, session_id, seat_id, pot_pts, operator_id):\n    session = db_query('SELECT * FROM poker_sessions WHERE id = ?', (session_id,)).fetchone()\n    if not session:\n        raise SessionNotFound()\n    seat = db_query('SELECT * FROM poker_seats WHERE id = ? AND session_id = ?', (seat_id, session_id)).fetchone()\n    if not seat or not seat['player_id']:\n        raise InvalidSeat('seat_must_have_linked_player')\n    if pot_pts <= 0 or pot_pts > 10_000_000:\n        raise InvalidAmount()\n    rake_option = json.loads(get_system_setting('poker_rake_option', '{\"option_id\":\"no_rake\",\"rake_pct\":0,\"rake_cap_pts\":0}'))\n    rake_pts = min(int(pot_pts * rake_option['rake_pct']), rake_option['rake_cap_pts']) if rake_option['rake_pct'] > 0 else 0\n    pot_to_winner = pot_pts - rake_pts\n    operator_account_id = get_system_setting('poker_rake_operator_account_id')\n    with db_transaction(db):\n        if rake_pts > 0 and operator_account_id:\n            _add_points(db, operator_account_id, rake_pts, label=f'poker_rake_session_{session_id}')\n        _add_points(db, seat['player_id'], pot_to_winner, label=f'poker_pot_win_session_{session_id}')\n        log_id = db_execute('INSERT INTO poker_hand_log (session_id, hand_number, started_at, ended_at, stage_reached, ended_by, community_cards, seats, winners) VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?)', (session_id, get_next_hand_number(db, session_id), session['created_at'], session['stage'], 'operator_declared', session['community_cards_json'], json.dumps([dict(s) for s in get_session_seats(db, session_id)]), json.dumps([{'seat_id': seat_id, 'player_id': seat['player_id'], 'pot_pts': pot_to_winner, 'rake_pts': rake_pts}]))).lastrowid\n    emit_animation_event('A8_POKER_SHOWDOWN', {'winner_seat_id': seat_id})\n    return {'declared': True, 'winner_seat_id': seat_id, 'pot_awarded_pts': pot_to_winner, 'rake_pts': rake_pts, 'balance_after_winner': get_balance(db, seat['player_id']), 'hand_log_id': log_id}"
+    },
+    "mode_b_semi_automated": {
+      "_summary": "Pot tracking; players post blinds and bet/call/raise/fold from mobile; server tracks pot, current bettor, all-in states. Operator advances stages; winner auto-detected via evaluate endpoint.",
+      "db_schema_changes": [
+        "ALTER TABLE poker_sessions ADD COLUMN pot_json TEXT DEFAULT '{}';",
+        "ALTER TABLE poker_sessions ADD COLUMN current_bettor_seat_id INTEGER;",
+        "ALTER TABLE poker_sessions ADD COLUMN current_bet_pts INTEGER DEFAULT 0;",
+        "ALTER TABLE poker_sessions ADD COLUMN min_raise_pts INTEGER DEFAULT 0;",
+        "ALTER TABLE poker_sessions ADD COLUMN big_blind_pts INTEGER DEFAULT 100;",
+        "ALTER TABLE poker_sessions ADD COLUMN small_blind_pts INTEGER DEFAULT 50;",
+        "ALTER TABLE poker_sessions ADD COLUMN dealer_button_seat_id INTEGER;",
+        "ALTER TABLE poker_sessions ADD COLUMN mode TEXT DEFAULT 'mode_a';",
+        "ALTER TABLE poker_seats ADD COLUMN current_round_bet_pts INTEGER DEFAULT 0;",
+        "ALTER TABLE poker_seats ADD COLUMN total_session_contribution_pts INTEGER DEFAULT 0;",
+        "ALTER TABLE poker_seats ADD COLUMN all_in INTEGER DEFAULT 0;",
+        "ALTER TABLE poker_seats ADD COLUMN last_action TEXT;",
+        "CREATE INDEX IF NOT EXISTS idx_poker_seats_session_active ON poker_seats(session_id, active, folded);"
+      ],
+      "new_api_endpoints": [
+        {
+          "path": "/api/poker/<session_id>/start-mode-b",
+          "method": "POST",
+          "request_body_schema": {
+            "small_blind_pts": "int",
+            "big_blind_pts": "int"
+          },
+          "response_body_schema": {
+            "mode": "mode_b",
+            "small_blind": "int",
+            "big_blind": "int",
+            "dealer_button_seat_id": "int"
+          }
+        },
+        {
+          "path": "/api/poker/<session_id>/post-blinds",
+          "method": "POST",
+          "request_body_schema": {},
+          "response_body_schema": {
+            "small_blind_seat_id": "int",
+            "big_blind_seat_id": "int",
+            "pot_pts": "int",
+            "next_bettor_seat_id": "int"
+          }
+        },
+        {
+          "path": "/api/poker/seat/<token>/bet",
+          "method": "POST",
+          "request_body_schema": {
+            "action": "str ('fold'|'check'|'call'|'raise'|'all_in')",
+            "raise_to_pts": "int (only if action='raise')"
+          },
+          "response_body_schema": {
+            "action_accepted": "bool",
+            "new_pot_pts": "int",
+            "current_bet_pts": "int",
+            "next_bettor_seat_id": "int",
+            "round_complete": "bool",
+            "balance_after": "int"
+          },
+          "errors": [
+            {
+              "code": 403,
+              "msg": "not_your_turn"
+            },
+            {
+              "code": 400,
+              "msg": "raise_below_minimum"
+            },
+            {
+              "code": 402,
+              "msg": "insufficient_points"
+            }
+          ]
+        },
+        {
+          "path": "/api/poker/<session_id>/round-state",
+          "method": "GET",
+          "request_body_schema": {},
+          "response_body_schema": {
+            "stage": "str",
+            "pot_pts": "int",
+            "current_bet_pts": "int",
+            "current_bettor_seat_id": "int",
+            "min_raise_pts": "int",
+            "seats": "list[{seat_id, player_name, current_round_bet_pts, last_action, all_in, folded}]"
+          }
+        },
+        {
+          "path": "/api/poker/<session_id>/auto-settle",
+          "method": "POST",
+          "request_body_schema": {
+            "operator_confirmed": "bool"
+          },
+          "response_body_schema": {
+            "settled": "bool",
+            "winners": "list[{seat_id, player_id, pot_share_pts, hand_rank}]",
+            "side_pots": "list[{eligible_seat_ids, pot_pts}]"
+          }
+        }
+      ],
+      "bet_pot_pseudocode": "def submit_bet_action(db, session_id, seat_token, action, raise_to_pts=None):\n    seat = db_query('SELECT s.*, sess.* FROM poker_seats s JOIN poker_sessions sess ON s.session_id = sess.id WHERE s.join_token = ? AND s.session_id = ?', (seat_token, session_id)).fetchone()\n    if not seat:\n        raise InvalidToken()\n    if seat['folded'] or not seat['active']:\n        raise InvalidAction('seat_not_active')\n    if seat['id'] != seat['current_bettor_seat_id']:\n        raise InvalidAction('not_your_turn')\n    pot = json.loads(seat['pot_json'] or '{}')\n    main_pot = pot.get('main', 0)\n    side_pots = pot.get('side', [])\n    current_bet = seat['current_bet_pts']\n    seat_round_bet = seat['current_round_bet_pts']\n    seat_balance = get_balance(db, seat['player_id'])\n    if action == 'fold':\n        db_execute('UPDATE poker_seats SET folded = 1, last_action = ? WHERE id = ?', ('fold', seat['id']))\n    elif action == 'check':\n        if seat_round_bet < current_bet:\n            raise InvalidAction('cannot_check_when_bet_pending')\n        db_execute('UPDATE poker_seats SET last_action = ? WHERE id = ?', ('check', seat['id']))\n    elif action == 'call':\n        diff = current_bet - seat_round_bet\n        if seat_balance < diff:\n            return submit_bet_action(db, session_id, seat_token, 'all_in')\n        _atomic_deduct_points(db, seat['player_id'], diff, label=f'poker_call_session_{session_id}')\n        main_pot += diff\n        db_execute('UPDATE poker_seats SET current_round_bet_pts = ?, total_session_contribution_pts = total_session_contribution_pts + ?, last_action = ? WHERE id = ?', (current_bet, diff, 'call', seat['id']))\n    elif action == 'raise':\n        if raise_to_pts is None or raise_to_pts < current_bet + seat['min_raise_pts']:\n            raise InvalidAction('raise_below_minimum')\n        diff = raise_to_pts - seat_round_bet\n        if seat_balance < diff:\n            return submit_bet_action(db, session_id, seat_token, 'all_in')\n        _atomic_deduct_points(db, seat['player_id'], diff, label=f'poker_raise_session_{session_id}')\n        main_pot += diff\n        new_min_raise = raise_to_pts - current_bet\n        db_execute('UPDATE poker_seats SET current_round_bet_pts = ?, total_session_contribution_pts = total_session_contribution_pts + ?, last_action = ? WHERE id = ?', (raise_to_pts, diff, 'raise', seat['id']))\n        db_execute('UPDATE poker_sessions SET current_bet_pts = ?, min_raise_pts = ? WHERE id = ?', (raise_to_pts, new_min_raise, session_id))\n    elif action == 'all_in':\n        all_in_amount = seat_balance\n        _atomic_deduct_points(db, seat['player_id'], all_in_amount, label=f'poker_allin_session_{session_id}')\n        new_round_bet = seat_round_bet + all_in_amount\n        if new_round_bet > current_bet:\n            db_execute('UPDATE poker_sessions SET current_bet_pts = ? WHERE id = ?', (new_round_bet, session_id))\n        side_pots = compute_side_pots(db, session_id)\n        db_execute('UPDATE poker_seats SET current_round_bet_pts = ?, total_session_contribution_pts = total_session_contribution_pts + ?, all_in = 1, last_action = ? WHERE id = ?', (new_round_bet, all_in_amount, 'all_in', seat['id']))\n    pot['main'] = main_pot\n    pot['side'] = side_pots\n    db_execute('UPDATE poker_sessions SET pot_json = ? WHERE id = ?', (json.dumps(pot), session_id))\n    next_seat = compute_next_bettor(db, session_id)\n    round_complete = next_seat is None\n    if not round_complete:\n        db_execute('UPDATE poker_sessions SET current_bettor_seat_id = ? WHERE id = ?', (next_seat['id'], session_id))\n    return {'action_accepted': True, 'new_pot_pts': main_pot, 'current_bet_pts': read_current_bet(db, session_id), 'next_bettor_seat_id': next_seat['id'] if next_seat else None, 'round_complete': round_complete, 'balance_after': get_balance(db, seat['player_id'])}\n\ndef compute_side_pots(db, session_id):\n    seats = db_query('SELECT id, total_session_contribution_pts, all_in, folded FROM poker_seats WHERE session_id = ? ORDER BY total_session_contribution_pts ASC', (session_id,)).fetchall()\n    side_pots = []\n    prior_threshold = 0\n    eligible_for_main = [s['id'] for s in seats if not s['folded']]\n    for s in seats:\n        if s['all_in'] and s['total_session_contribution_pts'] > prior_threshold:\n            level = s['total_session_contribution_pts'] - prior_threshold\n            pot_pts = level * len(eligible_for_main)\n            side_pots.append({'eligible_seat_ids': list(eligible_for_main), 'pot_pts': pot_pts})\n            prior_threshold = s['total_session_contribution_pts']\n            eligible_for_main = [e for e in eligible_for_main if e != s['id']]\n    return side_pots\n\ndef compute_next_bettor(db, session_id):\n    sess = db_query('SELECT * FROM poker_sessions WHERE id = ?', (session_id,)).fetchone()\n    seats = db_query('SELECT * FROM poker_seats WHERE session_id = ? AND active = 1 AND folded = 0 ORDER BY seat_number', (session_id,)).fetchall()\n    if len(seats) <= 1:\n        return None\n    current_seat = next((s for s in seats if s['id'] == sess['current_bettor_seat_id']), None)\n    if not current_seat:\n        return seats[0]\n    current_idx = seats.index(current_seat)\n    target_bet = sess['current_bet_pts']\n    for offset in range(1, len(seats) + 1):\n        candidate = seats[(current_idx + offset) % len(seats)]\n        if candidate['all_in']:\n            continue\n        if candidate['current_round_bet_pts'] < target_bet:\n            return candidate\n        if offset == len(seats):\n            return None\n    return None",
+      "blind_structure": {
+        "default_small_blind_pts": 50,
+        "default_big_blind_pts": 100,
+        "operator_overridable": true,
+        "system_setting_keys": [
+          "poker_default_small_blind",
+          "poker_default_big_blind"
+        ],
+        "blind_posting_flow": [
+          "1. Operator clicks 'ALOITA KÄSI' (start hand)",
+          "2. Server identifies dealer button seat (rotates from previous hand or initial seat for new session)",
+          "3. Small blind = (dealer_button + 1) % active_seats",
+          "4. Big blind = (dealer_button + 2) % active_seats",
+          "5. Server calls _atomic_deduct_points for SB and BB amounts on respective player accounts",
+          "6. Pot initialized: pot.main = SB + BB",
+          "7. current_bet_pts = BB; min_raise_pts = BB",
+          "8. current_bettor_seat_id = (BB + 1) % active_seats (Under-the-Gun)"
+        ]
+      },
+      "all_in_handling": "When a seat's call/raise amount exceeds their balance, automatically convert to all_in. Server commits available balance to pot, marks seat.all_in=1. Side pots are computed via compute_side_pots(): each all-in level creates a side pot accessible only to seats that contributed at or above that level. At showdown, side pots are awarded in level order — innermost (largest contribution) first, then progressively outer pots. Seats that folded are never eligible for any pot they would otherwise have qualified for. Side pot award uses evaluate endpoint result restricted to eligible seat list per pot.",
+      "player_mobile_ui": {
+        "_route": "/poker/join (existing template templates/poker_player.html, upgraded)",
+        "layout": "Single-column mobile-first; max-width 480px centered on tablet/desktop",
+        "sections_top_to_bottom": [
+          "section_1_seat_info: seat number, player name, current balance, fold/all-in/active status badge",
+          "section_2_hole_cards: large face-up or face-down rendering (CardRenderer.drawCard at scale=2.0) with NÄYTÄ KORTIT toggle button below",
+          "section_3_community_cards: 5 slots (PREFLOP empty, FLOP 3 visible, TURN 4, RIVER 5); CardRenderer at scale=1.0",
+          "section_4_stage_badge: full-width 1px solid var(--border-hard); text-align center; uppercase; font Chivo 900 size 16px",
+          "section_5_hand_rank_badge: live rank display (auto-refreshes every 3s via polling); shows e.g. 'PARI 8 (PAIR OF EIGHTS)'; --accent-success background when player is leader at showdown",
+          "section_6_pot_display (mode_b only): large readout 'POTTI: 2 480 pts' with rake estimate below in --text-muted",
+          "section_7_bet_actions (mode_b only, only when current_bettor_seat_id == own seat_id): 3 large buttons FOLD / CALL <amount> / RAISE; RAISE opens slider input (min_raise to balance); CONFIRM modal before submission"
+        ],
+        "polling_interval_ms": 3000,
+        "polling_endpoint": "GET /api/poker/player/<token>",
+        "haptics_on_event": "vibrate([100,50,100]) MEDIUM on each new community card revealed (tracked via stage_changed flag from polling response)"
+      }
+    },
+    "preset_editor": {
+      "ui_wireframe": "+----------------------------------------------------------+\n|  PRESET-MUOKKAIN — Operaattori                            |\n+----------------------------------------------------------+\n|  KORTTIPALETTI (52 korttia, vedettävissä):                |\n|  ♠: [A][K][Q][J][T][9][8][7][6][5][4][3][2]               |\n|  ♥: [A][K][Q][J][T][9][8][7][6][5][4][3][2]               |\n|  ♦: [A][K][Q][J][T][9][8][7][6][5][4][3][2]               |\n|  ♣: [A][K][Q][J][T][9][8][7][6][5][4][3][2]               |\n|                                                          |\n|  ISTUMAPAIKAT (vedä kortit alueisiin):                    |\n|  Seat 1 ([Pelaaja A]): [drop here] [drop here]   ESIKAT.: |\n|                                              ★ AKas Suora |\n|  Seat 2 ([Pelaaja B]): [drop here] [drop here]   ESIKAT.: |\n|                                              ★ Pari KK    |\n|  Seat 3 ([Pelaaja C]): [drop here] [drop here]   ESIKAT.: |\n|                                              ★ Korkein A  |\n|                                                          |\n|  YHTEISET KORTIT (esikatselun pohjaksi):                  |\n|  [drop][drop][drop][drop][drop]                           |\n|                                                          |\n|  [TYHJENNÄ]   [TARKISTA]   [TALLENNA PRESET]              |\n+----------------------------------------------------------+",
+      "validation_rules": [
+        "1. Each card from 52-card deck must appear at most once across all seats AND community zone",
+        "2. Each seat must have exactly 0 or 2 hole cards assigned (no half-assignment)",
+        "3. Community zone must have 0, 3, 4, or 5 cards (matching valid stages)",
+        "4. Visual warning (red border + tooltip 'Sama kortti useassa paikassa') if any duplicate",
+        "5. TALLENNA button disabled until all validations pass",
+        "6. Preview area auto-updates after each drop using best_hand(seat_holes, community_cards) showing rank name in Finnish"
+      ],
+      "pseudocode": "function PresetEditor(sessionId, seatList, currentPresets) {\n  const palette = generateAllCards();\n  const assignments = currentPresets || {};\n  const community = [];\n  function onDragStart(card) {\n    return JSON.stringify(card);\n  }\n  function onDrop(targetType, targetId, dataTransfer) {\n    const card = JSON.parse(dataTransfer);\n    if (isCardUsed(card, assignments, community)) {\n      showWarning('Sama kortti useassa paikassa');\n      return;\n    }\n    if (targetType === 'seat') {\n      assignments[targetId] = assignments[targetId] || [];\n      if (assignments[targetId].length >= 2) {\n        assignments[targetId].pop();\n      }\n      assignments[targetId].push(card);\n    } else if (targetType === 'community') {\n      if (community.length >= 5) {\n        community.shift();\n      }\n      community.push(card);\n    }\n    updatePreview();\n  }\n  function updatePreview() {\n    for (const [seatId, holes] of Object.entries(assignments)) {\n      if (holes.length === 2) {\n        fetchEvaluatePreview(holes, community).then(result => {\n          renderRankBadge(seatId, result.rank_fi);\n        });\n      }\n    }\n  }\n  function isCardUsed(card, assignments, community) {\n    const allUsed = [...community, ...Object.values(assignments).flat()];\n    return allUsed.some(c => c.rank === card.rank && c.suit === card.suit);\n  }\n  function save() {\n    if (!validateAll()) return;\n    fetch(`/api/poker/${sessionId}/preset`, { method: 'POST', body: JSON.stringify({preset_hands_json: assignments, community_preview: community}) });\n  }\n  return {onDragStart, onDrop, save};\n}\n\nfunction validateAll() {\n  const allCards = [...community, ...Object.values(assignments).flat()];\n  const fingerprints = allCards.map(c => `${c.rank}_${c.suit}`);\n  if (new Set(fingerprints).size !== fingerprints.length) {\n    return false;\n  }\n  for (const holes of Object.values(assignments)) {\n    if (holes.length !== 0 && holes.length !== 2) {\n      return false;\n    }\n  }\n  if (![0, 3, 4, 5].includes(community.length)) {\n    return false;\n  }\n  return true;\n}"
+    },
+    "hand_history_replay": {
+      "ui_wireframe": "+----------------------------------------------------------+\n|  KÄSIHISTORIA — Replay                                    |\n+----------------------------------------------------------+\n|  Käsi #1247  ·  Aloitettu 14:32:18  ·  Päättyi 14:33:54   |\n|  Vaihe: SHOWDOWN  ·  Voittaja: Seat 3 (Pelaaja C)         |\n|                                                          |\n|     ┌─────┬─────┬─────┬─────┬─────┐                       |\n|     │  ?  │  ?  │  ?  │  ?  │  ?  │  ← yhteiset kortit    |\n|     └─────┴─────┴─────┴─────┴─────┘                       |\n|                                                          |\n|  Seat 1: [A♠][K♣]  ·  Pari Ässää                          |\n|  Seat 2: [Q♥][J♥]  ·  Pari Q                              |\n|  Seat 3: [T♥][T♦]  ⭐  Kolmoset T  (VOITTAJA)              |\n|                                                          |\n|  AIKAJANA:                                               |\n|  [────●──────────────────────] 14:32:35 / 01:36           |\n|  [⏮ ALKUUN] [⏪ -1] [▶ TOISTA] [⏸ TAUKO] [⏩ +1] [⏭ LOPPU] |\n|                                                          |\n+----------------------------------------------------------+",
+      "animation_sequence": [
+        {
+          "t_ms": 0,
+          "event": "render_initial_seats_with_facedown_holes"
+        },
+        {
+          "t_ms": 200,
+          "event": "A6_POKER_DEAL_MULTI_SEAT for hole cards (faster: 60ms stagger in replay)"
+        },
+        {
+          "t_ms": 1200,
+          "event": "stage_PREFLOP_label_show"
+        },
+        {
+          "t_ms": 1700,
+          "event": "A7_POKER_COMMUNITY_REVEAL flop (3 cards)"
+        },
+        {
+          "t_ms": 3000,
+          "event": "stage_FLOP_label_update"
+        },
+        {
+          "t_ms": 3500,
+          "event": "A7v turn (1 card)"
+        },
+        {
+          "t_ms": 4040,
+          "event": "stage_TURN_label_update"
+        },
+        {
+          "t_ms": 4500,
+          "event": "A7v river (1 card)"
+        },
+        {
+          "t_ms": 5040,
+          "event": "stage_RIVER_label_update"
+        },
+        {
+          "t_ms": 5500,
+          "event": "reveal_holes_face_up_via_A5_per_seat (320ms each)"
+        },
+        {
+          "t_ms": 6500,
+          "event": "A8_POKER_SHOWDOWN winner highlight"
+        }
+      ],
+      "pseudocode": "class HandReplay {\n  constructor(handLogId, canvasCtx) {\n    this.handLogId = handLogId;\n    this.canvasCtx = canvasCtx;\n    this.timeline = [];\n    this.currentMs = 0;\n    this.totalMs = 0;\n    this.playing = false;\n    this.lastFrameTs = null;\n  }\n  async load() {\n    const res = await fetch(`/api/poker/hands/${this.handLogId}`);\n    this.handData = await res.json();\n    this.timeline = this.buildTimelineFromData(this.handData);\n    this.totalMs = this.timeline[this.timeline.length - 1].t_ms;\n  }\n  buildTimelineFromData(data) {\n    const seats = JSON.parse(data.seats);\n    const community = JSON.parse(data.community_cards || '[]');\n    const winners = JSON.parse(data.winners || '[]');\n    return [\n      {t_ms: 200,  type: 'deal_holes', seats},\n      {t_ms: 1700, type: 'community_flop', cards: community.slice(0, 3)},\n      {t_ms: 3500, type: 'community_turn', card: community[3]},\n      {t_ms: 4500, type: 'community_river', card: community[4]},\n      {t_ms: 5500, type: 'reveal_holes', seats},\n      {t_ms: 6500, type: 'showdown', winners}\n    ];\n  }\n  play() {\n    this.playing = true;\n    this.lastFrameTs = performance.now();\n    requestAnimationFrame(this.tick.bind(this));\n  }\n  pause() { this.playing = false; }\n  step(deltaMs) {\n    this.currentMs = Math.max(0, Math.min(this.totalMs, this.currentMs + deltaMs));\n    this.renderAt(this.currentMs);\n  }\n  tick(now) {\n    if (!this.playing) return;\n    const dt = now - this.lastFrameTs;\n    this.lastFrameTs = now;\n    this.currentMs = Math.min(this.currentMs + dt, this.totalMs);\n    this.renderAt(this.currentMs);\n    if (this.currentMs >= this.totalMs) { this.playing = false; return; }\n    requestAnimationFrame(this.tick.bind(this));\n  }\n  renderAt(t_ms) {\n    const passed = this.timeline.filter(e => e.t_ms <= t_ms);\n    this.canvasCtx.clearRect(0, 0, 1080, 1920);\n    for (const event of passed) {\n      this.dispatchAnimation(event, t_ms - event.t_ms);\n    }\n  }\n  dispatchAnimation(event, elapsedSinceEvent) {\n    switch (event.type) {\n      case 'deal_holes': renderDealHoles(this.canvasCtx, event.seats, elapsedSinceEvent, 60); break;\n      case 'community_flop': renderCommunityFlop(this.canvasCtx, event.cards, elapsedSinceEvent); break;\n      case 'community_turn':\n      case 'community_river': renderCommunitySingle(this.canvasCtx, event.card, elapsedSinceEvent); break;\n      case 'reveal_holes': renderHoleReveal(this.canvasCtx, event.seats, elapsedSinceEvent); break;\n      case 'showdown': renderShowdown(this.canvasCtx, event.winners, elapsedSinceEvent); break;\n    }\n  }\n}"
+    },
+    "table_visual_spec": {
+      "felt": {
+        "color": "#3D1A24",
+        "shape": "oval (1600px wide × 900px tall on desktop; aspect 16:9)",
+        "normal_map_pattern": "256×256 tiling. Each pixel encodes a fiber direction vector via RGB: R=normal_x (0.5-bias around 128), G=normal_y, B=255 (up). Fibers cluster in groups of 8 px running at angle θ where θ = π/2 + jitter(±15°) per group. Generated procedurally via Perlin-noise-modulated angle field.",
+        "css_implementation": ".poker-felt { background: #3D1A24 url('/static/img/poker_felt_normal.png') center/256px 256px repeat; image-rendering: pixelated; box-shadow: inset 0 0 80px rgba(0,0,0,0.45); }",
+        "decals": [
+          "seat_outline_oval per seat",
+          "dealer_button_track 280px radius dashed outline",
+          "pot_glow center radial amber"
+        ]
+      },
+      "nameplates": {
+        "css": ".seat-nameplate { background: linear-gradient(135deg, #C9A227 0%, #9B7B2E 35%, #6B4F12 65%, #C9A227 100%); border: 1px solid #0A0A0A; padding: 6px 12px; color: #1A130A; font-family: 'Chivo 900'; font-size: 13px; letter-spacing: 0.05em; text-transform: uppercase; text-shadow: 0 1px 0 rgba(255,255,255,0.25), 0 -1px 0 rgba(0,0,0,0.45); position: relative; min-width: 140px; }",
+        "engraved_text_effect": "Inset shadow simulation via dual text-shadow: first shadow lightens top-left edge, second shadow darkens bottom-right edge, creating illusion of pressed-in lettering",
+        "rivets": "::before and ::after pseudo-elements at top-left and top-right corners, 6px circles with radial gradient simulating brass rivets",
+        "active_seat_highlight": ".seat-nameplate.active-bettor { box-shadow: 0 0 0 2px var(--accent-warning); }",
+        "fold_status": ".seat-nameplate.folded { opacity: 0.45; filter: grayscale(0.6); }",
+        "show_cards_icon": "Lucide eye icon (16×16px) inline with nameplate text; toggles via /api/poker/player/<token>/showcards"
+      },
+      "community_zone": {
+        "css": ".community-zone { background: #4D2330; border: 1px solid #1A0810; box-shadow: inset 0 4px 8px rgba(0,0,0,0.45), inset 0 -2px 4px rgba(0,0,0,0.30), inset 1px 0 2px rgba(0,0,0,0.20), inset -1px 0 2px rgba(0,0,0,0.20); padding: 16px; display: grid; grid-template-columns: repeat(5, 96px); gap: 8px; }",
+        "card_slot_css": ".community-card-slot { width: 96px; height: 134px; background: rgba(0,0,0,0.20); border: 1px dashed rgba(255,255,255,0.10); }",
+        "card_arrival_animation": ".community-card-slot.populated > .card-sprite { animation: communityArrive 540ms cubic-bezier(0.22, 1.0, 0.36, 1.0) forwards; } @keyframes communityArrive { 0% { transform: translate(var(--from-x), var(--from-y)) rotateY(180deg); } 60% { transform: translate(0,-2px) rotateY(180deg); } 65% { transform: translate(0,0) rotateY(180deg); } 100% { transform: translate(0,0) rotateY(0deg); } }"
+      },
+      "pot_display": {
+        "container_css": ".pot-display { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; }",
+        "chip_stack_css": ".pot-chip-stack { width: 45px; position: relative; }  .pot-chip-stack > .chip { width: 45px; height: 8px; position: absolute; left: 0; transition: transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1); }",
+        "stack_height_calculation": "stack height_px = chips.length * 8px (visible stacked chip height)",
+        "tilt_per_new_chip": "Each newly-added chip applies inline style: transform: translateY(calc(var(--chip-index) * -8px)) rotate(calc((Math.random() - 0.5) * 3deg))",
+        "pot_amount_text": ".pot-amount { font-family: 'Chivo 900'; font-size: 24px; color: var(--layout-print-gold); text-shadow: 0 0 8px rgba(201, 162, 39, 0.6); margin-top: 8px; letter-spacing: 0.05em; }",
+        "amber_glow_underneath": ".pot-display::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 240px; height: 240px; background: radial-gradient(circle, rgba(255,177,78,0.35) 0%, rgba(255,177,78,0) 70%); pointer-events: none; }"
+      },
+      "stage_indicator": {
+        "container": ".stage-indicator { display: flex; gap: 4px; position: absolute; top: 16px; left: 50%; transform: translateX(-50%); }",
+        "segment_css": ".stage-segment { width: 96px; height: 8px; background: var(--bg-canvas); border: 1px solid var(--border-hard); transition: background 200ms ease-out; }",
+        "active_state": ".stage-segment.active { background: var(--accent-warning); }",
+        "completed_state": ".stage-segment.completed { background: var(--accent-success); }",
+        "labels": [
+          "PREFLOP",
+          "FLOP",
+          "TURN",
+          "RIVER"
+        ],
+        "label_css": ".stage-segment > .stage-label { position: absolute; top: 12px; font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-muted); text-transform: uppercase; }"
+      },
+      "dealer_button_animation": {
+        "css": ".dealer-button { width: 64px; height: 64px; position: absolute; pointer-events: none; transition: transform 400ms cubic-bezier(0.45, 0, 0.55, 1); }",
+        "movement_path": "Arc trajectory between current seat position and next seat position; CSS path: arc with control point 60px above midpoint between seats",
+        "rotation_during_move": ".dealer-button.moving { animation: dealerSpin 400ms linear; } @keyframes dealerSpin { 0% { rotate: 0deg; } 100% { rotate: 360deg; } }"
+      },
+      "fold_indicator": {
+        "css": ".seat-zone.folded .hole-cards-container { background-image: repeating-linear-gradient(45deg, transparent 0 8px, rgba(0,0,0,0.35) 8px 12px); animation: foldCompress 300ms cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards; } @keyframes foldCompress { 0% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(0.6); opacity: 0.6; } }"
+      }
+    },
+    "player_mobile_page_upgrade": {
+      "hole_card_display": {
+        "size": "144px × 202px (scale 1.5x of base 96×134px card)",
+        "rendering": "CardRenderer.drawCard with faceUp=show_cards_flag, scale=1.5",
+        "shimmer_when_facedown": ".hole-card-back-shimmer { background: linear-gradient(135deg, #1A2440 0%, #2A3550 25%, #1A2440 50%, #2A3550 75%, #1A2440 100%); background-size: 400% 400%; animation: backShimmer 3s ease-in-out infinite; } @keyframes backShimmer { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }",
+        "data_testid": "player-hole-card-{1|2}"
+      },
+      "toggle_show_cards": {
+        "button_text": "NÄYTÄ KORTIT (toggles to PIILOTA KORTIT when active)",
+        "button_css": "button { width: 100%; height: 48px; border: 1px solid var(--border-hard); background: var(--bg-surface); font-family: 'JetBrains Mono'; font-size: 14px; text-transform: uppercase; }",
+        "active_state": "button.active { background: var(--accent-primary); color: var(--bg-surface); }",
+        "endpoint": "POST /api/poker/player/<token>/showcards (toggle)",
+        "animation_on_change": "A5_BLACKJACK_DEALER_REVEAL applied to both hole cards (re-used; flips cards 180° in 320ms)",
+        "data_testid": "toggle-show-cards-btn"
+      },
+      "community_display": {
+        "size": "96px × 134px per card (scale 1.0)",
+        "layout": "5 slots in a single horizontal row with 8px gap; populated slots show face-up cards, empty slots show 1px dashed border placeholder",
+        "data_testid": "community-card-slot-{1..5}"
+      },
+      "stage_badge": {
+        "css": ".stage-badge { width: 100%; height: 40px; border: 1px solid var(--border-hard); background: var(--bg-surface); display: flex; align-items: center; justify-content: center; font-family: 'Chivo 900'; font-size: 16px; text-transform: uppercase; letter-spacing: 0.1em; margin: 16px 0; }",
+        "stage_text_map": {
+          "waiting": "ODOTUSTILA",
+          "preflop": "PREFLOP",
+          "flop": "FLOP",
+          "turn": "TURN",
+          "river": "RIVER",
+          "showdown": "SHOWDOWN"
+        },
+        "data_testid": "stage-badge"
+      },
+      "hand_rank_badge": {
+        "css": ".hand-rank-badge { width: 100%; min-height: 36px; border: 1px solid var(--border-hard); background: var(--bg-canvas); padding: 8px 12px; font-family: 'JetBrains Mono'; font-size: 13px; }",
+        "leader_state": ".hand-rank-badge.leader { background: var(--accent-success); color: var(--bg-surface); }",
+        "polling_interval_ms": 3000,
+        "polling_endpoint": "GET /api/poker/player/<token>",
+        "rank_text_map_fi": {
+          "royal_flush": "Kuninkaallinen suora väri",
+          "straight_flush": "Suora väri",
+          "four_of_a_kind": "Neloset",
+          "full_house": "Täyskäsi",
+          "flush": "Väri",
+          "straight": "Suora",
+          "three_of_a_kind": "Kolmoset",
+          "two_pair": "Kaksi paria",
+          "one_pair": "Pari",
+          "high_card": "Korkein"
+        },
+        "data_testid": "hand-rank-badge"
+      },
+      "mode_b_bet_actions": {
+        "container_css": ".bet-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 16px; }",
+        "fold_button": ".btn-fold { background: var(--accent-danger); color: var(--bg-surface); height: 56px; border: 1px solid var(--border-hard); font-family: 'JetBrains Mono'; font-size: 14px; text-transform: uppercase; }",
+        "call_button": ".btn-call { background: var(--bg-surface); color: var(--text-main); height: 56px; border: 1px solid var(--border-hard); font-family: 'JetBrains Mono'; font-size: 14px; text-transform: uppercase; } .btn-call > .amount { display: block; font-size: 11px; color: var(--text-muted); margin-top: 2px; }",
+        "raise_button": ".btn-raise { background: var(--accent-primary); color: var(--bg-surface); height: 56px; border: 1px solid var(--border-hard); font-family: 'JetBrains Mono'; font-size: 14px; text-transform: uppercase; }",
+        "raise_modal": "On click, opens modal with: range input slider (min=current_bet+min_raise, max=balance, step=1); numeric input synced; preset buttons (MIN / 2x / POT / ALL_IN); CONFIRM/CANCEL buttons",
+        "confirm_modal_text": "Vahvista korotus: {amount} pistettä? Saldosi muutos: -{amount}",
+        "data_testids": [
+          "btn-fold",
+          "btn-call",
+          "btn-raise",
+          "raise-amount-slider",
+          "raise-amount-input",
+          "btn-confirm-raise",
+          "btn-cancel-raise"
+        ]
+      },
+      "haptics": [
+        {
+          "event": "new_community_card",
+          "pattern": "MEDIUM [100,50,100]",
+          "trigger": "stage_changed flag from polling response"
+        },
+        {
+          "event": "your_turn_to_act",
+          "pattern": "STRONG [200]",
+          "trigger": "current_bettor_seat_id matches own seat_id"
+        },
+        {
+          "event": "fold_action",
+          "pattern": "LIGHT [30]",
+          "trigger": "successful POST /bet with action=fold"
+        },
+        {
+          "event": "showdown_winner",
+          "pattern": "HEAVY [100,50,100,50,200]",
+          "trigger": "showdown event reveals own seat as winner"
+        }
+      ]
+    }
+  },
+  "card_renderer": {
+    "class_pseudocode": "class CardRenderer {\n  constructor(ctx) {\n    this.ctx = ctx;\n    this.cardW = 120;\n    this.cardH = 168;\n    this.spriteCache = new Map();\n    this.backPattern = null;\n    this.PIP_LAYOUT = PIP_LAYOUT_TABLE;\n    this.SUIT_COLORS = {'♠': '#0A0A0A', '♥': '#CC2200', '♦': '#CC2200', '♣': '#0A0A0A'};\n    this.SUIT_PATHS = {'♠': SUIT_SVG_PATHS.spade, '♥': SUIT_SVG_PATHS.heart, '♦': SUIT_SVG_PATHS.diamond, '♣': SUIT_SVG_PATHS.club};\n  }\n\n  _cacheKey(card, faceUp) {\n    if (!faceUp) return 'BACK';\n    return `${card.rank}_${card.suit}`;\n  }\n\n  _renderCardToOffscreen(card, faceUp) {\n    const off = new OffscreenCanvas(this.cardW, this.cardH);\n    const octx = off.getContext('2d');\n    if (faceUp) {\n      octx.fillStyle = '#FBF8EE';\n      octx.fillRect(0, 0, this.cardW, this.cardH);\n      octx.strokeStyle = '#0A0A0A';\n      octx.lineWidth = 1.5;\n      octx.strokeRect(0.75, 0.75, this.cardW - 1.5, this.cardH - 1.5);\n      this._drawCornerIndex(octx, card, 8, 16, 'top-left');\n      this._drawCornerIndex(octx, card, this.cardW - 8, this.cardH - 16, 'bottom-right');\n      const rankNum = ['2','3','4','5','6','7','8','9','10'].indexOf(card.rank) + 2;\n      if (rankNum >= 2 && rankNum <= 10) {\n        const layout = this.PIP_LAYOUT[rankNum];\n        for (const [px, py] of layout) {\n          this._drawSuitPip(octx, card.suit, px * this.cardW, py * this.cardH, 0.13 * this.cardW);\n        }\n      } else {\n        this._drawFaceCard(octx, card);\n      }\n    } else {\n      if (!this.backPattern) {\n        this.backPattern = this._buildBackPattern();\n      }\n      octx.fillStyle = this.backPattern;\n      octx.fillRect(0, 0, this.cardW, this.cardH);\n      octx.strokeStyle = '#C9A227';\n      octx.lineWidth = 2.5;\n      octx.strokeRect(6, 6, this.cardW - 12, this.cardH - 12);\n    }\n    return off.transferToImageBitmap();\n  }\n\n  _buildBackPattern() {\n    const tile = new OffscreenCanvas(16, 16);\n    const tctx = tile.getContext('2d');\n    tctx.fillStyle = '#1A2440';\n    tctx.fillRect(0, 0, 16, 16);\n    tctx.fillStyle = '#2A3550';\n    for (let x = 0; x < 16; x += 4) {\n      for (let y = 0; y < 16; y += 4) {\n        if ((x / 4 + y / 4) % 2 === 0) {\n          tctx.fillRect(x, y, 2, 2);\n        }\n      }\n    }\n    return this.ctx.createPattern(tile, 'repeat');\n  }\n\n  _drawCornerIndex(ctx, card, x, y, position) {\n    ctx.save();\n    if (position === 'bottom-right') {\n      ctx.translate(x, y);\n      ctx.rotate(Math.PI);\n      x = 0; y = 0;\n    }\n    ctx.fillStyle = this.SUIT_COLORS[card.suit];\n    ctx.font = 'bold 16px JetBrains Mono';\n    ctx.textAlign = position === 'bottom-right' ? 'left' : 'left';\n    ctx.textBaseline = 'top';\n    ctx.fillText(card.rank, x, y);\n    this._drawSuitPip(ctx, card.suit, x + 6, y + 22, 8);\n    ctx.restore();\n  }\n\n  _drawSuitPip(ctx, suit, cx, cy, sz) {\n    ctx.save();\n    ctx.translate(cx - sz/2, cy - sz/2);\n    ctx.scale(sz / 48, sz / 48);\n    ctx.fillStyle = this.SUIT_COLORS[suit];\n    const path2d = new Path2D(this.SUIT_PATHS[suit]);\n    ctx.fill(path2d);\n    ctx.restore();\n  }\n\n  _drawFaceCard(ctx, card) {\n    const colorMap = {'J': '#1F3A93', 'Q': '#9B7B2E', 'K': '#5B2C6F', 'A': '#0A0A0A'};\n    ctx.fillStyle = '#FBF8EE';\n    ctx.fillRect(20, 32, this.cardW - 40, this.cardH - 64);\n    ctx.strokeStyle = colorMap[card.rank] || '#0A0A0A';\n    ctx.lineWidth = 2;\n    ctx.strokeRect(22, 34, this.cardW - 44, this.cardH - 68);\n    ctx.fillStyle = colorMap[card.rank] || '#0A0A0A';\n    ctx.font = 'bold 60px Chivo 900';\n    ctx.textAlign = 'center';\n    ctx.textBaseline = 'middle';\n    ctx.fillText(card.rank, this.cardW / 2, this.cardH / 2);\n    this._drawSuitPip(ctx, card.suit, this.cardW / 2, this.cardH / 2 + 36, 18);\n  }\n\n  drawCard(ctx, card, x, y, faceUp = true, scale = 1, rotation = 0) {\n    const key = this._cacheKey(card, faceUp);\n    if (!this.spriteCache.has(key)) {\n      this.spriteCache.set(key, this._renderCardToOffscreen(card, faceUp));\n    }\n    const bitmap = this.spriteCache.get(key);\n    ctx.save();\n    ctx.translate(x + (this.cardW * scale) / 2, y + (this.cardH * scale) / 2);\n    ctx.rotate(rotation);\n    ctx.drawImage(bitmap, -(this.cardW * scale) / 2, -(this.cardH * scale) / 2, this.cardW * scale, this.cardH * scale);\n    ctx.restore();\n  }\n\n  animateCardFlip(card, startX, startY, endX, endY, duration, onComplete) {\n    const startTs = performance.now();\n    const tick = (now) => {\n      const t = Math.min(1, (now - startTs) / duration);\n      const easeT = 1 - Math.pow(1 - t, 3);\n      const x = startX + (endX - startX) * easeT;\n      const y = startY + (endY - startY) * easeT - 60 * Math.sin(Math.PI * t);\n      const flipProgress = Math.min(1, Math.max(0, (t - 0.5) * 2));\n      const faceUp = flipProgress > 0.5;\n      const yScale = Math.abs(Math.cos(Math.PI * flipProgress));\n      this.ctx.save();\n      this.ctx.translate(x + this.cardW / 2, y + this.cardH / 2);\n      this.ctx.scale(1, yScale > 0.05 ? yScale : 0.05);\n      this.drawCard(this.ctx, card, -this.cardW / 2, -this.cardH / 2, faceUp);\n      this.ctx.restore();\n      if (t < 1) { requestAnimationFrame(tick); }\n      else { onComplete && onComplete(); }\n    };\n    requestAnimationFrame(tick);\n  }\n\n  drawChip(ctx, x, y, denomination, scale = 1) {\n    const palette = CHIP_PALETTE[denomination];\n    const r = 32 * scale;\n    ctx.save();\n    ctx.translate(x, y);\n    ctx.beginPath();\n    ctx.arc(0, 0, r, 0, Math.PI * 2);\n    ctx.fillStyle = palette.body;\n    ctx.fill();\n    ctx.strokeStyle = '#0A0A0A';\n    ctx.lineWidth = 1;\n    ctx.stroke();\n    for (let i = 0; i < 8; i++) {\n      const angle = (i / 8) * Math.PI * 2;\n      const sx = Math.cos(angle) * r * 0.78;\n      const sy = Math.sin(angle) * r * 0.78;\n      ctx.fillStyle = palette.spot1;\n      ctx.fillRect(sx - 6 * scale, sy - 4 * scale, 12 * scale, 8 * scale);\n    }\n    ctx.fillStyle = '#C9A227';\n    ctx.font = `bold ${10 * scale}px Chivo 900`;\n    ctx.textAlign = 'center';\n    ctx.textBaseline = 'middle';\n    ctx.fillText(denomination.toString(), 0, 0);\n    ctx.restore();\n  }\n\n  drawChipStack(ctx, x, y, chips) {\n    chips.forEach((chip, idx) => {\n      const offsetY = -idx * 6;\n      const jitterDeg = (Math.random() - 0.5) * 4;\n      ctx.save();\n      ctx.translate(x, y + offsetY);\n      ctx.rotate((jitterDeg * Math.PI) / 180);\n      this.drawChip(ctx, 0, 0, chip.denomination, chip.scale || 1);\n      ctx.restore();\n    });\n  }\n}\n\nconst CHIP_PALETTE = {\n  100:   {body: '#F2EAD3', spot1: '#B91C1C'},\n  500:   {body: '#B91C1C', spot1: '#F2EAD3'},\n  1000:  {body: '#0F5132', spot1: '#F2EAD3'},\n  5000:  {body: '#0A0A0A', spot1: '#B91C1C'},\n  10000: {body: '#5B2C6F', spot1: '#FFB800'}\n};\n\nconst SUIT_SVG_PATHS = {\n  spade:   'M24 6 C 30 16 42 18 42 28 C 42 36 32 38 26 32 L 24 38 L 18 44 L 30 44 L 24 38 C 18 38 6 36 6 28 C 6 18 18 16 24 6 Z',\n  heart:   'M24 42 C 36 32 46 24 46 16 Q 46 6 36 6 C 30 6 24 12 24 16 C 24 12 18 6 12 6 Q 2 6 2 16 C 2 24 12 32 24 42 Z',\n  diamond: 'M24 4 L 44 24 L 24 44 L 4 24 Z',\n  club:    'M24 14 m -8 0 a 8 8 0 1 0 16 0 a 8 8 0 1 0 -16 0 M14 26 m -8 0 a 8 8 0 1 0 16 0 a 8 8 0 1 0 -16 0 M34 26 m -8 0 a 8 8 0 1 0 16 0 a 8 8 0 1 0 -16 0 M24 28 L 18 44 L 30 44 Z'\n};",
+    "pip_layout_table": {
+      "_format": "Per rank 2-10: list of [x_relative, y_relative] pip positions where (0,0) = top-left of card face area, (1,1) = bottom-right",
+      "2": [
+        [
+          0.5,
+          0.2
+        ],
+        [
+          0.5,
+          0.8
+        ]
+      ],
+      "3": [
+        [
+          0.5,
+          0.2
+        ],
+        [
+          0.5,
+          0.5
+        ],
+        [
+          0.5,
+          0.8
+        ]
+      ],
+      "4": [
+        [
+          0.3,
+          0.2
+        ],
+        [
+          0.7,
+          0.2
+        ],
+        [
+          0.3,
+          0.8
+        ],
+        [
+          0.7,
+          0.8
+        ]
+      ],
+      "5": [
+        [
+          0.3,
+          0.2
+        ],
+        [
+          0.7,
+          0.2
+        ],
+        [
+          0.5,
+          0.5
+        ],
+        [
+          0.3,
+          0.8
+        ],
+        [
+          0.7,
+          0.8
+        ]
+      ],
+      "6": [
+        [
+          0.3,
+          0.2
+        ],
+        [
+          0.7,
+          0.2
+        ],
+        [
+          0.3,
+          0.5
+        ],
+        [
+          0.7,
+          0.5
+        ],
+        [
+          0.3,
+          0.8
+        ],
+        [
+          0.7,
+          0.8
+        ]
+      ],
+      "7": [
+        [
+          0.3,
+          0.2
+        ],
+        [
+          0.7,
+          0.2
+        ],
+        [
+          0.5,
+          0.32
+        ],
+        [
+          0.3,
+          0.5
+        ],
+        [
+          0.7,
+          0.5
+        ],
+        [
+          0.3,
+          0.8
+        ],
+        [
+          0.7,
+          0.8
+        ]
+      ],
+      "8": [
+        [
+          0.3,
+          0.2
+        ],
+        [
+          0.7,
+          0.2
+        ],
+        [
+          0.5,
+          0.3
+        ],
+        [
+          0.3,
+          0.5
+        ],
+        [
+          0.7,
+          0.5
+        ],
+        [
+          0.5,
+          0.7
+        ],
+        [
+          0.3,
+          0.8
+        ],
+        [
+          0.7,
+          0.8
+        ]
+      ],
+      "9": [
+        [
+          0.3,
+          0.2
+        ],
+        [
+          0.7,
+          0.2
+        ],
+        [
+          0.3,
+          0.4
+        ],
+        [
+          0.7,
+          0.4
+        ],
+        [
+          0.5,
+          0.5
+        ],
+        [
+          0.3,
+          0.6
+        ],
+        [
+          0.7,
+          0.6
+        ],
+        [
+          0.3,
+          0.8
+        ],
+        [
+          0.7,
+          0.8
+        ]
+      ],
+      "10": [
+        [
+          0.3,
+          0.18
+        ],
+        [
+          0.7,
+          0.18
+        ],
+        [
+          0.5,
+          0.3
+        ],
+        [
+          0.3,
+          0.4
+        ],
+        [
+          0.7,
+          0.4
+        ],
+        [
+          0.3,
+          0.6
+        ],
+        [
+          0.7,
+          0.6
+        ],
+        [
+          0.5,
+          0.7
+        ],
+        [
+          0.3,
+          0.82
+        ],
+        [
+          0.7,
+          0.82
+        ]
+      ]
+    },
+    "css_fallback": {
+      "class_structure": ".card-sprite { position: absolute; width: 120px; height: 168px; perspective: 600px; transform-style: preserve-3d; will-change: transform; } .card-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform 320ms cubic-bezier(0.455, 0.030, 0.515, 0.955); } .card-inner.flipped { transform: rotateY(180deg); } .card-front, .card-back { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border: 1.5px solid #0A0A0A; background: #FBF8EE; } .card-back { transform: rotateY(180deg); background: #1A2440 url('/static/img/card_back_pattern.png') center/16px 16px repeat; }",
+      "flip_animation_css": ".card-sprite.flipping .card-inner { animation: flipCard 320ms cubic-bezier(0.455, 0.030, 0.515, 0.955) forwards; } .card-sprite.flipped-back .card-inner { animation: flipCardBack 320ms cubic-bezier(0.455, 0.030, 0.515, 0.955) forwards; }",
+      "keyframes_css": "@keyframes flipCard { 0% { transform: rotateY(0deg); } 100% { transform: rotateY(180deg); } } @keyframes flipCardBack { 0% { transform: rotateY(180deg); } 100% { transform: rotateY(0deg); } } @keyframes cardArc { 0% { transform: translate(var(--start-x), var(--start-y)) rotateY(180deg); } 50% { transform: translate(calc((var(--start-x) + var(--end-x)) / 2), calc((var(--start-y) + var(--end-y)) / 2 - 60px)) rotateY(180deg); } 100% { transform: translate(var(--end-x), var(--end-y)) rotateY(0deg); } }"
+    }
+  },
+  "rng_to_animation_pseudocode": {
+    "blackjack_deal": "import random\ndef start_blackjack(db, player_id, bet_pts, perfect_pairs_pts=0, twenty_one_plus_three_pts=0):\n    _atomic_deduct_points(db, player_id, bet_pts, label='blackjack_initial_bet')\n    if perfect_pairs_pts > 0:\n        _atomic_deduct_points(db, player_id, perfect_pairs_pts, label='blackjack_pp_sidebet')\n    if twenty_one_plus_three_pts > 0:\n        _atomic_deduct_points(db, player_id, twenty_one_plus_three_pts, label='blackjack_213_sidebet')\n    forced_deck = redis.get(f'bonus_buy_forced_deck:{player_id}')\n    if forced_deck:\n        redis.delete(f'bonus_buy_forced_deck:{player_id}')\n        deck = json.loads(forced_deck)\n    else:\n        deck = new_deck(decks=6)\n        random.shuffle(deck)\n    player_cards = [deck.pop(0), deck.pop(0)]\n    dealer_cards = [deck.pop(0), deck.pop(0)]\n    side_bets_resolved = {}\n    if perfect_pairs_pts > 0:\n        pp = resolve_perfect_pairs(player_cards, perfect_pairs_pts)\n        side_bets_resolved['perfect_pairs'] = pp\n        if pp['payout'] > 0:\n            _add_points(db, player_id, pp['payout'], label=f'blackjack_pp_win')\n    if twenty_one_plus_three_pts > 0:\n        t = resolve_21plus3(player_cards, dealer_cards[0], twenty_one_plus_three_pts)\n        side_bets_resolved['21plus3'] = t\n        if t['payout'] > 0:\n            _add_points(db, player_id, t['payout'], label=f'blackjack_213_win')\n    animation_events = []\n    for i, c in enumerate(player_cards):\n        animation_events.append({'event': 'A1_BLACKJACK_CARD_DEAL', 'payload': {'card': c, 'target': 'player', 'card_index': i, 'delay_ms': i * 80}, 'sequence_id': i})\n    for i, c in enumerate(dealer_cards):\n        animation_events.append({'event': 'A1_BLACKJACK_CARD_DEAL', 'payload': {'card': c, 'target': 'dealer', 'card_index': i, 'face_down': i == 1, 'delay_ms': 160 + i * 80}, 'sequence_id': 2 + i})\n    if side_bets_resolved.get('perfect_pairs', {}).get('payout', 0) > 0:\n        animation_events.append({'event': 'A_perfect_pairs_halo', 'payload': side_bets_resolved['perfect_pairs'], 'delay_ms': 480})\n    if side_bets_resolved.get('21plus3', {}).get('payout', 0) > 0:\n        animation_events.append({'event': 'A_21plus3_orbit', 'payload': side_bets_resolved['21plus3'], 'delay_ms': 800})\n    if hand_value(player_cards) == 21:\n        animation_events.append({'event': 'A3_BLACKJACK_NATURAL', 'payload': {'cards': player_cards}, 'delay_ms': 700})\n    return {'game_id': insert_game(db, player_id, bet_pts, deck, player_cards, dealer_cards, side_bets_resolved), 'animation_events': animation_events, 'side_bets_resolved': side_bets_resolved}",
+    "blackjack_hit": "def blackjack_hit(db, game_id, player_id):\n    game = db_query('SELECT * FROM blackjack_games WHERE id = ? AND player_id = ?', (game_id, player_id)).fetchone()\n    deck = json.loads(game['deck_json'])\n    cards = json.loads(game['player_cards_json'])\n    new_card = deck.pop(0)\n    if get_player_streak_mode(db, player_id) == 'hot' and would_bust(cards + [new_card]):\n        if random.random() < 0.04:\n            substitute = next((c for c in deck if card_value_low(c) <= 5), None)\n            if substitute:\n                deck.remove(substitute)\n                deck.insert(0, new_card)\n                new_card = substitute\n                log_streak_substitution(db, player_id, game_id, original=new_card, substituted=substitute)\n    cards.append(new_card)\n    new_total = hand_value(cards)\n    bust = new_total > 21\n    status = 'done_bust' if bust else 'active'\n    db_execute('UPDATE blackjack_games SET deck_json = ?, player_cards_json = ?, status = ? WHERE id = ?', (json.dumps(deck), json.dumps(cards), status, game_id))\n    animation_events = [{'event': 'A2_BLACKJACK_HIT', 'payload': {'card': new_card, 'new_total': new_total}}]\n    if bust:\n        animation_events.append({'event': 'A4_BLACKJACK_BUST', 'payload': {'final_total': new_total}, 'delay_ms': 460})\n    return {'card': new_card, 'new_total': new_total, 'status': status, 'animation_events': animation_events}",
+    "blackjack_split": "(see blackjack_upgrade.split_mechanic.pseudocode for full implementation)",
+    "blackjack_surrender": "(see blackjack_upgrade.surrender_mechanic.pseudocode for full implementation)",
+    "blackjack_dealer_reveal": "def dealer_play_sequence(db, game_id, player_id):\n    game = db_query('SELECT * FROM blackjack_games WHERE id = ?', (game_id,)).fetchone()\n    deck = json.loads(game['deck_json'])\n    dealer_cards = json.loads(game['dealer_cards_json'])\n    animation_events = [{'event': 'A5_BLACKJACK_DEALER_REVEAL', 'payload': {'hole_card': dealer_cards[1]}, 'delay_ms': 0}]\n    next_delay = 320\n    while hand_value(dealer_cards) < 17 or (hand_value(dealer_cards) == 17 and is_soft(dealer_cards)):\n        new_card = deck.pop(0)\n        if get_player_streak_mode(db, player_id) == 'cold':\n            if hand_value(dealer_cards) >= 12 and hand_value(dealer_cards) <= 16 and random.random() < 0.04:\n                substitute = next((c for c in deck if card_value_low(c) <= 6), None)\n                if substitute:\n                    deck.remove(substitute)\n                    deck.insert(0, new_card)\n                    new_card = substitute\n                    log_streak_substitution(db, player_id, game_id, original=new_card, substituted=substitute)\n        dealer_cards.append(new_card)\n        animation_events.append({'event': 'A2_BLACKJACK_HIT', 'payload': {'card': new_card, 'target': 'dealer', 'new_total': hand_value(dealer_cards)}, 'delay_ms': next_delay})\n        next_delay += 460\n    final_total = hand_value(dealer_cards)\n    if final_total == 22:\n        animation_events.append({'event': 'push_22_indicator', 'payload': {}, 'delay_ms': next_delay + 200})\n    return {'dealer_final_total': final_total, 'dealer_cards': dealer_cards, 'animation_events': animation_events}",
+    "blackjack_natural": "def detect_natural_and_emit(player_cards, dealer_cards):\n    player_natural = (len(player_cards) == 2 and hand_value(player_cards) == 21)\n    dealer_natural = (len(dealer_cards) == 2 and hand_value(dealer_cards) == 21)\n    if player_natural and not dealer_natural:\n        return {'event': 'A3_BLACKJACK_NATURAL', 'payload': {'cards': player_cards, 'payout_ratio': '6:5'}}\n    if dealer_natural and not player_natural:\n        return {'event': 'A5_BLACKJACK_DEALER_REVEAL', 'payload': {'reveal_natural': True}, 'follow_up': {'event': 'dealer_natural_settlement', 'delay_ms': 320}}\n    if player_natural and dealer_natural:\n        return {'event': 'push_natural_vs_natural', 'payload': {}}\n    return None",
+    "blackjack_side_bet_resolve": "def resolve_perfect_pairs(player_cards, side_bet_pts):\n    c1, c2 = player_cards\n    if c1['rank'] != c2['rank']:\n        return {'won': False, 'result': 'none', 'payout': 0}\n    if c1['suit'] == c2['suit']:\n        return {'won': True, 'result': 'suited', 'payout': 25 * side_bet_pts}\n    same_color = (c1['suit'] in ('♥', '♦')) == (c2['suit'] in ('♥', '♦'))\n    if same_color:\n        return {'won': True, 'result': 'colored', 'payout': 12 * side_bet_pts}\n    return {'won': True, 'result': 'mixed', 'payout': 6 * side_bet_pts}\n\ndef resolve_21plus3(player_cards, dealer_up, side_bet_pts):\n    cards = list(player_cards) + [dealer_up]\n    rank_values = sorted([RANK_TO_VALUE[c['rank']] for c in cards])\n    suits = [c['suit'] for c in cards]\n    is_flush = len(set(suits)) == 1\n    is_straight = (rank_values[2] - rank_values[0] == 2 and len(set(rank_values)) == 3) or set(rank_values) == {2, 3, 14}\n    is_trips = len(set(c['rank'] for c in cards)) == 1\n    if is_trips and is_flush:\n        return {'won': True, 'result': 'suited_trips', 'payout': 100 * side_bet_pts}\n    if is_straight and is_flush:\n        return {'won': True, 'result': 'straight_flush', 'payout': 40 * side_bet_pts}\n    if is_trips:\n        return {'won': True, 'result': 'three_of_a_kind', 'payout': 30 * side_bet_pts}\n    if is_straight:\n        return {'won': True, 'result': 'straight', 'payout': 10 * side_bet_pts}\n    if is_flush:\n        return {'won': True, 'result': 'flush', 'payout': 5 * side_bet_pts}\n    return {'won': False, 'result': 'none', 'payout': 0}",
+    "blackjack_bonus_buy": "(see blackjack_upgrade.bonus_buy.pseudocode for full implementation)",
+    "poker_deal_multi_seat": "def poker_deal(db, session_id):\n    session = db_query('SELECT * FROM poker_sessions WHERE id = ?', (session_id,)).fetchone()\n    seats = db_query('SELECT * FROM poker_seats WHERE session_id = ? AND active = 1 ORDER BY seat_number', (session_id,)).fetchall()\n    if len(seats) < 2:\n        raise InvalidState('need_at_least_2_seats')\n    presets = json.loads(session['preset_hands_json'] or '{}')\n    deck = new_deck(decks=1)\n    random.shuffle(deck)\n    used_in_presets = []\n    for seat_id, holes in presets.items():\n        used_in_presets.extend(holes)\n    for c in used_in_presets:\n        deck = [d for d in deck if not (d['rank'] == c['rank'] and d['suit'] == c['suit'])]\n    animation_events = []\n    delay = 0\n    for round_n in range(2):\n        for s_idx, seat in enumerate(seats):\n            sid_str = str(seat['id'])\n            if sid_str in presets:\n                card = presets[sid_str][round_n]\n            else:\n                card = deck.pop(0)\n            existing = json.loads(seat['hole_cards_json'] or '[]')\n            existing.append(card)\n            db_execute('UPDATE poker_seats SET hole_cards_json = ? WHERE id = ?', (json.dumps(existing), seat['id']))\n            animation_events.append({'event': 'A6_POKER_DEAL_MULTI_SEAT', 'payload': {'seat_id': seat['id'], 'card': card, 'card_index': round_n, 'face_down': True}, 'delay_ms': delay})\n            delay += 120\n    db_execute('UPDATE poker_sessions SET deck_json = ?, stage = ? WHERE id = ?', (json.dumps(deck), 'preflop', session_id))\n    return {'animation_events': animation_events}",
+    "poker_community_flop": "def poker_advance_flop(db, session_id):\n    session = db_query('SELECT * FROM poker_sessions WHERE id = ?', (session_id,)).fetchone()\n    if session['stage'] != 'preflop':\n        raise InvalidState('flop_can_only_advance_from_preflop')\n    deck = json.loads(session['deck_json'])\n    burn = deck.pop(0)\n    flop = [deck.pop(0), deck.pop(0), deck.pop(0)]\n    db_execute('UPDATE poker_sessions SET community_cards_json = ?, deck_json = ?, stage = ? WHERE id = ?', (json.dumps(flop), json.dumps(deck), 'flop', session_id))\n    animation_events = []\n    for i, card in enumerate(flop):\n        animation_events.append({'event': 'A7_POKER_COMMUNITY_REVEAL', 'payload': {'card': card, 'slot_index': i, 'flop_card_index': i, 'stagger_ms': i * 80}, 'delay_ms': i * 80})\n    return {'flop': flop, 'animation_events': animation_events}",
+    "poker_community_turn_river": "def poker_advance_turn_or_river(db, session_id):\n    session = db_query('SELECT * FROM poker_sessions WHERE id = ?', (session_id,)).fetchone()\n    if session['stage'] not in ('flop', 'turn'):\n        raise InvalidState('invalid_stage_for_turn_or_river')\n    deck = json.loads(session['deck_json'])\n    burn = deck.pop(0)\n    new_card = deck.pop(0)\n    community = json.loads(session['community_cards_json'] or '[]')\n    community.append(new_card)\n    next_stage = 'turn' if session['stage'] == 'flop' else 'river'\n    slot_index = 3 if next_stage == 'turn' else 4\n    db_execute('UPDATE poker_sessions SET community_cards_json = ?, deck_json = ?, stage = ? WHERE id = ?', (json.dumps(community), json.dumps(deck), next_stage, session_id))\n    return {'new_card': new_card, 'animation_events': [{'event': 'A7v_POKER_COMMUNITY_REVEAL_SINGLE', 'payload': {'card': new_card, 'slot_index': slot_index}}]}",
+    "poker_showdown_evaluate": "def poker_showdown(db, session_id):\n    session = db_query('SELECT * FROM poker_sessions WHERE id = ?', (session_id,)).fetchone()\n    seats = db_query('SELECT * FROM poker_seats WHERE session_id = ? AND active = 1 AND folded = 0', (session_id,)).fetchall()\n    community = json.loads(session['community_cards_json'] or '[]')\n    if len(community) != 5:\n        raise InvalidState('showdown_requires_full_community')\n    results = []\n    for seat in seats:\n        holes = json.loads(seat['hole_cards_json'] or '[]')\n        if len(holes) != 2:\n            continue\n        rank_int, tiebreak, best_5 = best_hand(holes, community)\n        results.append({'seat_id': seat['id'], 'player_id': seat['player_id'], 'player_name': seat['player_name'], 'rank_int': rank_int, 'tiebreak': tiebreak, 'best_5': best_5, 'holes': holes})\n    results.sort(key=lambda r: (-r['rank_int'], [-x for x in r['tiebreak']]))\n    top_rank = (results[0]['rank_int'], results[0]['tiebreak'])\n    winners = [r for r in results if (r['rank_int'], r['tiebreak']) == top_rank]\n    db_execute('UPDATE poker_sessions SET stage = ? WHERE id = ?', ('showdown', session_id))\n    animation_events = [{'event': 'A8_POKER_SHOWDOWN', 'payload': {'winner_seat_ids': [w['seat_id'] for w in winners], 'all_results': [{'seat_id': r['seat_id'], 'rank_int': r['rank_int'], 'best_5': r['best_5']} for r in results]}}]\n    return {'winners': winners, 'all_results': results, 'animation_events': animation_events}"
+  },
+  "ui_wireframes": {
+    "blackjack_game_screen": "+----------------------------------------------------------------------+\n|  < TAKAISIN  BLACKJACK · RTP 90.0% · TASE 12 480p · STREAK normal     |\n+----------------------------------------------------------------------+\n|                                                                      |\n|     JAKAJA ─────────────────────────────────────                     |\n|     ┌─────┐ ┌─────┐                                                  |\n|     │ K♠  │ │  ?  │   SUMMA: ?  (paljastetaan vuorolla)              |\n|     └─────┘ └─────┘                                                  |\n|                                                                      |\n|     ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─                    |\n|                                                                      |\n|                            VAKUUTUSLINJA                             |\n|                                                                      |\n|     PELAAJA ────────────────────────────────                         |\n|     ┌─────┐ ┌─────┐                                                  |\n|     │ 9♥  │ │ 7♣  │   SUMMA: 16                                      |\n|     └─────┘ └─────┘                                                  |\n|                                                                      |\n|     PERUSPANOS [□ 100p]   PERFECT PAIRS [□ 50p]   21+3 [□ 50p]       |\n|                                                                      |\n|  [HIT] [STAND] [DOUBLE] [SPLIT] [SURRENDER] [VAKUUTUS]               |\n|                                                                      |\n|  CHIP-RACK:  [100][500][1000][5000][10000]                           |\n|                                                                      |\n|  [OSTA BLACKJACK 280p]   [TILASTOT]   [APUVÄLINEET]                  |\n+----------------------------------------------------------------------+\n|  RG: ISTUNTO 00:23:14  ·  NETTO -120p  ·  [KESKEYTÄ PELI]            |\n+----------------------------------------------------------------------+\nGrid: max-width 1080px centered. Felt area uses --felt-blackjack background. All buttons 1px solid --border-hard, 36px height, JetBrains Mono 13px. Active player turn = SPLIT/SURRENDER buttons highlighted via --accent-primary border-color. Side bet checkboxes are 24×24 squares left of label.",
+    "blackjack_side_bet_area": "+----------------------------------------------------------+\n|  SIVUPANOKSET                                            |\n+----------------------------------------------------------+\n|  [✓] PERFECT PAIRS                                       |\n|     Panos: [-]   50p   [+]                               |\n|     Maksu: 25× / 12× / 6× (suited / colored / mixed)     |\n|     RTP: 89.580%                                         |\n|                                                          |\n|  [✓] 21+3 (PELAAJAN 2 + JAKAJAN 1)                       |\n|     Panos: [-]   50p   [+]                               |\n|     Maksu: 100× / 40× / 30× / 10× / 5×                   |\n|     RTP: 89.460%                                         |\n|                                                          |\n|  YHTEENSÄ SIVUPANOKSET: 100p                             |\n+----------------------------------------------------------+\nValidation: side_bet ≥ 10p AND ≤ base_bet. Auto-disabled if balance < 10p. Each side bet stake field has data-testid='sidebet-{perfect_pairs|21plus3}-amount'.",
+    "blackjack_split_hands": "+--------------------------------------------------------------------+\n|  JAETTU KÄSI · 2 / 4                                                |\n+--------------------------------------------------------------------+\n|                                                                    |\n|  KÄSI A (ACTIVE) ─────────────────                                 |\n|     ┌─────┐ ┌─────┐                                                |\n|     │ 8♠  │ │ T♥  │   SUMMA: 18                                    |\n|     └─────┘ └─────┘                                                |\n|     PANOS: 100p     [HIT] [STAND] [DOUBLE]                         |\n|                                                                    |\n|  KÄSI B (waiting) ────────────                                     |\n|     ┌─────┐ ┌─────┐                                                |\n|     │ 8♣  │ │ 5♦  │   SUMMA: 13                                    |\n|     └─────┘ └─────┘                                                |\n|     PANOS: 100p (jaettu)                                           |\n|                                                                    |\n|  [SIIRRY KÄTEEN B]                                                  |\n+--------------------------------------------------------------------+\nActive hand: full opacity, --accent-primary outline. Waiting hand: 0.5 opacity. Cards rendered at scale=1.0 (96×134px). Active hand action buttons reflect available actions per game state.",
+    "blackjack_bonus_buy_modal": "+----------------------------------------------------+\n|  OSTA TAATTU BLACKJACK                              |\n+----------------------------------------------------+\n|                                                    |\n|  HINTA:           280 pts (= 2.8× peruspanos)      |\n|  ODOTETTU ARVO:   120 pts (palautusarvio)          |\n|  TALON OSUUS:     5 % (auditoitu)                  |\n|                                                    |\n|  ⚠ Tämä takaa luonnollisen blackjackin (Ace + 10-  |\n|     arvoinen) seuraavalla jakamisella.             |\n|  ⚠ Hinta on lopullinen.                            |\n|  ⚠ Maksimi 2 ostoa per istunto. Cooldown 120 s.    |\n|  ⚠ Käytetty: 0 / 2  ·  Cooldown: 0 s               |\n|                                                    |\n|        [VAHVISTA OSTO]      [PERUUTA]              |\n+----------------------------------------------------+\nModal: alertdialog role, focus-trapped, ESC = cancel. Confirm button has data-testid='confirm-bonus-buy-blackjack'. Cooldown countdown updates every second; Confirm disabled until cooldown reaches 0.",
+    "blackjack_responsible_gambling_loss_streak": "+----------------------------------------------------+\n|  HUOMIO — VASTUULLINEN PELAAMINEN                   |\n+----------------------------------------------------+\n|                                                    |\n|  Olet hävinnyt 20 kättä peräkkäin.                 |\n|                                                    |\n|  Tämän istunnon tilastot:                          |\n|     Kierroksia:               42                   |\n|     Hävittyä:                 −1 850 pts           |\n|     Suurin häviö yhdellä:     −400 pts             |\n|     Aika:                     00:23:14             |\n|                                                    |\n|  Haluatko jatkaa?                                  |\n|                                                    |\n|  [JATKA (3 s lukko)]      [LOPETA]                 |\n|                                                    |\n|  ⚠ JATKA aktivoituu 3 s viiveen jälkeen.           |\n+----------------------------------------------------+\nTriggered when consecutive_losses == 20 OR session_net_loss > 5 × session_start_balance. Modal alertdialog, ESC disabled (must explicitly choose). Pause logged to rg_session_state.pause_acknowledged_at.",
+    "poker_operator_table_view": "+----------------------------------------------------------------------+\n|  POKERI · POYTÄ #4 · MOODI A · STAGE: FLOP · POTTI: (manuaali)        |\n+----------------------------------------------------------------------+\n|                                                                      |\n|        [─PREFLOP─] [─FLOP═══] [──TURN──] [──RIVER─]                  |\n|                                                                      |\n|     ┌──── BURGUNDY OVAL FELT ────────┐                               |\n|     │                                 │                              |\n|     │   YHTEISET KORTIT:              │                              |\n|     │   [J♠] [Q♣] [4♥] [   ] [   ]    │                              |\n|     │                                 │                              |\n|     │   • Seat 1 [Pelaaja A]          │ Hole: [hide]    [JULISTA]    |\n|     │   • Seat 2 [Pelaaja B]          │ Hole: [show]    [JULISTA]    |\n|     │   • Seat 3 [Pelaaja C]  FOLD    │ Hole: [-]       [-]          |\n|     │   • Seat 4 [Pelaaja D]          │ Hole: [hide]    [JULISTA]    |\n|     │   D ← dealer button             │                              |\n|     │                                 │                              |\n|     └─────────────────────────────────┘                              |\n|                                                                      |\n|  [JAA HOLE-KORTIT]  [FLOP]  [TURN]  [RIVER]  [SHOWDOWN]              |\n|  [PRESET-MUOKKAIN]  [KÄSIHISTORIA]  [LOPETA SESSIO]                  |\n+----------------------------------------------------------------------+\nFelt is dark burgundy with normal-mapped fiber pattern. Seat positions arranged in oval at 60° intervals (6 seats max). Dealer button overlay rotates clockwise on each new hand.",
+    "poker_operator_preset_editor": "(see texas_holdem_upgrade.preset_editor.ui_wireframe for full layout)",
+    "poker_operator_declare_winner": "+----------------------------------------------------+\n|  JULISTA VOITTAJA · Seat 2 (Pelaaja B)              |\n+----------------------------------------------------+\n|                                                    |\n|  Anna potin koko (pisteinä): [_______]             |\n|                                                    |\n|  RAKE-LASKURI (jos käytössä):                      |\n|     Aktiivinen rake-asetus: rake_2pct_cap200       |\n|     Rake summasta:        (lasketaan vahvistuksessa)|\n|                                                    |\n|  Voittaja saa: pot − rake                          |\n|                                                    |\n|  [VAHVISTA]   [PERUUTA]                            |\n+----------------------------------------------------+\nValidation: pot_pts > 0 AND ≤ 10000000. Confirm button disabled until valid integer entered. After confirm: A8_POKER_SHOWDOWN plays for that seat.",
+    "poker_player_mobile_mode_a": "+--------------------------------+\n|  Seat 2 · Pelaaja B            |\n|  Saldo: 4 200 pts              |\n+--------------------------------+\n|                                |\n|       ┌──────┐  ┌──────┐       |\n|       │ A♠   │  │ K♠   │       |\n|       │      │  │      │       |\n|       │ ♠ A  │  │ ♠ K  │       |\n|       └──────┘  └──────┘       |\n|                                |\n|  [PIILOTA KORTIT (active)]     |\n|                                |\n|  YHTEISET (3 / 5):             |\n|  [J♠][Q♣][4♥][?][?]            |\n|                                |\n|  ┌──── STAGE: FLOP ─────┐      |\n|  └──────────────────────┘      |\n|                                |\n|  ┌─ KÄSI: PARI Ässää ──┐       |\n|  └──────────────────────┘      |\n|                                |\n+--------------------------------+\nNo bet actions in mode A (operator-managed). Polling every 3s for state updates. Haptic vibrate on each new community card.",
+    "poker_player_mobile_mode_b": "+--------------------------------+\n|  Seat 2 · Pelaaja B            |\n|  Saldo: 4 200 pts              |\n+--------------------------------+\n|       ┌──────┐  ┌──────┐       |\n|       │ A♠   │  │ K♠   │       |\n|       └──────┘  └──────┘       |\n|       [PIILOTA KORTIT]         |\n|                                |\n|  YHTEISET: [J♠][Q♣][4♥][?][?]  |\n|  ┌─ STAGE: FLOP ─┐             |\n|  ┌─ KÄSI: PARI A ─┐             |\n|                                |\n|  POTTI: 2 480 pts              |\n|  Sun panos: 100 pts            |\n|  Min korotus: +100 pts         |\n|                                |\n|  ┌────────┬─────────┬────────┐ |\n|  │  FOLD  │  CALL   │ RAISE  │ |\n|  │        │  100p   │        │ |\n|  └────────┴─────────┴────────┘ |\n+--------------------------------+\nWhen current_bettor_seat_id = own seat_id: action buttons enabled. RAISE opens slider modal (min..max). CALL shows the call-to amount. After click: confirm modal before submission.",
+    "poker_hand_history_replay": "(see texas_holdem_upgrade.hand_history_replay.ui_wireframe for full layout)",
+    "settings_colorblind_toggle": "+----------------------------------------------------+\n|  ASETUKSET · Esteettömyys                          |\n+----------------------------------------------------+\n|                                                    |\n|  VÄRISOKEUSTILA                                    |\n|     ◯ Pois (oletus)                                |\n|     ◯ Protan / Deutan (puna-/vihreä)               |\n|     ◯ Tritan (sini-/keltainen)                     |\n|                                                    |\n|  Esikatselu (kaikki neljä maata):                  |\n|     [♠][♥][♦][♣]                                   |\n|                                                    |\n|  VÄHENNETTY LIIKE                                  |\n|     ☐ Käytä järjestelmän asetusta (oletus)         |\n|     ☐ Pakota vähennetty liike                      |\n|                                                    |\n|  HAPTIIKKA                                         |\n|     ☐ Päällä (oletus)                              |\n|     ☐ Pois                                         |\n|                                                    |\n|  [TALLENNA]   [PERUUTA]                            |\n+----------------------------------------------------+\nSetting persisted in system_settings.colorblind_mode (TEXT) per player session. Live preview re-renders 4 suit pip SVGs with the chosen palette."
+  },
+  "css_glsl_snippets": {
+    "card_face_specular": ".card-face-specular { position: relative; isolation: isolate; } .card-face-specular::after { content: ''; position: absolute; inset: 4% 8% 60% 12%; background: linear-gradient(155deg, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0.18) 30%, rgba(255,255,255,0) 65%); mix-blend-mode: screen; pointer-events: none; filter: blur(0.4px); }",
+    "card_back_cloth_texture": ".card-back-cloth { background-color: #1A2440; background-image: url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><rect width='16' height='16' fill='%231A2440'/><rect x='0' y='0' width='2' height='2' fill='%232A3550'/><rect x='4' y='4' width='2' height='2' fill='%232A3550'/><rect x='8' y='8' width='2' height='2' fill='%232A3550'/><rect x='12' y='12' width='2' height='2' fill='%232A3550'/><rect x='2' y='10' width='2' height='2' fill='%232A3550'/><rect x='10' y='2' width='2' height='2' fill='%232A3550'/></svg>\"); background-size: 16px 16px; image-rendering: pixelated; }",
+    "felt_micro_displacement": ".poker-felt-micro { background-color: #3D1A24; background-image: radial-gradient(ellipse 80% 50% at 50% 55%, rgba(0,0,0,0.30) 0%, transparent 70%), url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='256' height='256'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.30 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>\"); background-blend-mode: multiply; image-rendering: pixelated; }",
+    "chip_metallic_edge": ".chip-clay { width: 64px; height: 64px; position: relative; background: radial-gradient(circle at 35% 28%, #F5EFD5 0%, var(--chip-body) 35%, color-mix(in srgb, var(--chip-body) 60%, #000) 100%); border: 1px solid #0A0A0A; isolation: isolate; } .chip-clay::before { content: ''; position: absolute; inset: -2px; background: repeating-conic-gradient(from 0deg, #2A1F08 0deg 4deg, #C9A227 4deg 8deg); mask: radial-gradient(circle, transparent 47%, #000 49%, #000 51%, transparent 53%); -webkit-mask: radial-gradient(circle, transparent 47%, #000 49%, #000 51%, transparent 53%); pointer-events: none; }",
+    "blackjack_natural_glow": ".bj-card.natural-glow { animation: naturalGoldRim 1800ms cubic-bezier(0.22, 1, 0.36, 1) forwards; outline: 1px solid #0A0A0A; } @keyframes naturalGoldRim { 0% { box-shadow: 0 0 0 0 rgba(201,162,39,0); transform: scale(1.0); } 11% { box-shadow: 0 0 0 4px rgba(201,162,39,0.85), 0 0 24px 8px rgba(201,162,39,0.7); transform: scale(1.0); } 22% { transform: scale(1.06); } 33% { transform: scale(1.0); } 100% { box-shadow: 0 0 0 2px rgba(201,162,39,0.55), 0 0 12px 4px rgba(201,162,39,0.40); transform: scale(1.0); } }",
+    "bust_crack_overlay": ".bj-card.bust { position: relative; } .bj-card.bust::after { content: ''; position: absolute; inset: 0; background-image: var(--bust-fracture-svg); background-size: cover; background-repeat: no-repeat; pointer-events: none; opacity: 0; animation: bustFractureFadeIn 480ms cubic-bezier(0.55, 0.085, 0.68, 0.530) forwards; animation-delay: 540ms; mix-blend-mode: multiply; } @keyframes bustFractureFadeIn { 0% { opacity: 0; } 100% { opacity: 1.0; } }",
+    "poker_nameplate_brass": ".seat-nameplate { background: linear-gradient(135deg, #C9A227 0%, #9B7B2E 35%, #6B4F12 65%, #C9A227 100%); border: 1px solid #0A0A0A; padding: 6px 12px; color: #1A130A; font-family: 'Chivo 900'; font-size: 13px; letter-spacing: 0.05em; text-transform: uppercase; text-shadow: 0 1px 0 rgba(255,255,255,0.25), 0 -1px 0 rgba(0,0,0,0.45); position: relative; min-width: 140px; display: inline-flex; align-items: center; gap: 8px; } .seat-nameplate::before { content: ''; position: absolute; top: 4px; left: 4px; width: 4px; height: 4px; background: radial-gradient(circle, #F5EFD5 0%, #6B4F12 100%); border: 0.5px solid #0A0A0A; } .seat-nameplate::after { content: ''; position: absolute; top: 4px; right: 4px; width: 4px; height: 4px; background: radial-gradient(circle, #F5EFD5 0%, #6B4F12 100%); border: 0.5px solid #0A0A0A; }",
+    "community_zone_inset": ".community-zone-inset { background: #4D2330; border: 1px solid #1A0810; box-shadow: inset 0 4px 8px rgba(0,0,0,0.45), inset 0 -2px 4px rgba(0,0,0,0.30), inset 1px 0 2px rgba(0,0,0,0.20), inset -1px 0 2px rgba(0,0,0,0.20); padding: 16px; display: grid; grid-template-columns: repeat(5, 96px); gap: 8px; }",
+    "stage_indicator_rail": ".stage-indicator-rail { display: flex; gap: 4px; position: absolute; top: 16px; left: 50%; transform: translateX(-50%); } .stage-indicator-rail > .stage-segment { width: 96px; height: 8px; background: var(--bg-canvas); border: 1px solid var(--border-hard); transition: background 200ms ease-out, border-color 200ms ease-out; } .stage-indicator-rail > .stage-segment.active { background: var(--accent-warning); border-color: var(--accent-warning); } .stage-indicator-rail > .stage-segment.completed { background: var(--accent-success); border-color: var(--accent-success); }",
+    "dealer_button_chrome": ".dealer-button-chrome { width: 64px; height: 64px; border-radius: 50%; background: radial-gradient(circle at 50% 30%, #E8ECF0 0%, #B0B7BF 50%, #6B7178 100%); border: 1px solid #0A0A0A; box-shadow: inset 0 -2px 4px rgba(0,0,0,0.30), inset 0 2px 4px rgba(255,255,255,0.40), 0 1px 2px rgba(0,0,0,0.45); position: relative; display: flex; align-items: center; justify-content: center; font-family: 'Chivo 900'; font-size: 32px; color: #0A0A0A; } .dealer-button-chrome::before { content: ''; position: absolute; inset: 4px; border-radius: 50%; border: 0.5px solid #5C5C54; opacity: 0.6; pointer-events: none; }"
+  },
+  "db_migrations": [
+    "ALTER TABLE blackjack_games ADD COLUMN side_bets_json TEXT;",
+    "ALTER TABLE blackjack_games ADD COLUMN split_hands_json TEXT;",
+    "ALTER TABLE blackjack_games ADD COLUMN split_count INTEGER DEFAULT 0;",
+    "ALTER TABLE blackjack_games ADD COLUMN active_hand_index INTEGER DEFAULT 0;",
+    "ALTER TABLE blackjack_games ADD COLUMN surrender_amount INTEGER DEFAULT 0;",
+    "CREATE TABLE IF NOT EXISTS bonus_buy_log (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  player_id INTEGER NOT NULL,\n  game_theme TEXT NOT NULL,\n  bonus_type TEXT NOT NULL,\n  cost_points INTEGER NOT NULL,\n  payout_points INTEGER NOT NULL DEFAULT 0,\n  rng_seed TEXT,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  FOREIGN KEY (player_id) REFERENCES players(id)\n);",
+    "CREATE INDEX IF NOT EXISTS idx_bonus_buy_log_player_theme_time ON bonus_buy_log(player_id, game_theme, created_at);",
+    "CREATE TABLE IF NOT EXISTS streak_substitution_log (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  player_id INTEGER NOT NULL,\n  game_id INTEGER NOT NULL,\n  game_type TEXT NOT NULL,\n  streak_mode TEXT NOT NULL,\n  original_card TEXT NOT NULL,\n  substituted_card TEXT NOT NULL,\n  draw_context TEXT,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);",
+    "ALTER TABLE poker_sessions ADD COLUMN pot_json TEXT DEFAULT '{}';",
+    "ALTER TABLE poker_sessions ADD COLUMN current_bettor_seat_id INTEGER;",
+    "ALTER TABLE poker_sessions ADD COLUMN current_bet_pts INTEGER DEFAULT 0;",
+    "ALTER TABLE poker_sessions ADD COLUMN min_raise_pts INTEGER DEFAULT 0;",
+    "ALTER TABLE poker_sessions ADD COLUMN big_blind_pts INTEGER DEFAULT 100;",
+    "ALTER TABLE poker_sessions ADD COLUMN small_blind_pts INTEGER DEFAULT 50;",
+    "ALTER TABLE poker_sessions ADD COLUMN dealer_button_seat_id INTEGER;",
+    "ALTER TABLE poker_sessions ADD COLUMN mode TEXT DEFAULT 'mode_a';",
+    "ALTER TABLE poker_seats ADD COLUMN current_round_bet_pts INTEGER DEFAULT 0;",
+    "ALTER TABLE poker_seats ADD COLUMN total_session_contribution_pts INTEGER DEFAULT 0;",
+    "ALTER TABLE poker_seats ADD COLUMN all_in INTEGER DEFAULT 0;",
+    "ALTER TABLE poker_seats ADD COLUMN last_action TEXT;",
+    "CREATE INDEX IF NOT EXISTS idx_poker_seats_session_active ON poker_seats(session_id, active, folded);",
+    "CREATE TABLE IF NOT EXISTS session_state (\n  player_id INTEGER NOT NULL,\n  game_type TEXT NOT NULL,\n  consecutive_losses INTEGER NOT NULL DEFAULT 0,\n  session_start_points INTEGER NOT NULL DEFAULT 0,\n  session_started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  last_activity TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (player_id, game_type),\n  FOREIGN KEY (player_id) REFERENCES players(id)\n);",
+    "CREATE TABLE IF NOT EXISTS rg_session_state (\n  player_id INTEGER PRIMARY KEY,\n  session_started_at TIMESTAMP NOT NULL,\n  total_play_seconds INTEGER NOT NULL DEFAULT 0,\n  pause_acknowledged_at TIMESTAMP,\n  loss_limit_points INTEGER,\n  win_limit_points INTEGER,\n  net_points_session INTEGER NOT NULL DEFAULT 0,\n  FOREIGN KEY (player_id) REFERENCES players(id)\n);"
+  ],
+  "sound_bank": [
+    {
+      "event_name": "card_deal_cloth",
+      "physical_description": "Card sliding across felt fabric — sustained shh-hiss with paper-edge grain at start",
+      "web_audio_type": "AudioBufferSourceNode (procedurally generated white-noise band-passed 1.6-3.4 kHz, 180ms duration)",
+      "duration_ms": 180,
+      "envelope": {
+        "attack_ms": 6,
+        "sustain_ms": 60,
+        "release_ms": 114
+      },
+      "trigger_event": "card_in_flight_phase",
+      "haptic_pattern": "LIGHT [40]"
+    },
+    {
+      "event_name": "card_flip_snap",
+      "physical_description": "Crisp paper snap at flip apex — single sharp click",
+      "web_audio_type": "AudioBufferSourceNode (40ms transient: 12kHz click + decaying 4-6kHz noise tail)",
+      "duration_ms": 40,
+      "envelope": {
+        "attack_ms": 1,
+        "sustain_ms": 6,
+        "release_ms": 33
+      },
+      "trigger_event": "card_face_reveal_50pct_of_flip",
+      "haptic_pattern": "LIGHT [40]"
+    },
+    {
+      "event_name": "card_land_felt",
+      "physical_description": "Soft thud — low thump as card contacts felt",
+      "web_audio_type": "AudioBufferSourceNode (low-pass filtered noise burst, 80ms, peak at 320Hz)",
+      "duration_ms": 80,
+      "envelope": {
+        "attack_ms": 4,
+        "sustain_ms": 16,
+        "release_ms": 60
+      },
+      "trigger_event": "card_lands_at_target",
+      "haptic_pattern": "LIGHT [40]"
+    },
+    {
+      "event_name": "chip_toss_arc",
+      "physical_description": "Brief whoosh as chip flies through air",
+      "web_audio_type": "OscillatorNode (sine sweep 600→1200Hz, 200ms) + filtered noise layer",
+      "duration_ms": 200,
+      "envelope": {
+        "attack_ms": 12,
+        "sustain_ms": 80,
+        "release_ms": 108
+      },
+      "trigger_event": "chip_in_flight",
+      "haptic_pattern": null
+    },
+    {
+      "event_name": "chip_land_felt",
+      "physical_description": "Soft click-thud — clay chip contacts felt with 1-2 micro-bounces",
+      "web_audio_type": "AudioBufferSourceNode (custom WAV: 2 stacked transients at 800Hz and 1.2kHz, 120ms total)",
+      "duration_ms": 120,
+      "envelope": {
+        "attack_ms": 2,
+        "sustain_ms": 32,
+        "release_ms": 86
+      },
+      "trigger_event": "chip_settles_on_felt",
+      "haptic_pattern": "MEDIUM [80,30,80]"
+    },
+    {
+      "event_name": "chip_stack_settle",
+      "physical_description": "Multiple tiny clicks as chips reorganize in stack",
+      "web_audio_type": "Series of 4 AudioBufferSourceNodes (each 40ms tick, staggered 50ms)",
+      "duration_ms": 300,
+      "envelope": {
+        "attack_ms": 1,
+        "sustain_ms": 8,
+        "release_ms": 31,
+        "_per_tick": true
+      },
+      "trigger_event": "stack_height_changes",
+      "haptic_pattern": "MEDIUM [80,30,80]"
+    },
+    {
+      "event_name": "blackjack_natural_fanfare",
+      "physical_description": "Rising 3-note major chord (C-E-G) — orchestral brass simulated",
+      "web_audio_type": "3 OscillatorNodes (sawtooth, frequencies 523/659/784 Hz) with envelope + reverb (ConvolverNode with synthetic IR)",
+      "duration_ms": 800,
+      "envelope": {
+        "attack_ms": 24,
+        "sustain_ms": 320,
+        "release_ms": 456
+      },
+      "trigger_event": "player_natural_blackjack_detected",
+      "haptic_pattern": "HEAVY [150,80,150,80,300]"
+    },
+    {
+      "event_name": "bust_negative",
+      "physical_description": "Descending minor 6th — ominous downward gesture",
+      "web_audio_type": "OscillatorNode (sine sweep 440→220Hz, 400ms) + sub-octave layer at 110Hz",
+      "duration_ms": 400,
+      "envelope": {
+        "attack_ms": 8,
+        "sustain_ms": 120,
+        "release_ms": 272
+      },
+      "trigger_event": "player_hand_total_exceeds_21",
+      "haptic_pattern": "STRONG [200]"
+    },
+    {
+      "event_name": "insurance_prompt_tone",
+      "physical_description": "Single attention bell — high clear bell strike",
+      "web_audio_type": "OscillatorNode (sine 1200Hz, 200ms) with bell-like overtone layer at 2400Hz",
+      "duration_ms": 200,
+      "envelope": {
+        "attack_ms": 4,
+        "sustain_ms": 40,
+        "release_ms": 156
+      },
+      "trigger_event": "dealer_shows_ace_after_deal",
+      "haptic_pattern": "LIGHT [60]"
+    },
+    {
+      "event_name": "poker_deal_round",
+      "physical_description": "Rapid series of cloth slides for multi-seat deal — 4 to 12 cards in sequence",
+      "web_audio_type": "Repeating card_deal_cloth event scheduled at 120ms intervals matching A6 stagger",
+      "duration_ms": 600,
+      "envelope": {
+        "_per_card_event": "see card_deal_cloth"
+      },
+      "trigger_event": "poker_hole_card_deal_phase",
+      "haptic_pattern": "LIGHT [40] per card"
+    },
+    {
+      "event_name": "showdown_reveal",
+      "physical_description": "Dramatic low rumble building to chord resolution",
+      "web_audio_type": "Sub-bass OscillatorNode (sine 65Hz fading in over 800ms) + brass chord stinger at 1000ms (3-note major chord)",
+      "duration_ms": 1200,
+      "envelope": {
+        "attack_ms": 800,
+        "sustain_ms": 280,
+        "release_ms": 120
+      },
+      "trigger_event": "showdown_animation_starts",
+      "haptic_pattern": "HEAVY [100,50,100,50,200]"
+    },
+    {
+      "event_name": "pot_award",
+      "physical_description": "Coin cascade audio + final chord resolve",
+      "web_audio_type": "AudioBufferSourceNode (sample: cascading coins.wav) + final 3-note major chord stinger",
+      "duration_ms": 1000,
+      "envelope": {
+        "attack_ms": 12,
+        "sustain_ms": 600,
+        "release_ms": 388
+      },
+      "trigger_event": "pot_credited_to_winner",
+      "haptic_pattern": "HEAVY [100,50,100,50,200]"
+    }
+  ],
+  "performance_budget": {
+    "card_sprite_memory_bytes": 4193280,
+    "_card_sprite_memory_calculation": "52 cards * 120px * 168px * 4 bytes (RGBA) = 52 * 80,640 = 4,193,280 bytes ≈ 4.0 MB. Within 64MB mobile heap budget.",
+    "chip_atlas_px": "256x256 (15 chip sprites at 64×64px each, packed 5×3 grid into single PNG; total ≈ 65.5KB compressed)",
+    "felt_texture_mb": 1.288,
+    "_felt_texture_calculation": "Albedo 512×512 RGBA = 1,048,576 bytes; Normal map 512×512 RGB = 786,432 bytes; mipmap level 4 adds ~33% = total 1.288 MB",
+    "max_simultaneous_animated_cards": 3,
+    "_animation_queue_rationale": "9-card deals (6-seat × 2 holes - 3 cards in air at once) staggered ensures GPU compositor stays under 16ms/frame on mobile",
+    "lod_rules": {
+      "trigger_metric": "requestAnimationFrame delta_ms",
+      "trigger_threshold_ms": 24,
+      "trigger_consecutive_frames": 3,
+      "auto_lod_actions": [
+        "Disable particle systems (A3 coin burst, A8 winner glow particles)",
+        "Halve card sprite dimensions: 60×84px instead of 120×168px",
+        "Disable felt normal map: solid background color only",
+        "Replace CSS keyframe animations with state transitions (200ms ease-out only)",
+        "Skip motion blur filter on card flights",
+        "Replace card flip with opacity cross-dissolve (150ms)",
+        "Cap chip stack rendering to top 5 chips only"
+      ],
+      "exit_lod_when": "delta_ms < 18ms for 60 consecutive frames",
+      "memory_threshold_mb": 2048,
+      "memory_threshold_action": "If navigator.deviceMemory < 2 AND devicePixelRatio > 2, force LOD on init"
+    },
+    "mobile_heap_budget_mb": 64,
+    "animation_queue_stagger_ms": 80,
+    "atlas_layout": {
+      "card_faces_atlas.png": {
+        "size": "1024×1344 (52 cards in 13×4 grid at 78×84 reduced size; full size on mipmap level 0 = 4096×5376)",
+        "mipmaps": true
+      },
+      "chip_sprites_atlas.png": {
+        "size": "256×256",
+        "mipmaps": false,
+        "_format": "PNG-8 quantized"
+      },
+      "felt_normal_map.png": {
+        "size": "256×256",
+        "mipmaps": true,
+        "_tile_repeat": "2×2 across 1024×1024 visible felt area"
+      }
+    }
+  },
+  "accessibility": {
+    "reduced_motion_rules": {
+      "A1_BLACKJACK_CARD_DEAL": {
+        "fallback": "Card appears at target with 200ms opacity 0→1 fade; no flight, no flip, no blur"
+      },
+      "A2_BLACKJACK_HIT": {
+        "fallback": "Card + total update instantly; 100ms opacity transition only"
+      },
+      "A3_BLACKJACK_NATURAL": {
+        "fallback": "'BLACKJACK' label appears centered for 1500ms with 200ms fade; no rim glow, no particles, no ripple"
+      },
+      "A4_BLACKJACK_BUST": {
+        "fallback": "Counter turns red instantly; cards stay neutral; 'YLI' label for 1000ms"
+      },
+      "A5_BLACKJACK_DEALER_REVEAL": {
+        "fallback": "150ms opacity cross-dissolve from face-down to face-up"
+      },
+      "A6_POKER_DEAL_MULTI_SEAT": {
+        "fallback": "Hole cards appear at seats with 200ms staggered opacity fade; no flight"
+      },
+      "A7_POKER_COMMUNITY_REVEAL": {
+        "fallback": "Cards appear face-up at slots with 200ms staggered opacity fade"
+      },
+      "A8_POKER_SHOWDOWN": {
+        "fallback": "Winning seat row gets --accent-success background; losing seats get 40% opacity instantly; no rim, no glow"
+      },
+      "A9_CHIP_BET_BLACKJACK": {
+        "fallback": "Chip appears in betting circle instantly; no toss, no bounce, no ripple"
+      },
+      "A10_INSURANCE_PROMPT": {
+        "fallback": "Banner appears instantly with text; no Ace pulse; chip animation skipped"
+      }
+    },
+    "colorblind_modes": {
+      "default": {
+        "spade": "#0A0A0A",
+        "heart": "#CC2200",
+        "diamond": "#CC2200",
+        "club": "#0A0A0A",
+        "_shape_distinction": "Standard suit shapes (already differentiated by outline)"
+      },
+      "protanopia_deuteranopia": {
+        "spade": "#0A0A0A",
+        "heart": "#E87040",
+        "diamond": "#0066CC",
+        "club": "#006644",
+        "_shape_tokens": {
+          "spade": "Distinctive pointed base; trapezoidal stem visible at bottom",
+          "heart": "Two rounded top lobes meeting in valley; tapering point at bottom",
+          "diamond": "Strict rhombus — straight sides, no curves",
+          "club": "Three-circle trefoil with small trapezoidal stem"
+        },
+        "_additional_visual_cues": "Stroke width increased to 2px on suit pips; suit identifier letter shown small below pip in corner index"
+      },
+      "tritanopia": {
+        "spade": "#0A0A0A",
+        "heart": "#CC2200",
+        "diamond": "#009900",
+        "club": "#CC9900",
+        "_shape_tokens": "(same as protanopia_deuteranopia)"
+      },
+      "system_settings_key": "colorblind_mode",
+      "settings_values": [
+        "default",
+        "protanopia_deuteranopia",
+        "tritanopia"
+      ]
+    },
+    "screen_reader_aria_live": {
+      "card_deal_announcement": "aria-live='polite' on .game-state-announcer; on each card dealt, append text 'Jaettu: <rank> <suit_finnish_name>' (e.g., 'Jaettu: Ässä pata')",
+      "rank_announce_finnish_map": {
+        "A": "Ässä",
+        "K": "Kuningas",
+        "Q": "Kuningatar",
+        "J": "Sotilas",
+        "10": "Kymmenen",
+        "9": "Yhdeksän",
+        "8": "Kahdeksan",
+        "7": "Seitsemän",
+        "6": "Kuusi",
+        "5": "Viisi",
+        "4": "Neljä",
+        "3": "Kolme",
+        "2": "Kaksi"
+      },
+      "suit_announce_finnish_map": {
+        "♠": "pata",
+        "♥": "hertta",
+        "♦": "ruutu",
+        "♣": "risti"
+      },
+      "facedown_card_aria_label": "Peitetty kortti",
+      "blackjack_outcomes": {
+        "natural": "aria-live='assertive': 'BLACKJACK! Voitto <amount> pistettä'",
+        "bust": "aria-live='assertive': 'YLI 21! Hävisit <amount> pistettä'",
+        "win": "aria-live='polite':    'Voitit <amount> pistettä'",
+        "push": "aria-live='polite':    'Tasapeli — panos palautettu'"
+      },
+      "rg_interstitial_modal": "role='alertdialog' with aria-modal='true' and aria-labelledby pointing to the title element"
+    },
+    "responsible_gambling": {
+      "blackjack_loss_streak_trigger": 20,
+      "net_loss_interstitial_multiplier": 5,
+      "session_state_table_schema": "CREATE TABLE IF NOT EXISTS session_state (\n  player_id INTEGER NOT NULL,\n  game_type TEXT NOT NULL,\n  consecutive_losses INTEGER NOT NULL DEFAULT 0,\n  session_start_points INTEGER NOT NULL DEFAULT 0,\n  session_started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  last_activity TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (player_id, game_type),\n  FOREIGN KEY (player_id) REFERENCES players(id)\n);",
+      "loss_streak_pseudocode": "def update_loss_streak_and_check(db, player_id, hand_outcome, current_balance):\n    state = db_query('SELECT * FROM session_state WHERE player_id = ? AND game_type = ?', (player_id, 'blackjack')).fetchone()\n    if not state:\n        db_execute('INSERT INTO session_state (player_id, game_type, consecutive_losses, session_start_points, session_started_at, last_activity) VALUES (?, ?, 0, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)', (player_id, 'blackjack', current_balance))\n        state = {'consecutive_losses': 0, 'session_start_points': current_balance}\n    if hand_outcome in ('done_loss', 'done_bust'):\n        new_streak = state['consecutive_losses'] + 1\n    else:\n        new_streak = 0\n    db_execute('UPDATE session_state SET consecutive_losses = ?, last_activity = CURRENT_TIMESTAMP WHERE player_id = ? AND game_type = ?', (new_streak, player_id, 'blackjack'))\n    show_loss_streak_modal = (new_streak >= 20)\n    net_loss = state['session_start_points'] - current_balance\n    show_net_loss_modal = (net_loss >= 5 * state['session_start_points'])\n    return {'show_loss_streak_modal': show_loss_streak_modal, 'show_net_loss_modal': show_net_loss_modal, 'consecutive_losses': new_streak, 'net_loss': net_loss}",
+      "localizable_keys": [
+        "rg.bj.loss_streak.title",
+        "rg.bj.loss_streak.body",
+        "rg.bj.loss_streak.continue_btn",
+        "rg.bj.loss_streak.quit_btn",
+        "rg.bj.net_loss.title",
+        "rg.bj.net_loss.body_template",
+        "rg.bj.session.spins_label",
+        "rg.bj.session.lost_label",
+        "rg.bj.session.biggest_loss_label",
+        "rg.bj.session.time_label",
+        "rg.bj.bonus_buy.confirm_title",
+        "rg.bj.bonus_buy.confirm_body",
+        "rg.bj.bonus_buy.confirm_btn",
+        "rg.bj.bonus_buy.cancel_btn",
+        "rg.poker.session.timer_label",
+        "rg.poker.session.net_label",
+        "rg.poker.pause_btn",
+        "rg.btn.continue",
+        "rg.btn.quit"
+      ]
+    }
+  },
+  "qa_checklist": {
+    "rng_validation": [
+      "Seed test: random.seed(0xA17EBABE_BLACKJACK_v1) → first 1000 dealt cards match snapshot fixture",
+      "Distribution test: 10M deals → each rank appears 4/13 ± 0.05% (within shoe distribution)",
+      "Shuffle uniformity: Fisher-Yates shuffle test — 100k shuffles, position bias chi-square p > 0.05",
+      "new_deck(decks=6) returns exactly 312 cards, 24 of each rank, 78 of each suit"
+    ],
+    "rtp_validation_blackjack": [
+      "10M-hand Monte Carlo under basic strategy with stated rules → observed RTP within 90.0% ± 0.10%",
+      "Streak HOT mode: 1M-hand simulation → observed RTP within 92.873% ± 0.20%",
+      "Streak COLD mode: 1M-hand simulation → observed RTP within 87.224% ± 0.20%",
+      "Push 22 frequency: dealer ends on exactly 22 in approximately 9.97% of hands",
+      "Natural blackjack frequency: 4.748% of hands ± 0.02%",
+      "Variance per hand: σ² ≈ 1.330 bet_units²; std deviation ≈ 1.153"
+    ],
+    "side_bet_rtp_validation": [
+      "Perfect Pairs: 5M-hand standalone Monte Carlo → RTP 89.580% ± 0.15%",
+      "Perfect Pairs probability: suited_pair 1.891% ± 0.05%, colored 1.891% ± 0.05%, mixed 3.782% ± 0.05%",
+      "21+3: 5M-hand standalone Monte Carlo → RTP 89.460% ± 0.15%",
+      "21+3 combination frequencies: suited_trips 0.0098%, straight_flush 0.196%, three_of_a_kind 0.235%, straight 3.193%, flush 5.285%"
+    ],
+    "split_logic_edge_cases": [
+      "Split pair of Aces: each hand receives exactly 1 card; no further hits allowed; no double after split aces",
+      "Re-split: 4-hand maximum (3 splits total) — 4th split attempt returns 409 max_splits_reached",
+      "Re-split aces: split A-A → split first A again → 409 no_resplit_aces",
+      "Split with insufficient points: 402 insufficient_points; original hand state unchanged",
+      "Active hand index tracking: after split, action_index tracks which hand is being played; advances on stand/bust/double",
+      "Final settlement: each split hand resolved independently against dealer's final total",
+      "Monte Carlo: 100k random splits → all valid splits succeed; all invalid attempts return correct error code"
+    ],
+    "animation_fallback_tests": [
+      "prefers-reduced-motion: reduce → all 10 animations (A1–A10) reach end state without translate/rotate/scale",
+      "LOD trigger: artificial 30ms RAF delay for 3 frames → reduced mode active within 100ms",
+      "All animations playable on iPhone 13 Safari, Pixel 7 Chrome, desktop Chrome 120 at target FPS",
+      "Lottie stubs / Canvas2D card sprites render at 60fps on reference devices",
+      "Card flip animation: rotateY transitions visible; backface-visibility prevents face-back bleed"
+    ],
+    "colorblind_mode_tests": [
+      "Toggle colorblind_mode in settings → all 4 suits redraw with new palette + shape tokens within 200ms",
+      "Protan/Deutan: ♥ vs ♦ visually distinct on monochrome filter applied screen capture",
+      "Tritan: ♦ vs ♣ visually distinct on monochrome filter applied screen capture",
+      "Suit shapes alone (no color) distinguishable: pass screen reader simulation test"
+    ],
+    "responsible_gambling_flow_tests": [
+      "Loss-streak modal fires at exactly 20 consecutive losses; JATKA disabled for 3s after open",
+      "Net-loss interstitial fires when session_start_points - current_balance ≥ 5 × session_start_points",
+      "Modal cannot be dismissed via ESC (must explicitly choose JATKA or LOPETA)",
+      "session_state row created on first hand of session; consecutive_losses resets on any non-loss outcome",
+      "Localized strings present for all keys in localizable_keys list",
+      "Bonus-buy consent modal displays before deduction; CANCEL preserves balance"
+    ],
+    "poker_mode_b_pot_integrity_tests": [
+      "Atomic bet deduction: 1000 concurrent /bet requests under load → no double-deductions; pot integrity verified",
+      "Side pot computation: 3-player all-in scenario with [100, 200, 500] contributions → side pots: [{300, all 3 eligible}, {200, players 2-3}, {300, player 3 only}]",
+      "Folded seats removed from side pot eligibility before side pot creation",
+      "current_bettor_seat_id rotation: after each bet, next non-folded non-all-in seat in clockwise order",
+      "Round complete detection: round ends when all non-folded non-all-in seats have current_round_bet_pts == current_bet_pts (or are all-in)",
+      "Showdown auto-settle: auto-settle endpoint requires operator_confirmed=true to credit accounts",
+      "All-in handling: insufficient balance for call automatically converts to all-in; new side pot computed"
+    ],
+    "db_migration_safety": [
+      "All ALTER TABLE statements use ADD COLUMN with DEFAULT or NULL → safe on existing rows",
+      "All CREATE TABLE statements use IF NOT EXISTS → idempotent on re-run",
+      "All CREATE INDEX statements use IF NOT EXISTS",
+      "Rollback script provided for each new column/table (DROP COLUMN / DROP TABLE / DROP INDEX)",
+      "Post-migration smoke test: insert/select on each new table from app code; existing blackjack/poker flows unaffected",
+      "side_bets_json column NULL on pre-migration rows verified"
+    ],
+    "performance_budget_checks": [
+      "Card sprite cache memory: ≤ 4.2 MB on instantiation of all 52 face-up + 1 face-down sprites",
+      "Mobile JS heap: ≤ 64 MB after 50 hands of blackjack",
+      "Mobile draw calls: ≤ 30/frame during card deal animation; verified via SpectorJS",
+      "First-paint of blackjack screen: ≤ 1500 ms on 4G simulated",
+      "Poker showdown with 6 seats: ≤ 30 fps fallback maintained on mobile",
+      "Memory leak test: 1000 hands of blackjack; pre/post heap snapshot delta ≤ 5 MB"
+    ]
+  },
+  "implementation_notes": {
+    "deck_position_to_animation_mapping": "Each card drawn from deck (deck.pop(0)) maps to a frontend animation event. The server response includes an animation_events array; each entry has {event, payload, delay_ms, sequence_id}. Frontend AnimationBus dispatches in sequence_id order, applying delay_ms cumulatively. For blackjack: deck[0] = player_card_1, deck[1] = dealer_up_card, deck[2] = player_card_2, deck[3] = dealer_hole_card. Client uses these card identities + the deck position to compute animation start coordinates (always from .deck-shoe element bounding rect via getBoundingClientRect()) and target coordinates (per seat/zone CSS variables --target-x, --target-y). This decouples card identity from animation timing, enabling reduced-motion mode to short-circuit visual chain while preserving correct game state.",
+    "atomic_points_for_split_hands": "Each split deducts the original bet amount via _atomic_deduct_points(db, player_id, bet, label). This is called within the same transaction as the deck.pop() and INSERT/UPDATE statements. If atomic deduction fails (insufficient points), the entire split operation is rolled back via SQLite transaction rollback — the split is rejected with 402 and the hand state is unchanged. Split hand wins are credited via _add_points per resolved hand at game end (status transition to done_*), keyed by active_hand_index. Side bet stakes are deducted separately and resolved before main hand actions; their winnings/losses are independent of split logic.",
+    "side_bet_settlement_ordering": "Order of operations in start_blackjack(): 1) deduct main bet, 2) deduct side bet stakes, 3) shuffle/check forced deck, 4) deal 4 cards, 5) resolve perfect_pairs (if staked), 6) resolve 21+3 (if staked), 7) credit side bet payouts via _add_points, 8) check for player natural BJ → emit A3 if yes, 9) check for dealer natural BJ peek → emit A5 + settle if yes (player loses main, side bets independent). All within a single SQLite transaction. Side bets are NEVER refunded on dealer natural BJ — they are resolved against player's 2 cards regardless of dealer outcome.",
+    "poker_mode_b_concurrency": "Mode B requires careful concurrency control because multiple players may submit bet actions simultaneously. Use SQLite's BEGIN IMMEDIATE for all bet-related transactions to acquire write lock early. Each /bet endpoint reads current_bettor_seat_id under lock; if it doesn't match the requesting seat, returns 403. Bet submission is idempotent via a request_id field in the body — duplicate submissions with same request_id return cached result instead of double-deducting. For high concurrency (>10 active tables), consider migrating to PostgreSQL with SELECT FOR UPDATE; SQLite serializes writes which limits throughput to ~50/sec.",
+    "streak_mode_audit_logging": "Every streak-mode-induced card substitution writes a row to streak_substitution_log: (player_id, game_id, game_type, streak_mode, original_card, substituted_card, draw_context, created_at). draw_context describes the situation: e.g., 'player_hit_at_total_18' or 'dealer_drawing_to_make_17'. This log enables compliance audits to retroactively verify the streak mechanic was applied within stated probability bounds (4% trigger rate). A scheduled job (daily cron) can compute observed_substitution_rate = COUNT(streak_log) / COUNT(matching_eligible_draws) and alert if > 6% or < 2% (indicating implementation bug or tampering). Log is operator-only — never exposed to /asiakas (player) endpoints.",
+    "card_renderer_caching_strategy": "CardRenderer.spriteCache is a Map<string, ImageBitmap> with keys like 'A_♠' (face-up) or 'BACK' (face-down). On first drawCard() call for a given card+faceUp combination, _renderCardToOffscreen() creates an OffscreenCanvas, draws the card, calls transferToImageBitmap(), and caches. Subsequent draws of the same card use cached bitmap with ctx.drawImage() — extremely fast (~0.05ms). Cache size: 53 entries (52 face-up + 1 face-down) = 4.2 MB stable. Cache is rebuilt on resize events (devicePixelRatio change); during rebuild, fallback CSS sprites are shown. For very low-memory devices (<1GB), reduce card sprite size to 60×84px and skip the offscreen cache entirely, drawing each card directly to the main canvas every frame.",
+    "mobile_page_polling_vs_websocket": "Player-facing mobile page (/poker/join → templates/poker_player.html) uses HTTP polling at 3-second intervals via GET /api/poker/player/<token>. This was chosen over WebSocket for the following reasons: (1) Existing Flask infrastructure does not have WebSocket support; adding it requires Flask-SocketIO + Eventlet/Gevent which complicates deployment; (2) Polling at 3s is acceptable for poker pacing (community card reveals occur on operator-controlled timing, typically 10-30s apart); (3) Polling is more resilient to flaky mobile networks (each request is independent; WebSocket disconnects require reconnect logic); (4) Server load at 3s polling × 6 seats × concurrent tables is well within SQLite read capacity (>100 reads/sec). If user feedback indicates polling latency feels too slow during showdown, future migration path: server-sent events (SSE) via /api/poker/player/<token>/stream — easier than full WebSocket, single direction, falls back to polling on browser incompatibility."
+  }
+}

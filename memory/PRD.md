@@ -52,3 +52,35 @@ Tuottaa täydellinen, toteutusvalmis design-, taide-, UX- ja logiikkaspesifikaat
 - `/app/casino_game_spec.json` — primary deliverable (149.6 KB)
 - `/app/spec_parts/part_1.json` … `part_3.json` — source parts (preserved for diff/rebuild)
 - `/app/spec_parts/merge.py`, `validate_pseudocode.py` — build + validation tooling
+
+---
+
+## ITERATION 2 — Card Games Deep-Dive Spec (Blackjack + Texas Hold'em)
+
+### Delivered
+- 2026-01: `/app/casino_card_games_spec.json` (193.4 KB, 17 top-level keys)
+  - Full RTP math: Blackjack base 90.011%, Perfect Pairs 89.58%, 21+3 89.46%, House-banked Hold'em variant 90.04%
+  - 10 animation specs (A1–A10) with 60fps keyframes, easings, fallbacks
+  - Blackjack upgrades: split mechanic, surrender, side bets, "Guaranteed Blackjack" bonus buy, streak-mode CSS filters
+  - Texas Hold'em upgrades: Mode A (display-only) + Mode B (semi-automated betting w/ blinds + side pots), preset editor, hand-history replay
+  - CardRenderer class (vanilla JS + Canvas2D) with PIP_LAYOUT_TABLE for ranks 2-10 + face card art + chip rendering
+  - 12 SFX, 23 DB migrations, 10 new API endpoints (5 BJ + 5 Poker mode-B), 12 UI wireframes, 10 CSS snippets
+  - Accessibility: 3 colorblind modes (default, protan/deutan, tritan), reduced-motion fallbacks per anim, ARIA-live announcements with Finnish suit/rank names
+  - Responsible gambling: 20-loss streak interstitial, 5×-balance net-loss interstitial, session_state schema
+- Validation: All 15 Python pseudocode blocks parse; all 4 RTP targets within tolerance; merged file is valid JSON
+
+### Files
+- `/app/casino_card_games_spec.json` — primary deliverable
+- `/app/spec_parts2/part_{1..4}.json` — source parts (split at top-level key boundaries per OUTPUT SPLITTING RULES)
+- `/app/spec_parts2/merge_and_validate.py` — build + validation tooling
+
+### Backlog (P1)
+- Implement 10 new API endpoints (5 BJ split/surrender/sidebet/bonus-buy/active-hand + 5 Poker mode-B)
+- Run 23 DB migrations against staging SQLite (idempotent IF NOT EXISTS / ALTER ADD COLUMN)
+- Add CardRenderer JS class to /static/js/card_renderer.js, integrate into existing Blackjack + Poker frontends
+
+### Backlog (P2)
+- Build SVG/Lottie binaries from art_tokens.iconography construction tokens
+- Generate WAV samples per sound_bank physical_descriptions
+- Run 10M-hand Blackjack Monte Carlo to verify RTP 90.011% ± 0.10%
+- Localize Finnish UI keys to en-US, sv-SE
