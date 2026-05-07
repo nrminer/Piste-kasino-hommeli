@@ -1,0 +1,18 @@
+{
+  "num_hands": 100000,
+  "observed_rtp": 0.9479950969995223,
+  "observed_rtp_pct": 94.7995,
+  "win_pct": 43.22,
+  "loss_pct": 47.856,
+  "push_pct": 8.924,
+  "natural_player_rate_pct": 4.595,
+  "natural_dealer_rate_pct": 4.433,
+  "variance_per_bet": 1.2102,
+  "std_dev_per_bet": 1.1001,
+  "house_rake_on_winnings": 0.0886,
+  "elapsed_sec": 0.87,
+  "hands_per_sec": 115189.0,
+  "target_rtp_pct": 95.0,
+  "target_tolerance_pct": 0.1,
+  "within_tolerance": false
+}

@@ -1,4 +1,4 @@
-import os, json, random, string, socket, hashlib
+import os, json, random, string, socket, hashlib, time, math
 from datetime import datetime
 from flask import Flask, request, jsonify, render_template, g
 import sqlite3
@@ -170,6 +170,36 @@ def init_db():
         )""",
         "CREATE INDEX IF NOT EXISTS idx_hand_log_session ON poker_hand_log(session_id, hand_number)",
         "CREATE INDEX IF NOT EXISTS idx_hand_log_started ON poker_hand_log(started_at DESC)",
+        # ── Card games upgrade pack (Iteration 3) ──
+        "ALTER TABLE blackjack_games ADD COLUMN side_bets_json TEXT DEFAULT ''",
+        "ALTER TABLE blackjack_games ADD COLUMN split_hands_json TEXT DEFAULT '[]'",
+        "ALTER TABLE blackjack_games ADD COLUMN split_count INTEGER DEFAULT 0",
+        "ALTER TABLE blackjack_games ADD COLUMN active_hand_index INTEGER DEFAULT 0",
+        "ALTER TABLE blackjack_games ADD COLUMN surrender_amount INTEGER DEFAULT 0",
+        """CREATE TABLE IF NOT EXISTS bonus_buy_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            player_id INTEGER NOT NULL,
+            game_theme TEXT NOT NULL,
+            bonus_type TEXT NOT NULL,
+            cost_points INTEGER NOT NULL,
+            payout_points INTEGER DEFAULT 0,
+            rng_seed TEXT,
+            status TEXT DEFAULT 'consumed',
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )""",
+        "CREATE INDEX IF NOT EXISTS idx_bonus_buy_log_player ON bonus_buy_log(player_id, game_theme, created_at)",
+        "ALTER TABLE poker_sessions ADD COLUMN pot_json TEXT DEFAULT '{}'",
+        "ALTER TABLE poker_sessions ADD COLUMN current_bettor_seat_id INTEGER DEFAULT NULL",
+        "ALTER TABLE poker_sessions ADD COLUMN current_bet_pts INTEGER DEFAULT 0",
+        "ALTER TABLE poker_sessions ADD COLUMN min_raise_pts INTEGER DEFAULT 0",
+        "ALTER TABLE poker_sessions ADD COLUMN big_blind_pts INTEGER DEFAULT 100",
+        "ALTER TABLE poker_sessions ADD COLUMN small_blind_pts INTEGER DEFAULT 50",
+        "ALTER TABLE poker_sessions ADD COLUMN dealer_button_seat_id INTEGER DEFAULT NULL",
+        "ALTER TABLE poker_sessions ADD COLUMN mode TEXT DEFAULT 'mode_a'",
+        "ALTER TABLE poker_seats ADD COLUMN current_round_bet_pts INTEGER DEFAULT 0",
+        "ALTER TABLE poker_seats ADD COLUMN total_session_contribution_pts INTEGER DEFAULT 0",
+        "ALTER TABLE poker_seats ADD COLUMN all_in INTEGER DEFAULT 0",
+        "ALTER TABLE poker_seats ADD COLUMN last_action TEXT DEFAULT ''",
     ]
     for m in migrations:
         try:
@@ -2454,6 +2484,716 @@ def pikapokeri_draw(gid):
         'mult': mult, 'bet': bet, 'payout': payout, 'net': payout - bet,
         'outcome': outcome, 'points': bal,
     })
+
+# ─── Card games upgrade pack — Iteration 3 endpoints ─────────────────────────
+# Adds: Blackjack side-bets (Perfect Pairs, 21+3), split, surrender, active-hand,
+# bonus-buy "Guaranteed Blackjack"; Texas Hold'em mode-B (player-driven betting).
+# All routes preserve backward compatibility with existing /start and /action.
+
+_BJ_BONUS_BUY_COOLDOWN_SEC = 120
+_BJ_BONUS_BUY_MAX_PER_SESSION = 2
+_BJ_BONUS_BUY_PRICE_MULTIPLIER = 2.8
+_SUIT_COLOR = {'♠': 'black', '♣': 'black', '♥': 'red', '♦': 'red'}
+
+
+def _card_rank_value(card):
+    """Numeric rank value: A=14, K=13, Q=12, J=11, 10..2."""
+    return _RV.get(card.get('rank', ''), 0)
+
+
+def _resolve_perfect_pairs(player_cards, side_bet_pts):
+    """Pays 25× suited, 12× same-color, 6× mixed; lose stake on no-pair."""
+    if len(player_cards) < 2:
+        return {'won': False, 'result': 'none', 'payout': 0, 'bet': side_bet_pts}
+    c1, c2 = player_cards[0], player_cards[1]
+    if c1.get('rank') != c2.get('rank'):
+        return {'won': False, 'result': 'none', 'payout': 0, 'bet': side_bet_pts}
+    if c1.get('suit') == c2.get('suit'):
+        return {'won': True, 'result': 'suited', 'payout': 25 * side_bet_pts, 'bet': side_bet_pts}
+    if _SUIT_COLOR.get(c1.get('suit')) == _SUIT_COLOR.get(c2.get('suit')):
+        return {'won': True, 'result': 'colored', 'payout': 12 * side_bet_pts, 'bet': side_bet_pts}
+    return {'won': True, 'result': 'mixed', 'payout': 6 * side_bet_pts, 'bet': side_bet_pts}
+
+
+def _resolve_21plus3(player_cards, dealer_up, side_bet_pts):
+    """3-card poker hand from player's 2 + dealer's up-card."""
+    if len(player_cards) < 2 or not dealer_up:
+        return {'won': False, 'result': 'none', 'payout': 0, 'bet': side_bet_pts}
+    cards = [player_cards[0], player_cards[1], dealer_up]
+    rank_values = sorted([_card_rank_value(c) for c in cards])
+    suits = [c.get('suit') for c in cards]
+    is_flush = len(set(suits)) == 1
+    distinct = len(set(rank_values)) == 3
+    is_straight = distinct and (rank_values[2] - rank_values[0] == 2)
+    if not is_straight and set(rank_values) == {2, 3, 14}:
+        is_straight = True
+    is_trips = len(set(c.get('rank') for c in cards)) == 1
+    if is_trips and is_flush:
+        return {'won': True, 'result': 'suited_trips', 'payout': 100 * side_bet_pts, 'bet': side_bet_pts}
+    if is_straight and is_flush:
+        return {'won': True, 'result': 'straight_flush', 'payout': 40 * side_bet_pts, 'bet': side_bet_pts}
+    if is_trips:
+        return {'won': True, 'result': 'three_of_a_kind', 'payout': 30 * side_bet_pts, 'bet': side_bet_pts}
+    if is_straight:
+        return {'won': True, 'result': 'straight', 'payout': 10 * side_bet_pts, 'bet': side_bet_pts}
+    if is_flush:
+        return {'won': True, 'result': 'flush', 'payout': 5 * side_bet_pts, 'bet': side_bet_pts}
+    return {'won': False, 'result': 'none', 'payout': 0, 'bet': side_bet_pts}
+
+
+@app.route('/api/points/<int:pid>/blackjack/<int:gid>/sidebet', methods=['POST'])
+def game_bj_sidebet(pid, gid):
+    d = request.json or {}
+    db = get_db()
+    game = db.execute('SELECT * FROM blackjack_games WHERE id=? AND player_id=?', (gid, pid)).fetchone()
+    if not game:
+        return jsonify({'error': 'Peliä ei löydy.'}), 404
+    if game['status'] != 'active':
+        return jsonify({'error': 'Sivupanos ei mahdollinen — peli ei ole aktiivinen.'}), 400
+    pcards = json.loads(game['player_cards_json'])
+    dcards = json.loads(game['dealer_cards_json'])
+    if len(pcards) != 2:
+        return jsonify({'error': 'Sivupanos vain ennen ensimmäistä toimintoa.'}), 400
+    existing = json.loads(game['side_bets_json'] or '{}') if game['side_bets_json'] else {}
+    if existing.get('perfect_pairs') or existing.get('twenty_one_plus_three'):
+        return jsonify({'error': 'Sivupanos on jo asetettu tälle kädelle.'}), 400
+    try:
+        pp_pts = int(d.get('perfect_pairs_pts') or 0)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Virheellinen Perfect Pairs -panos.'}), 400
+    try:
+        t213_pts = int(d.get('twenty_one_plus_three_pts') or 0)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Virheellinen 21+3 -panos.'}), 400
+    if pp_pts < 0 or t213_pts < 0:
+        return jsonify({'error': 'Sivupanos ei saa olla negatiivinen.'}), 400
+    if pp_pts == 0 and t213_pts == 0:
+        return jsonify({'error': 'Anna vähintään yksi sivupanos.'}), 400
+    base_bet = game['bet']
+    if pp_pts > base_bet:
+        return jsonify({'error': f'Perfect Pairs -panos ylittää peruspanoksen ({base_bet}).'}), 400
+    if t213_pts > base_bet:
+        return jsonify({'error': f'21+3 -panos ylittää peruspanoksen ({base_bet}).'}), 400
+    if pp_pts > 0 and _atomic_deduct_points(db, pid, pp_pts, 'Blackjack Perfect Pairs sivupanos') is None:
+        return jsonify({'error': 'Ei tarpeeksi pisteitä Perfect Pairs -panokseen.'}), 400
+    if t213_pts > 0 and _atomic_deduct_points(db, pid, t213_pts, 'Blackjack 21+3 sivupanos') is None:
+        if pp_pts > 0:
+            _add_points(db, pid, pp_pts, 'Blackjack PP palautus (21+3 epäonnistui)')
+        return jsonify({'error': 'Ei tarpeeksi pisteitä 21+3 -panokseen.'}), 400
+    resolved = {}
+    if pp_pts > 0:
+        pp = _resolve_perfect_pairs(pcards, pp_pts)
+        resolved['perfect_pairs'] = pp
+        if pp['payout'] > 0:
+            _add_points(db, pid, pp['payout'], f"Blackjack Perfect Pairs voitto ({pp['result']})")
+    if t213_pts > 0:
+        t213 = _resolve_21plus3(pcards, dcards[0], t213_pts)
+        resolved['twenty_one_plus_three'] = t213
+        if t213['payout'] > 0:
+            _add_points(db, pid, t213['payout'], f"Blackjack 21+3 voitto ({t213['result']})")
+    db.execute('UPDATE blackjack_games SET side_bets_json=? WHERE id=?', (json.dumps(resolved), gid))
+    db.commit()
+    bal = db.execute('SELECT points FROM players WHERE id=?', (pid,)).fetchone()['points'] or 0
+    return jsonify({'ok': True, 'resolved': resolved, 'side_bets_json': json.dumps(resolved), 'balance_after': bal})
+
+
+@app.route('/api/points/<int:pid>/blackjack/<int:gid>/split', methods=['POST'])
+def game_bj_split(pid, gid):
+    db = get_db()
+    game = db.execute('SELECT * FROM blackjack_games WHERE id=? AND player_id=?', (gid, pid)).fetchone()
+    if not game:
+        return jsonify({'error': 'Peliä ei löydy.'}), 404
+    if game['status'] != 'active':
+        return jsonify({'error': 'Splittaus ei mahdollinen — peli ei ole aktiivinen.'}), 400
+    pcards = json.loads(game['player_cards_json'])
+    split_hands = json.loads(game['split_hands_json'] or '[]')
+    active_idx = game['active_hand_index'] or 0
+    split_count = game['split_count'] or 0
+    current_hand = pcards if active_idx == 0 else split_hands[active_idx - 1]
+    if len(current_hand) != 2:
+        return jsonify({'error': 'Splittaus vain alkuperäisillä 2 kortilla.'}), 400
+    if current_hand[0]['rank'] != current_hand[1]['rank']:
+        return jsonify({'error': 'Splittaus vain saman arvon parista.'}), 400
+    if split_count >= 3:
+        return jsonify({'error': 'Maksimi 3 splittiä (4 kättä).'}), 400
+    if current_hand[0]['rank'] == 'A' and split_count >= 1:
+        return jsonify({'error': 'Ässä-splittiä ei voi splittauttaa uudestaan.'}), 400
+    bet = game['bet']
+    if _atomic_deduct_points(db, pid, bet, f'Blackjack split panos #{split_count + 1}') is None:
+        return jsonify({'error': 'Ei tarpeeksi pisteitä splittiin.'}), 400
+    deck = json.loads(game['deck_json'])
+    if len(deck) < 2:
+        _add_points(db, pid, bet, 'Blackjack split palautus (pakka loppui)')
+        return jsonify({'error': 'Pakka liian tyhjä splittaukseen.'}), 400
+    new_a = deck.pop()
+    new_b = deck.pop()
+    hand_a = [current_hand[0], new_a]
+    hand_b = [current_hand[1], new_b]
+    if active_idx == 0:
+        pcards = hand_a
+        split_hands.insert(0, hand_b)
+    else:
+        split_hands[active_idx - 1] = hand_a
+        split_hands.append(hand_b)
+    is_aces = current_hand[0]['rank'] == 'A'
+    new_split_count = split_count + 1
+    db.execute(
+        'UPDATE blackjack_games SET deck_json=?, player_cards_json=?, split_hands_json=?, split_count=?, bet=? WHERE id=?',
+        (json.dumps(deck), json.dumps(pcards), json.dumps(split_hands), new_split_count, bet, gid)
+    )
+    db.commit()
+    bal = db.execute('SELECT points FROM players WHERE id=?', (pid,)).fetchone()['points'] or 0
+    return jsonify({
+        'split_complete': True,
+        'hand_a': hand_a,
+        'hand_b': hand_b,
+        'split_count': new_split_count,
+        'active_hand_index': active_idx,
+        'split_aces_locked': is_aces,
+        'balance_after': bal,
+    })
+
+
+@app.route('/api/points/<int:pid>/blackjack/<int:gid>/surrender', methods=['POST'])
+def game_bj_surrender(pid, gid):
+    db = get_db()
+    game = db.execute('SELECT * FROM blackjack_games WHERE id=? AND player_id=?', (gid, pid)).fetchone()
+    if not game:
+        return jsonify({'error': 'Peliä ei löydy.'}), 404
+    if game['status'] != 'active':
+        return jsonify({'error': 'Luovutus ei mahdollinen — peli ei ole aktiivinen.'}), 400
+    pcards = json.loads(game['player_cards_json'])
+    if len(pcards) != 2:
+        return jsonify({'error': 'Luovutus vain alkuperäisillä 2 kortilla.'}), 400
+    if (game['split_count'] or 0) > 0:
+        return jsonify({'error': 'Luovutus ei mahdollinen splitin jälkeen.'}), 400
+    dcards = json.loads(game['dealer_cards_json'])
+    dealer_up_value = _card_rank_value(dcards[0])
+    if dealer_up_value not in (9, 10, 11, 12, 13, 14):
+        return jsonify({'error': 'Late surrender vain kun jakajan avoin kortti on 9, 10, J, Q, K tai A.'}), 400
+    refund = game['bet'] // 2
+    _add_points(db, pid, refund, f'Blackjack luovutus (palautus {refund} pts)')
+    db.execute(
+        'UPDATE blackjack_games SET status=?, surrender_amount=?, result_json=? WHERE id=?',
+        ('done_surrender', refund,
+         json.dumps({'outcome': 'surrender', 'refund_pts': refund}), gid)
+    )
+    db.commit()
+    bal = db.execute('SELECT points FROM players WHERE id=?', (pid,)).fetchone()['points'] or 0
+    return jsonify({'surrendered': True, 'refund_pts': refund, 'status': 'done_surrender', 'balance_after': bal})
+
+
+@app.route('/api/points/<int:pid>/blackjack/<int:gid>/active-hand', methods=['POST'])
+def game_bj_active_hand(pid, gid):
+    d = request.json or {}
+    db = get_db()
+    game = db.execute('SELECT * FROM blackjack_games WHERE id=? AND player_id=?', (gid, pid)).fetchone()
+    if not game:
+        return jsonify({'error': 'Peliä ei löydy.'}), 404
+    try:
+        hand_index = int(d.get('hand_index', 0))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Virheellinen hand_index.'}), 400
+    split_hands = json.loads(game['split_hands_json'] or '[]')
+    max_idx = len(split_hands)
+    if hand_index < 0 or hand_index > max_idx:
+        return jsonify({'error': f'hand_index alueen ulkopuolella (0..{max_idx}).'}), 400
+    db.execute('UPDATE blackjack_games SET active_hand_index=? WHERE id=?', (hand_index, gid))
+    db.commit()
+    pcards = json.loads(game['player_cards_json'])
+    current_hand = pcards if hand_index == 0 else split_hands[hand_index - 1]
+    return jsonify({
+        'active_hand_index': hand_index,
+        'current_hand': current_hand,
+        'available_actions': ['hit', 'stand', 'double'] if len(current_hand) == 2 else ['hit', 'stand']
+    })
+
+
+def _bj_session_started_at_iso(db, pid):
+    """Earliest activity in the last 4 hours counts as the current session start."""
+    row = db.execute(
+        "SELECT MIN(created_at) AS s FROM bonus_buy_log WHERE player_id=? AND game_theme='blackjack' "
+        "AND created_at > datetime('now', '-4 hours')",
+        (pid,)
+    ).fetchone()
+    return row['s'] if row and row['s'] else None
+
+
+@app.route('/api/points/<int:pid>/blackjack/bonus-buy', methods=['POST'])
+def game_bj_bonus_buy(pid):
+    """Guaranteed Blackjack: pay 2.8× intended bet → next deal forces natural BJ."""
+    d = request.json or {}
+    db = get_db()
+    try:
+        intended_bet = int(d.get('intended_bet_pts') or d.get('bet') or 0)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Virheellinen panos.'}), 400
+    if intended_bet < MIN_BET or intended_bet > MAX_BET:
+        return jsonify({'error': f'Panos {MIN_BET}..{MAX_BET} pisteen välillä.'}), 400
+    last = db.execute(
+        "SELECT created_at FROM bonus_buy_log WHERE player_id=? AND game_theme='blackjack' "
+        "ORDER BY created_at DESC LIMIT 1", (pid,)
+    ).fetchone()
+    cooldown_remaining = 0
+    if last:
+        try:
+            last_ts = datetime.fromisoformat(last['created_at'].replace('Z', '+00:00')) if 'T' in last['created_at'] \
+                      else datetime.strptime(last['created_at'], '%Y-%m-%d %H:%M:%S')
+            elapsed = (datetime.utcnow() - last_ts.replace(tzinfo=None)).total_seconds()
+            if elapsed < _BJ_BONUS_BUY_COOLDOWN_SEC:
+                cooldown_remaining = int(_BJ_BONUS_BUY_COOLDOWN_SEC - elapsed)
+                return jsonify({'error': 'Cooldown aktiivinen.', 'cooldown_sec_remaining': cooldown_remaining}), 429
+        except Exception:
+            pass
+    session_count = db.execute(
+        "SELECT COUNT(*) AS c FROM bonus_buy_log WHERE player_id=? AND game_theme='blackjack' "
+        "AND created_at > datetime('now', '-4 hours')", (pid,)
+    ).fetchone()['c'] or 0
+    if session_count >= _BJ_BONUS_BUY_MAX_PER_SESSION:
+        return jsonify({'error': 'Istuntoraja saavutettu (max 2 ostoa / 4h).',
+                        'session_remaining': 0}), 409
+    price = math.ceil(intended_bet * _BJ_BONUS_BUY_PRICE_MULTIPLIER)
+    if _atomic_deduct_points(db, pid, price, f'Blackjack bonus buy ({price} pts)') is None:
+        return jsonify({'error': 'Ei tarpeeksi pisteitä ostoon.'}), 402
+    rng_seed = hashlib.sha256(f'{pid}:bonus_buy:{time.time()}:{random.random()}'.encode()).hexdigest()[:16]
+    db.execute("UPDATE blackjack_games SET status='abandoned' WHERE player_id=? AND status='active'", (pid,))
+    deck = new_deck()
+    suit_idx_a = int(rng_seed[0], 16) % 4
+    forced_ace = {'rank': 'A', 'suit': SUITS[suit_idx_a]}
+    ten_rank_idx = int(rng_seed[1], 16) % 4
+    ten_ranks = ['10', 'J', 'Q', 'K']
+    forced_ten_rank = ten_ranks[ten_rank_idx]
+    suit_idx_t = int(rng_seed[2], 16) % 4
+    forced_ten = {'rank': forced_ten_rank, 'suit': SUITS[suit_idx_t]}
+    deck = [c for c in deck if not (c['rank'] == 'A' and c['suit'] == forced_ace['suit'])]
+    deck = [c for c in deck if not (c['rank'] == forced_ten['rank'] and c['suit'] == forced_ten['suit'])]
+    pc = [forced_ace, forced_ten]
+    dc = [deck.pop(), deck.pop()]
+    while _is_blackjack(dc):
+        deck.insert(0, dc[1])
+        deck.insert(0, dc[0])
+        random.shuffle(deck)
+        dc = [deck.pop(), deck.pop()]
+    payout = intended_bet + int(intended_bet * 1.5)
+    _add_points(db, pid, payout, 'Blackjack bonus buy → luonnollinen 21')
+    cur = db.execute(
+        '''INSERT INTO blackjack_games(player_id,bet,deck_json,player_cards_json,dealer_cards_json,status,result_json)
+           VALUES(?,?,?,?,?,?,?)''',
+        (pid, intended_bet, json.dumps(deck), json.dumps(pc), json.dumps(dc), 'done_blackjack',
+         json.dumps({'outcome': 'blackjack', 'payout': payout, 'bonus_buy': True, 'rng_seed': rng_seed}))
+    )
+    gid = cur.lastrowid
+    db.execute(
+        'INSERT INTO bonus_buy_log(player_id,game_theme,bonus_type,cost_points,payout_points,rng_seed,status) '
+        'VALUES(?,?,?,?,?,?,?)',
+        (pid, 'blackjack', 'guaranteed_blackjack', price, payout, rng_seed, 'consumed')
+    )
+    _audit(db, 'bonus_buy_blackjack', pid, '', {'bet': intended_bet, 'price': price, 'payout': payout, 'gid': gid})
+    db.commit()
+    bal = db.execute('SELECT points FROM players WHERE id=?', (pid,)).fetchone()['points'] or 0
+    return jsonify({
+        'ok': True,
+        'game_id': gid,
+        'price_pts': price,
+        'payout_pts': payout,
+        'player_cards': pc,
+        'dealer_cards': dc,
+        'cooldown_sec_remaining_after_this': _BJ_BONUS_BUY_COOLDOWN_SEC,
+        'session_remaining': max(0, _BJ_BONUS_BUY_MAX_PER_SESSION - session_count - 1),
+        'balance_after': bal,
+    })
+
+
+# ─── Texas Hold'em mode-B (player-driven betting) ────────────────────────────
+
+def _poker_compute_next_bettor(db, session_id, current_bettor_seat_id, current_bet_pts):
+    seats = db.execute(
+        'SELECT * FROM poker_seats WHERE session_id=? AND active=1 AND folded=0 ORDER BY seat_number',
+        (session_id,)
+    ).fetchall()
+    if len(seats) <= 1:
+        return None
+    if current_bettor_seat_id is None:
+        return seats[0]
+    current_idx = next((i for i, s in enumerate(seats) if s['id'] == current_bettor_seat_id), None)
+    if current_idx is None:
+        current_idx = -1
+    n = len(seats)
+    for offset in range(1, n + 1):
+        candidate = seats[(current_idx + offset) % n]
+        if candidate['all_in']:
+            continue
+        if (candidate['current_round_bet_pts'] or 0) < current_bet_pts:
+            return candidate
+    return None
+
+
+def _poker_compute_side_pots(db, session_id):
+    seats = db.execute(
+        'SELECT id, total_session_contribution_pts, all_in, folded FROM poker_seats '
+        'WHERE session_id=? AND active=1 ORDER BY total_session_contribution_pts ASC',
+        (session_id,)
+    ).fetchall()
+    side_pots = []
+    prior = 0
+    eligible = [s['id'] for s in seats if not s['folded']]
+    for s in seats:
+        contribution = s['total_session_contribution_pts'] or 0
+        if s['all_in'] and contribution > prior:
+            level = contribution - prior
+            pot_pts = level * len(eligible)
+            side_pots.append({'eligible_seat_ids': list(eligible), 'pot_pts': pot_pts})
+            prior = contribution
+            eligible = [e for e in eligible if e != s['id']]
+    return side_pots
+
+
+@app.route('/api/poker/start-mode-b', methods=['POST'])
+def poker_start_mode_b():
+    d = request.json or {}
+    db = get_db()
+    sess = current_session(db)
+    if not sess:
+        return jsonify({'error': 'Aktiivista sessiota ei löydy.'}), 404
+    try:
+        sb = int(d.get('small_blind_pts') or 50)
+        bb = int(d.get('big_blind_pts') or 100)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Virheelliset blindit.'}), 400
+    if sb <= 0 or bb <= sb:
+        return jsonify({'error': 'Big blind > small blind > 0 vaaditaan.'}), 400
+    seats = db.execute(
+        'SELECT * FROM poker_seats WHERE session_id=? AND active=1 ORDER BY seat_number',
+        (sess['id'],)
+    ).fetchall()
+    if len(seats) < 2:
+        return jsonify({'error': 'Vähintään 2 paikkaa vaaditaan.'}), 400
+    dealer_seat_id = seats[0]['id']
+    db.execute(
+        'UPDATE poker_sessions SET mode=?, small_blind_pts=?, big_blind_pts=?, dealer_button_seat_id=?, '
+        'pot_json=?, current_bet_pts=?, min_raise_pts=?, current_bettor_seat_id=NULL WHERE id=?',
+        ('mode_b', sb, bb, dealer_seat_id, '{}', 0, bb, sess['id'])
+    )
+    db.execute(
+        'UPDATE poker_seats SET current_round_bet_pts=0, total_session_contribution_pts=0, all_in=0, last_action="" '
+        'WHERE session_id=?',
+        (sess['id'],)
+    )
+    _audit(db, 'poker_mode_b_start', None, '', {'session_id': sess['id'], 'sb': sb, 'bb': bb})
+    db.commit()
+    return jsonify({
+        'ok': True,
+        'session_id': sess['id'],
+        'mode': 'mode_b',
+        'small_blind_pts': sb,
+        'big_blind_pts': bb,
+        'dealer_button_seat_id': dealer_seat_id,
+    })
+
+
+@app.route('/api/poker/post-blinds', methods=['POST'])
+def poker_post_blinds():
+    db = get_db()
+    sess = current_session(db)
+    if not sess:
+        return jsonify({'error': 'Aktiivista sessiota ei löydy.'}), 404
+    if sess['mode'] != 'mode_b':
+        return jsonify({'error': 'post-blinds vain mode-B sessiossa.'}), 400
+    seats = db.execute(
+        'SELECT * FROM poker_seats WHERE session_id=? AND active=1 ORDER BY seat_number',
+        (sess['id'],)
+    ).fetchall()
+    if len(seats) < 2:
+        return jsonify({'error': 'Vähintään 2 aktiivista paikkaa.'}), 400
+    dealer_idx = next((i for i, s in enumerate(seats) if s['id'] == sess['dealer_button_seat_id']), 0)
+    n = len(seats)
+    sb_seat = seats[(dealer_idx + 1) % n]
+    bb_seat = seats[(dealer_idx + 2) % n]
+    utg_seat = seats[(dealer_idx + 3) % n]
+    sb_amount = sess['small_blind_pts'] or 50
+    bb_amount = sess['big_blind_pts'] or 100
+    if sb_seat['player_id']:
+        if _atomic_deduct_points(db, sb_seat['player_id'], sb_amount, f'Poker SB seat#{sb_seat["seat_number"]}') is None:
+            return jsonify({'error': f'Seat {sb_seat["seat_number"]} ei voi maksaa SB:tä ({sb_amount} pts).'}), 402
+    if bb_seat['player_id']:
+        if _atomic_deduct_points(db, bb_seat['player_id'], bb_amount, f'Poker BB seat#{bb_seat["seat_number"]}') is None:
+            if sb_seat['player_id']:
+                _add_points(db, sb_seat['player_id'], sb_amount, 'Poker SB palautus (BB epäonnistui)')
+            return jsonify({'error': f'Seat {bb_seat["seat_number"]} ei voi maksaa BB:tä ({bb_amount} pts).'}), 402
+    db.execute(
+        'UPDATE poker_seats SET current_round_bet_pts=?, total_session_contribution_pts=? WHERE id=?',
+        (sb_amount, sb_amount, sb_seat['id'])
+    )
+    db.execute(
+        'UPDATE poker_seats SET current_round_bet_pts=?, total_session_contribution_pts=? WHERE id=?',
+        (bb_amount, bb_amount, bb_seat['id'])
+    )
+    pot = {'main': sb_amount + bb_amount, 'side': []}
+    db.execute(
+        'UPDATE poker_sessions SET pot_json=?, current_bet_pts=?, min_raise_pts=?, current_bettor_seat_id=? WHERE id=?',
+        (json.dumps(pot), bb_amount, bb_amount, utg_seat['id'], sess['id'])
+    )
+    db.commit()
+    return jsonify({
+        'small_blind_seat_id': sb_seat['id'],
+        'big_blind_seat_id': bb_seat['id'],
+        'pot_pts': pot['main'],
+        'next_bettor_seat_id': utg_seat['id'],
+    })
+
+
+@app.route('/api/poker/seat/<token>/bet', methods=['POST'])
+def poker_seat_bet(token):
+    d = request.json or {}
+    action = (d.get('action') or '').lower()
+    if action not in ('fold', 'check', 'call', 'raise', 'all_in'):
+        return jsonify({'error': 'Tuntematon toiminto.'}), 400
+    db = get_db()
+    seat = db.execute('SELECT * FROM poker_seats WHERE join_token=?', (token,)).fetchone()
+    if not seat:
+        return jsonify({'error': 'Tuntematon paikka.'}), 404
+    sess = db.execute('SELECT * FROM poker_sessions WHERE id=?', (seat['session_id'],)).fetchone()
+    if not sess:
+        return jsonify({'error': 'Sessiota ei löydy.'}), 404
+    if sess['mode'] != 'mode_b':
+        return jsonify({'error': 'Mode-B vaaditaan panostuksiin.'}), 400
+    if seat['folded'] or not seat['active']:
+        return jsonify({'error': 'Paikkasi ei ole aktiivinen.'}), 400
+    if seat['id'] != sess['current_bettor_seat_id']:
+        return jsonify({'error': 'Ei vuorosi.'}), 403
+    pot = json.loads(sess['pot_json'] or '{"main":0,"side":[]}')
+    main_pot = pot.get('main', 0)
+    current_bet = sess['current_bet_pts'] or 0
+    seat_round_bet = seat['current_round_bet_pts'] or 0
+    seat_balance = db.execute('SELECT points FROM players WHERE id=?', (seat['player_id'],)).fetchone()
+    seat_balance = seat_balance['points'] if seat_balance else 0
+    new_round_bet = seat_round_bet
+    new_min_raise = sess['min_raise_pts'] or 0
+    if action == 'fold':
+        db.execute('UPDATE poker_seats SET folded=1, last_action=? WHERE id=?', ('fold', seat['id']))
+    elif action == 'check':
+        if seat_round_bet < current_bet:
+            return jsonify({'error': 'Et voi checkata kun panos on auki.'}), 400
+        db.execute('UPDATE poker_seats SET last_action=? WHERE id=?', ('check', seat['id']))
+    elif action == 'call':
+        diff = current_bet - seat_round_bet
+        if diff <= 0:
+            return jsonify({'error': 'Ei voi callata — panos jo katettu.'}), 400
+        if seat_balance < diff:
+            return _poker_seat_all_in(db, sess, seat, seat_balance, pot)
+        if _atomic_deduct_points(db, seat['player_id'], diff, f'Poker call session#{sess["id"]}') is None:
+            return jsonify({'error': 'Ei tarpeeksi pisteitä callaukseen.'}), 402
+        main_pot += diff
+        new_round_bet = current_bet
+        db.execute(
+            'UPDATE poker_seats SET current_round_bet_pts=?, total_session_contribution_pts=total_session_contribution_pts+?, last_action=? WHERE id=?',
+            (new_round_bet, diff, 'call', seat['id'])
+        )
+    elif action == 'raise':
+        try:
+            raise_to = int(d.get('raise_to_pts') or 0)
+        except (TypeError, ValueError):
+            return jsonify({'error': 'Virheellinen korotus.'}), 400
+        if raise_to < current_bet + new_min_raise:
+            return jsonify({'error': f'Korotus alle minimin (vaaditaan ≥ {current_bet + new_min_raise}).'}), 400
+        diff = raise_to - seat_round_bet
+        if seat_balance < diff:
+            return _poker_seat_all_in(db, sess, seat, seat_balance, pot)
+        if _atomic_deduct_points(db, seat['player_id'], diff, f'Poker raise session#{sess["id"]}') is None:
+            return jsonify({'error': 'Ei tarpeeksi pisteitä korotukseen.'}), 402
+        main_pot += diff
+        new_round_bet = raise_to
+        new_min_raise = raise_to - current_bet
+        current_bet = raise_to
+        db.execute(
+            'UPDATE poker_seats SET current_round_bet_pts=?, total_session_contribution_pts=total_session_contribution_pts+?, last_action=? WHERE id=?',
+            (new_round_bet, diff, 'raise', seat['id'])
+        )
+    elif action == 'all_in':
+        return _poker_seat_all_in(db, sess, seat, seat_balance, pot)
+    pot['main'] = main_pot
+    db.execute('UPDATE poker_sessions SET pot_json=?, current_bet_pts=?, min_raise_pts=? WHERE id=?',
+               (json.dumps(pot), current_bet, new_min_raise, sess['id']))
+    next_seat = _poker_compute_next_bettor(db, sess['id'], seat['id'], current_bet)
+    round_complete = next_seat is None
+    if not round_complete:
+        db.execute('UPDATE poker_sessions SET current_bettor_seat_id=? WHERE id=?', (next_seat['id'], sess['id']))
+    else:
+        db.execute('UPDATE poker_sessions SET current_bettor_seat_id=NULL WHERE id=?', (sess['id'],))
+    db.commit()
+    bal = db.execute('SELECT points FROM players WHERE id=?', (seat['player_id'],)).fetchone()
+    bal = bal['points'] if bal else 0
+    return jsonify({
+        'action_accepted': True,
+        'new_pot_pts': main_pot,
+        'current_bet_pts': current_bet,
+        'next_bettor_seat_id': next_seat['id'] if next_seat else None,
+        'round_complete': round_complete,
+        'balance_after': bal,
+    })
+
+
+def _poker_seat_all_in(db, sess, seat, seat_balance, pot):
+    if seat_balance <= 0:
+        return jsonify({'error': 'Ei pisteitä all-iniin.'}), 402
+    deduct_amt = seat_balance
+    if _atomic_deduct_points(db, seat['player_id'], deduct_amt, f'Poker all-in session#{sess["id"]}') is None:
+        return jsonify({'error': 'All-in epäonnistui (samanaikainen muutos saldoon).'}), 402
+    seat_round_bet = seat['current_round_bet_pts'] or 0
+    new_round_bet = seat_round_bet + deduct_amt
+    pot['main'] = pot.get('main', 0) + deduct_amt
+    new_current_bet = sess['current_bet_pts'] or 0
+    if new_round_bet > new_current_bet:
+        new_current_bet = new_round_bet
+    db.execute(
+        'UPDATE poker_seats SET current_round_bet_pts=?, total_session_contribution_pts=total_session_contribution_pts+?, all_in=1, last_action=? WHERE id=?',
+        (new_round_bet, deduct_amt, 'all_in', seat['id'])
+    )
+    side_pots = _poker_compute_side_pots(db, sess['id'])
+    pot['side'] = side_pots
+    db.execute('UPDATE poker_sessions SET pot_json=?, current_bet_pts=? WHERE id=?',
+               (json.dumps(pot), new_current_bet, sess['id']))
+    next_seat = _poker_compute_next_bettor(db, sess['id'], seat['id'], new_current_bet)
+    round_complete = next_seat is None
+    if not round_complete:
+        db.execute('UPDATE poker_sessions SET current_bettor_seat_id=? WHERE id=?', (next_seat['id'], sess['id']))
+    else:
+        db.execute('UPDATE poker_sessions SET current_bettor_seat_id=NULL WHERE id=?', (sess['id'],))
+    db.commit()
+    bal = db.execute('SELECT points FROM players WHERE id=?', (seat['player_id'],)).fetchone()
+    bal = bal['points'] if bal else 0
+    return jsonify({
+        'action_accepted': True,
+        'all_in': True,
+        'new_pot_pts': pot['main'],
+        'current_bet_pts': new_current_bet,
+        'next_bettor_seat_id': next_seat['id'] if next_seat else None,
+        'round_complete': round_complete,
+        'side_pots': side_pots,
+        'balance_after': bal,
+    })
+
+
+@app.route('/api/poker/round-state', methods=['GET'])
+def poker_round_state():
+    db = get_db()
+    sess = current_session(db)
+    if not sess:
+        return jsonify({'error': 'Aktiivista sessiota ei löydy.'}), 404
+    seats = db.execute(
+        'SELECT id, seat_number, player_name, current_round_bet_pts, total_session_contribution_pts, '
+        'last_action, all_in, folded FROM poker_seats WHERE session_id=? AND active=1 ORDER BY seat_number',
+        (sess['id'],)
+    ).fetchall()
+    pot = json.loads(sess['pot_json'] or '{"main":0,"side":[]}')
+    return jsonify({
+        'session_id': sess['id'],
+        'mode': sess['mode'] or 'mode_a',
+        'stage': sess['stage'],
+        'pot_pts': pot.get('main', 0),
+        'side_pots': pot.get('side', []),
+        'current_bet_pts': sess['current_bet_pts'] or 0,
+        'min_raise_pts': sess['min_raise_pts'] or 0,
+        'current_bettor_seat_id': sess['current_bettor_seat_id'],
+        'dealer_button_seat_id': sess['dealer_button_seat_id'],
+        'small_blind_pts': sess['small_blind_pts'] or 0,
+        'big_blind_pts': sess['big_blind_pts'] or 0,
+        'seats': [dict(s) for s in seats],
+    })
+
+
+@app.route('/api/poker/auto-settle', methods=['POST'])
+def poker_auto_settle():
+    d = request.json or {}
+    db = get_db()
+    sess = current_session(db)
+    if not sess:
+        return jsonify({'error': 'Aktiivista sessiota ei löydy.'}), 404
+    if not d.get('operator_confirmed'):
+        return jsonify({'error': 'operator_confirmed=true vaaditaan.'}), 400
+    seats = db.execute(
+        'SELECT * FROM poker_seats WHERE session_id=? AND active=1 AND folded=0',
+        (sess['id'],)
+    ).fetchall()
+    community = json.loads(sess['community_cards_json'] or '[]')
+    pot = json.loads(sess['pot_json'] or '{"main":0,"side":[]}')
+    total_main = pot.get('main', 0)
+    side_pots = pot.get('side', [])
+    if len(seats) == 0:
+        return jsonify({'error': 'Ei aktiivisia paikkoja.'}), 400
+    if len(seats) == 1:
+        winner_seat = seats[0]
+        if winner_seat['player_id']:
+            _add_points(db, winner_seat['player_id'], total_main, f'Poker auto-settle session#{sess["id"]}')
+        winners = [{'seat_id': winner_seat['id'], 'player_id': winner_seat['player_id'],
+                    'pot_share_pts': total_main, 'hand_rank': None}]
+        db.execute('UPDATE poker_sessions SET stage=?, current_bettor_seat_id=NULL WHERE id=?',
+                   ('showdown', sess['id']))
+        db.commit()
+        return jsonify({'settled': True, 'winners': winners, 'side_pots': side_pots})
+    if len(community) != 5:
+        return jsonify({'error': 'Showdown vaatii 5 yhteistä korttia.'}), 400
+    results = []
+    for seat in seats:
+        holes = json.loads(seat['hole_cards_json'] or '[]')
+        if len(holes) != 2:
+            continue
+        rank_int, tiebreak = best_hand(holes, community)
+        results.append({
+            'seat_id': seat['id'], 'player_id': seat['player_id'],
+            'rank_int': rank_int, 'tiebreak': tiebreak,
+            'contribution': seat['total_session_contribution_pts'] or 0,
+        })
+    results.sort(key=lambda r: (-r['rank_int'], [-x for x in r['tiebreak']]))
+    top_rank = (results[0]['rank_int'], results[0]['tiebreak'])
+    main_winners = [r for r in results if (r['rank_int'], r['tiebreak']) == top_rank]
+    awarded = []
+    if main_winners and total_main > 0:
+        share = total_main // len(main_winners)
+        leftover = total_main - share * len(main_winners)
+        for i, w in enumerate(main_winners):
+            amount = share + (leftover if i == 0 else 0)
+            if w['player_id']:
+                _add_points(db, w['player_id'], amount, f'Poker main pot session#{sess["id"]}')
+            awarded.append({'seat_id': w['seat_id'], 'player_id': w['player_id'],
+                            'pot_share_pts': amount, 'hand_rank': w['rank_int']})
+    for sp in side_pots:
+        eligible_ids = sp.get('eligible_seat_ids', [])
+        eligible_results = [r for r in results if r['seat_id'] in eligible_ids]
+        if not eligible_results:
+            continue
+        eligible_results.sort(key=lambda r: (-r['rank_int'], [-x for x in r['tiebreak']]))
+        top = (eligible_results[0]['rank_int'], eligible_results[0]['tiebreak'])
+        winners = [r for r in eligible_results if (r['rank_int'], r['tiebreak']) == top]
+        sp_pts = sp.get('pot_pts', 0)
+        if not winners or sp_pts <= 0:
+            continue
+        share = sp_pts // len(winners)
+        leftover = sp_pts - share * len(winners)
+        for i, w in enumerate(winners):
+            amount = share + (leftover if i == 0 else 0)
+            if w['player_id']:
+                _add_points(db, w['player_id'], amount, f'Poker side pot session#{sess["id"]}')
+            awarded.append({'seat_id': w['seat_id'], 'player_id': w['player_id'],
+                            'pot_share_pts': amount, 'hand_rank': w['rank_int'], 'pot_type': 'side'})
+    db.execute('UPDATE poker_sessions SET stage=?, current_bettor_seat_id=NULL WHERE id=?',
+               ('showdown', sess['id']))
+    log_seats = []
+    for s in seats:
+        log_seats.append({'id': s['id'], 'seat_number': s['seat_number'], 'player_name': s['player_name'],
+                          'hole_cards_json': s['hole_cards_json']})
+    db.execute(
+        'INSERT INTO poker_hand_log(session_id,hand_number,started_at,ended_at,stage_reached,ended_by,community_cards,seats,winners) '
+        'VALUES(?,?,?,?,?,?,?,?,?)',
+        (sess['id'], 1, sess['created_at'], datetime.utcnow().isoformat(), 'showdown', 'auto_settle',
+         json.dumps(community), json.dumps(log_seats), json.dumps(awarded))
+    )
+    _audit(db, 'poker_auto_settle', None, '', {'session_id': sess['id'], 'awarded': awarded})
+    db.commit()
+    return jsonify({'settled': True, 'winners': awarded, 'side_pots': side_pots})
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
