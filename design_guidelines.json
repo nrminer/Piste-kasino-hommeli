@@ -1,124 +1,110 @@
 {
-  "project_overview": {
-    "domain": "Casino Gaming & Admin Management",
-    "theme": "Hybrid (Management: Light, Customer: Dark)",
-    "archetype_management": "Archetype 4 (Swiss & High-Contrast) - Clean, objective, functional",
-    "archetype_customer": "Archetype 5 (Jewel & Luxury) mixed with Playful - Expensive, deep, vibrant accents"
+  "theme": "DARK",
+  "archetype": "5_JEWEL_AND_LUXURY",
+  "instructions_to_main_agent": [
+    "Use ONLY .js / .jsx extensions. Do not use TypeScript (.ts/.tsx).",
+    "Bridge CSS variables to Three.js: use a utility or hook to read getComputedStyle(document.body).getPropertyValue('--primary') and pass it to <meshStandardMaterial color={...} />.",
+    "Strictly avoid cliché casino aesthetics. No green felt. No blinking neon. Stick to the minimal-luxe Scandi-Noir direction."
+  ],
+  "aesthetic_direction": {
+    "concept": "Scandi-Noir Casino / Minimal-Luxe",
+    "description": "A moody, high-end, and deeply atmospheric take on casino gaming. Bypasses the cliché green felt, neon lights, and gaudy gold. Instead, it leverages dark architectural slate, frosted glass panels (crystal glassmorphism), and sharp 1px borders. The interface feels like an exclusive VIP room in a modern Nordic hotel.",
+    "core_principles": [
+      "Texture over Gloss: Matte 3D surfaces and moody lighting.",
+      "High Contrast Lighting: 3D scenes must use stark, directional cinematic lighting to cast dramatic shadows.",
+      "Architectural UI: Sharp corners mixed with 8px radii. Use pure 1px white/10 borders."
+    ]
   },
   "typography": {
     "headings": {
-      "family": "Cabinet Grotesk",
-      "import_url": "https://fonts.cdnfonts.com/css/cabinet-grotesk",
-      "rules": "Never use Inter for headings. Use tight letter spacing (tracking-tight) for large headers."
+      "family": "Cormorant Garamond",
+      "weight": "font-light to font-semibold",
+      "tracking": "tracking-tight",
+      "usage": "Landing page hero, Dashboard primary titles, In-game big win banners."
     },
     "body": {
-      "family": "Manrope",
-      "import_url": "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap"
+      "family": "Outfit",
+      "weight": "font-light to font-normal",
+      "tracking": "tracking-normal",
+      "usage": "UI labels, player data, operator dashboard tables."
     },
-    "scale": {
-      "h1": "text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-none",
-      "h2": "text-2xl sm:text-3xl lg:text-4xl tracking-tight",
-      "h3": "text-xl sm:text-2xl",
-      "h4": "text-lg sm:text-xl",
-      "body": "text-base leading-relaxed",
-      "small_labels": "text-xs tracking-[0.2em] uppercase font-bold"
+    "mono": {
+      "family": "JetBrains Mono",
+      "usage": "Player balance, bet amounts, activity log timestamps."
     }
   },
-  "colors": {
-    "management_side": {
-      "background": "#F8F9FA",
-      "surface": "#FFFFFF",
-      "text_primary": "#111111",
-      "text_secondary": "#555555",
-      "accent_primary": "#0A0A0A",
-      "accent_secondary": "#FF3B30",
-      "border": "rgba(0,0,0,0.1)"
+  "color_tokens": {
+    "strategy": "CSS Variables applied to `:root`. R3F must read these to color 3D meshes.",
+    "default_theme": {
+      "--primary": "#D4AF37",
+      "--accent": "#5E81AC",
+      "--bg": "#0A0A0C",
+      "--surface": "#141418",
+      "--text": "#FFFFFF",
+      "--text-muted": "#A0A0AB",
+      "--border": "rgba(255, 255, 255, 0.1)",
+      "--success": "#3E9B74",
+      "--danger": "#C94A4A"
     },
-    "customer_side": {
-      "background": "#0B0C10",
-      "surface": "rgba(255, 255, 255, 0.05)",
-      "text_primary": "#FFFFFF",
-      "text_secondary": "rgba(255, 255, 255, 0.7)",
-      "accent_primary": "#FFD700",
-      "accent_secondary": "#00F0FF",
-      "border": "rgba(255, 255, 255, 0.1)"
-    }
+    "operator_overrides": [
+      "--primary",
+      "--accent",
+      "--bg",
+      "Brand Name",
+      "Logo URL"
+    ]
   },
   "spacing_and_layout": {
-    "general": {
-      "padding": "Generous spacing philosophy (p-8 to p-12 for containers)",
-      "alignment": "Left-align dense content/forms; Center-align hero moments in games."
-    },
-    "management_grid": {
-      "type": "Control Room Grid",
-      "rules": "grid-cols-1 md:grid-cols-3 lg:grid-cols-4. Gap-6. Strict hierarchy, no empty gaps, functional. Sidebar for navigation."
-    },
-    "customer_grid": {
-      "type": "Bento Grid",
-      "rules": "Asymmetrical, gap-8 to gap-12, heavily visual. Uses negative space for focus on games."
-    }
+    "scale": "Generous Tailwind Scale. Use p-8 and p-12 for containers.",
+    "bento_grid_lobby": "grid-cols-1 md:grid-cols-2 gap-8. Four massive bento cards for the games.",
+    "control_room_grid": "grid-cols-1 md:grid-cols-12 gap-4. Density-focused for operator. Side nav col-span-2. Main content col-span-10."
+  },
+  "visual_enhancers": {
+    "glassmorphism": "Use 'Crystal Glass' for over-game UI. `backdrop-blur-xl bg-black/40 border border-white/10`. Must not look muddy.",
+    "shadows": "Diffuse ambient shadow: `shadow-[0_8px_32px_rgba(0,0,0,0.4)]`.",
+    "borders": "1px sharp grid borders `border-border` to expose the skeleton."
   },
   "components": {
-    "management": {
-      "cards": "Flat background, 1px subtle border, no heavy drop shadows. Hover states lift slightly (-translate-y-1).",
-      "navigation": "Collapsible left-sidebar, highly scannable, F-pattern layout.",
-      "tables": "Dense, high-contrast, left-aligned, sticky headers."
-    },
-    "customer": {
-      "surfaces": "Glassmorphism (backdrop-blur-xl bg-black/60) with 1px delicate inner stroke (border-white/10).",
-      "buttons": "Neumorphic or glowing edges with Framer Motion hover effects.",
-      "modals": "Crystal glass effect, heavily blurred background (backdrop-blur-2xl)."
-    }
+    "operator_sidebar": "Glassmorphic left sidebar. Clean lines, text-muted turning text-white on hover.",
+    "bento_game_card": "Relative positioning, overflow hidden. Hover scales background image. Gradient overlay bottom-to-top for text legibility. 1px border.",
+    "in_game_ui_hud": "Floating bento pieces over the 3D scene. Balance pill top right. Bet controls bottom center.",
+    "casino_chips": "3D meshes in R3F. Minimalist discs, matte finish, edge stripes mapping to `--primary`.",
+    "3d_table_surface": "Three.js PlaneGeometry. `MeshStandardMaterial` with roughness 0.9. Color maps to `--surface` or `--bg`."
   },
-  "animations_and_mechanics": {
-    "slot_machine": {
-      "engine": "Framer Motion + CSS Transforms",
-      "physics": "Spring animation: type='spring', stiffness=80, damping=15, mass=1.2",
-      "mechanics": "Simulate inertia with negative start or overshoot. Use staggerChildren: 0.3 to stagger reel stops sequentially. Use repeat symbols (20+) in column and animate translateY for seamless scroll."
-    },
-    "card_games_war_pikapokeri": {
-      "deal": "Framer Motion layout animations. Cards translate from a fixed deck origin point.",
-      "flip": "3D rotateY(180deg) transition using Framer Motion with backface-visibility: hidden.",
-      "wins_loss": "Particle effects via tsparticles or framer-motion explosions. Highlight winning paylines with glowing overlays."
-    }
-  },
-  "testing_guidelines": {
-    "attributes": "All interactive elements MUST include data-testid. Example: data-testid='spin-button', data-testid='deal-button'.",
-    "qa_focus": "Regression testing for payout logic and state transitions, ensure game engine RTP remains fair during animation lags. Frame-rate testing on animations."
+  "layouts": {
+    "public_landing": "Split screen. Left: immersive dark architecture image. Right: Login forms (Tabs: Player/Operator).",
+    "operator_dashboard": "Control Room Grid. Sidebar + Dense Data Tables + Theme Live Preview.",
+    "player_lobby": "Top nav (Logo + Balance). Main area: 4 large bento tiles for Blackjack, Baccarat, Pikapokeri (Video Poker), Casino War.",
+    "in_game": "Absolute full-width/height R3F Canvas `z-0`. UI HUD layered on top `z-10`."
   },
   "media": {
-    "images": [
-      {
-        "category": "Customer Background",
-        "description": "Dark moody casino background with abstract 3d shapes and neon lights. Use as the base wallpaper behind the game areas.",
-        "url": "https://static.prod-images.emergentagent.com/jobs/540c5af7-00aa-455e-b94f-cb1040a649f2/images/bbdeb8be120b81add19307042967e88a5cc3b3b7e16213bc94c86140265f61a5.png"
-      },
-      {
-        "category": "Game Asset - Card Back",
-        "description": "Luxurious geometric deep indigo and gold card back for WAR and Pikapokeri.",
-        "url": "https://static.prod-images.emergentagent.com/jobs/540c5af7-00aa-455e-b94f-cb1040a649f2/images/001c2656921f93edb060575b46bcee2fc7810eca14827a8b02e431e57c4b62af.png"
-      },
-      {
-        "category": "Game Asset - Slot Frame",
-        "description": "Modern dark brushed metal frame for the slot machine UI.",
-        "url": "https://static.prod-images.emergentagent.com/jobs/540c5af7-00aa-455e-b94f-cb1040a649f2/images/de3dc0024decc7f601853161d062ba21f38b64788200913695a65b658607d856.png"
-      },
-      {
-        "category": "Customer Decoration",
-        "description": "Casino chips for onboarding flow or decoration.",
-        "url": "https://images.pexels.com/photos/35926283/pexels-photo-35926283.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
-      }
-    ],
-    "icons": {
-      "library": "lucide-react (default) and @phosphor-icons/react for dense dashboard metrics."
+    "hero_background": {
+      "url": "https://images.unsplash.com/photo-1633602114554-be8c2c5d6828?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NDh8MHwxfHNlYXJjaHwxfHxkYXJrJTIwbW9vZHklMjBhYnN0cmFjdCUyMGFyY2hpdGVjdHVyZXxlbnwwfHx8fDE3Nzg2MjgyNjd8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Dark moody abstract architecture for public landing hero.",
+      "usage": "Landing page background."
+    },
+    "lobby_tiles": {
+      "url": "https://images.unsplash.com/photo-1773188243509-4539e7681272?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNDR8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBwb2tlciUyMGNhcmRzfGVufDB8fHx8MTc3ODYyODI2N3ww&ixlib=rb-4.1.0&q=85",
+      "description": "Luxury poker cards.",
+      "usage": "Base texture for game tiles in the lobby."
+    },
+    "table_texture": {
+      "url": "https://images.unsplash.com/photo-1770795263297-9289a582a68d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTB8MHwxfHNlYXJjaHwzfHxtaW5pbWFsaXN0JTIwZGFyayUyMGJhY2tncm91bmQlMjB0ZXh0dXJlfGVufDB8fHx8MTc3ODYyODI4NXww&ixlib=rb-4.1.0&q=85",
+      "description": "Minimalist dark background texture.",
+      "usage": "Use as color map or bump map for the R3F table surface if needed, otherwise use solid css vars."
     }
   },
-  "instructions_to_main_agent": [
-    "Use standard Tailwind classes. For fonts, ensure they are imported via Google/CDN links in index.css.",
-    "Implement the Management dashboard in pure HTML/Tailwind with Shadcn for complex forms. Keep it completely separated from the Customer side layout.",
-    "Customer side must use Dark mode exclusively. Avoid standard generic borders; use glassmorphism with high saturation.",
-    "Slot machine must NOT use random intervals alone. Calculate the final state first, then spin the reels using Framer Motion to land exactly on the required offset.",
-    "Do NOT alter the game logic/payout RTP rules, focus strictly on making the visual and animation layers wrapper around the deterministic logic.",
-    "Ensure all actions (spin, bet, deal) have 'data-testid' and disabled states during animations."
-  ]
+  "motion": {
+    "page_transitions": "Fade and slight scale-up using Framer Motion.",
+    "3d_animations": "Cards dealing must use smooth bezier curves. Camera moves slightly based on mouse position (parallax) for immersion."
+  },
+  "testing": {
+    "convention": "data-testid='<element>-<context>-<action>'",
+    "examples": [
+      "data-testid='input-login-username'",
+      "data-testid='button-operator-save-theme'",
+      "data-testid='button-game-hit'",
+      "data-testid='tile-lobby-blackjack'"
+    ]
+  }
 }

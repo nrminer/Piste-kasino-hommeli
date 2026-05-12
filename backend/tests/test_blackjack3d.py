@@ -5,7 +5,7 @@ import os
 import pytest
 import requests
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://blackjack-points.preview.emergentagent.com").rstrip("/")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://card-game-suite-3d.preview.emergentagent.com").rstrip("/")
 PID = 1  # BJ3D Test seeded player
 
 SUITS = ["♠", "♥", "♦", "♣"]

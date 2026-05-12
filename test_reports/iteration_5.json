@@ -37,6 +37,6 @@
   "seed_data_creation": "None",
   "retest_needed": false,
   "should_main_agent_self_test": true,
-  "context_for_next_testing_agent": "Validated with public URL https://blackjack-points.preview.emergentagent.com/asiakas using TestPelaaja/test123 (player id 1). Bonus overlay appears after free-spin sequence when bonus_game present; in automation it may require extended wait (up to 120s) due cinematic flow timing.",
+  "context_for_next_testing_agent": "Validated with public URL https://card-game-suite-3d.preview.emergentagent.com/asiakas using TestPelaaja/test123 (player id 1). Bonus overlay appears after free-spin sequence when bonus_game present; in automation it may require extended wait (up to 120s) due cinematic flow timing.",
   "rca of the issue": "No blocking app defects found in requested scope. Earlier automation timeout was due test script waiting for bonus overlay too early while free-spin cinematic was still in progress; extending wait resolved it."
 }
