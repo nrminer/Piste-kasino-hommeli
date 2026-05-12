@@ -415,11 +415,19 @@ input[type=color].swatch::-webkit-color-swatch { border: none; border-radius: va
   overflow: hidden;
   cursor: grab;
 }
-.scene-3d canvas { display: block; width: 100% !important; height: 100% !important; }
+.scene-3d canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
 .scene-3d .hud {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  z-index: 2;
 }
 .scene-3d .hud > * { pointer-events: auto; }
 .scene-3d .corner-tl, .scene-3d .corner-tr,
@@ -442,7 +450,7 @@ input[type=color].swatch::-webkit-color-swatch { border: none; border-radius: va
   left: 50%;
   transform: translate(-50%, -50%) scale(.96);
   padding: 1.2rem 2rem;
-  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  background: color-mix(in srgb, var(--bg) 95%, transparent);
   border: 1px solid var(--primary);
   border-radius: var(--r-md);
   font-family: var(--f-display);
@@ -452,6 +460,8 @@ input[type=color].swatch::-webkit-color-swatch { border: none; border-radius: va
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--t-mid), transform var(--t-mid) var(--easing);
+  z-index: 5;
+  box-shadow: 0 12px 32px rgba(0,0,0,.6);
 }
 .scene-3d .center-banner.show {
   opacity: 1;

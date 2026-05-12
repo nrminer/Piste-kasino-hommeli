@@ -184,20 +184,23 @@ function bezier3(p0, p1, p2, t) {
 /* ─── Card slot layout ────────────────────────────────────────────────── */
 /**
  * Convert (zoneName, indexInZone) → world position on the table.
- * Zones: 'player', 'dealer', 'banker', 'community', 'split0', 'split1'
+ * Per-zone start x is tuned so the typical card count for that zone is
+ * centred on the felt (community = 5 cards, player/dealer/banker = 2-3
+ * cards). Z separates dealer (back) from player (front).
  */
 function slotPosition(zone, index) {
-  // Cards lay out left-to-right starting at the player/dealer "anchor" x.
-  const x = index * 0.78 - 1.2;
-  const positions = {
-    dealer:    { x: x + 0.6, y: 1.1, z: -1.0 },
-    player:    { x: x + 0.6, y: 1.1, z:  1.0 },
-    banker:    { x: x + 0.7, y: 1.1, z: -1.0 },
-    community: { x: x + 0.4, y: 1.1, z:  1.0 },
-    split0:    { x: x + 0.6, y: 1.1, z:  1.0 },
-    split1:    { x: x + 0.6, y: 1.1, z:  2.2 },
+  const spread = 0.78;
+  // start x = -spread * (typicalCount - 1) / 2 so the row sits centred.
+  const layout = {
+    dealer:    { startX: -spread, z: -1.1 },
+    player:    { startX: -spread, z:  1.1 },
+    banker:    { startX: -spread, z: -1.1 },
+    community: { startX: -spread * 2, z: 0.4 },
+    split0:    { startX: -spread, z: 1.1 },
+    split1:    { startX: -spread, z: 2.2 },
   };
-  return positions[zone] || positions.player;
+  const cfg = layout[zone] || layout.player;
+  return { x: cfg.startX + index * spread, y: 1.1, z: cfg.z };
 }
 
 /* ─── Main table scene ────────────────────────────────────────────────── */
