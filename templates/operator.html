@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Operaattori · Kasino</title>
+<link rel="icon" href="/favicon.svg">
+<style>
+:root{
+  --bg:#06140d; --bg2:#0a1f15; --panel:rgba(255,255,255,.03); --panel-bd:rgba(201,168,76,.18);
+  --gold:#c9a84c; --gold2:#e8c970; --cream:#f4ecd6; --muted:#9ca18d;
+  --ok:#5fa86b; --danger:#c44b3b; --warn:#e89a3c;
+  --font-display:'Playfair Display',Georgia,serif;
+  --font-body:'Inter','Cormorant Garamond',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;min-height:100%;background:
+  radial-gradient(1200px 600px at 80% -10%,rgba(201,168,76,.06),transparent 60%),
+  radial-gradient(1000px 500px at -10% 110%,rgba(95,168,107,.05),transparent 70%),
+  linear-gradient(180deg,#06140d,#02080a);
+  color:var(--cream);font-family:var(--font-body);
+  -webkit-font-smoothing:antialiased;font-feature-settings:'liga','kern';
+}
+a{color:var(--gold2);text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+
+.topbar{display:flex;align-items:center;gap:.8rem;padding:.85rem 1.2rem;border-bottom:1px solid var(--panel-bd);
+  background:linear-gradient(180deg,rgba(8,22,16,.95),rgba(8,22,16,.55));backdrop-filter:blur(10px);position:sticky;top:0;z-index:9}
+.brand{font-family:var(--font-display);font-weight:800;font-size:1.2rem;letter-spacing:.5px;color:var(--gold2)}
+.brand span{color:var(--cream);font-weight:600}
+.topbar .spacer{flex:1}
+.tag-role{padding:.3rem .7rem;border-radius:99px;border:1px solid rgba(196,75,59,.45);background:rgba(196,75,59,.12);color:#ff9a8e;font-size:.78rem;letter-spacing:.5px}
+.iconbtn{appearance:none;border:1px solid var(--panel-bd);background:rgba(13,31,23,.6);color:var(--cream);
+  padding:.45rem .85rem;border-radius:10px;font-size:.88rem;transition:all .18s ease}
+.iconbtn:hover{border-color:var(--gold);color:var(--gold2)}
+
+.wrap{max-width:1240px;margin:1.4rem auto;padding:0 1.2rem 2rem}
+
+/* Card / panel */
+.card{background:linear-gradient(180deg,rgba(13,31,23,.85),rgba(8,22,16,.92));border:1px solid var(--panel-bd);
+  border-radius:14px;padding:1rem 1.2rem;box-shadow:0 8px 24px rgba(0,0,0,.35);margin-bottom:1rem}
+.card h2{margin:0 0 .6rem;font-family:var(--font-display);font-size:1.15rem;color:var(--gold2);letter-spacing:.4px}
+.card .sub{color:var(--muted);font-size:.84rem;margin-bottom:.6rem}
+
+/* Login splash */
+#splash{display:flex;align-items:center;justify-content:center;min-height:60vh;padding:2rem 1rem}
+.splash-card{max-width:420px;width:100%;background:linear-gradient(180deg,rgba(13,31,23,.95),rgba(6,20,13,.95));
+  border:1px solid var(--panel-bd);border-radius:16px;padding:1.5rem;text-align:center;box-shadow:0 22px 60px rgba(0,0,0,.55)}
+.splash-card h1{margin:0 0 .3rem;font-family:var(--font-display);color:var(--gold2);font-size:1.55rem}
+.splash-card p{margin:.2rem 0 .9rem;color:var(--muted);font-size:.88rem}
+.inp{width:100%;padding:.6rem .8rem;background:rgba(6,20,13,.85);border:1px solid var(--panel-bd);
+  color:var(--cream);border-radius:8px;font-family:inherit;font-size:.95rem;margin-bottom:.5rem}
+.inp:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,168,76,.18)}
+.btn-primary{appearance:none;border:1px solid rgba(201,168,76,.6);background:linear-gradient(180deg,#e8c970,#a8841f);
+  color:#1a1308;padding:.6rem 1rem;border-radius:10px;font-weight:800;letter-spacing:.5px;
+  font-family:var(--font-display);text-transform:uppercase;font-size:.92rem;
+  box-shadow:0 6px 18px rgba(168,132,31,.28),inset 0 -2px 0 rgba(0,0,0,.18);transition:all .18s ease}
+.btn-primary:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.06)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-ghost{appearance:none;border:1px solid var(--panel-bd);background:rgba(13,31,23,.7);color:var(--cream);
+  padding:.5rem .9rem;border-radius:10px;font-size:.88rem;letter-spacing:.3px}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold2)}
+.btn-danger{appearance:none;border:1px solid rgba(196,75,59,.55);background:rgba(196,75,59,.14);color:#ff9a8e;
+  padding:.5rem .9rem;border-radius:10px;font-size:.88rem;letter-spacing:.3px;font-weight:600}
+.btn-danger:hover{filter:brightness(1.1)}
+
+/* Stat tiles */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.8rem}
+.stat{padding:.85rem 1rem;background:rgba(6,20,13,.55);border:1px solid var(--panel-bd);border-radius:12px}
+.stat .l{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+.stat .v{font-family:var(--font-display);font-size:1.7rem;color:var(--gold2);line-height:1.15;margin-top:.15rem}
+.stat .v.sm{font-size:1.2rem;color:var(--cream)}
+
+/* Tables */
+table.tbl{width:100%;border-collapse:collapse;font-size:.86rem}
+table.tbl th{text-align:left;padding:.55rem .7rem;color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.6px;font-weight:600;border-bottom:1px solid var(--panel-bd)}
+table.tbl td{padding:.55rem .7rem;border-bottom:1px solid rgba(201,168,76,.07)}
+table.tbl tr:hover td{background:rgba(201,168,76,.04)}
+.mono{font-family:ui-monospace,'Courier New',monospace}
+.pill{display:inline-block;padding:.15rem .55rem;border-radius:99px;font-size:.74rem;border:1px solid var(--panel-bd);background:rgba(6,20,13,.5)}
+.pill.ok{border-color:var(--ok);background:rgba(95,168,107,.12);color:var(--ok)}
+.pill.warn{border-color:var(--warn);background:rgba(232,154,60,.12);color:var(--warn)}
+.pill.danger{border-color:var(--danger);background:rgba(196,75,59,.12);color:#ff9a8e}
+.pill.gold{border-color:rgba(201,168,76,.4);background:rgba(201,168,76,.12);color:var(--gold2)}
+
+/* Progress bar (shoe usage) */
+.bar{position:relative;height:8px;background:rgba(255,255,255,.05);border-radius:99px;overflow:hidden;border:1px solid var(--panel-bd)}
+.bar .fill{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,#5fa86b,#c9a84c)}
+.bar .cut{position:absolute;top:-3px;width:2px;height:14px;background:#ff9a8e}
+
+/* Toast */
+.toast{position:fixed;left:50%;bottom:2rem;transform:translateX(-50%);background:rgba(13,31,23,.95);
+  border:1px solid var(--panel-bd);color:var(--cream);padding:.6rem 1rem;border-radius:99px;
+  font-size:.9rem;letter-spacing:.3px;z-index:1000;box-shadow:0 14px 36px rgba(0,0,0,.5);
+  opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease}
+.toast.show{opacity:1;transform:translate(-50%,-6px)}
+.toast.err{border-color:var(--danger);color:#ffd1cd}
+.toast.ok{border-color:var(--ok);color:#a3e2a3}
+
+.row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.row.between{justify-content:space-between}
+.section-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem}
+.section-h h2{margin:0}
+
+.empty{padding:1.2rem;color:var(--muted);text-align:center;font-style:italic}
+
+@media (max-width:560px){
+  .topbar{padding:.7rem 1rem}
+  .brand{font-size:1rem}
+  .wrap{margin-top:.8rem;padding:0 .8rem 2rem}
+  .card{padding:.85rem .9rem}
+  .stat .v{font-size:1.4rem}
+}
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <div class="splash-card">
+    <h1>Operaattoripaneeli</h1>
+    <p>Anna operaattorin salasana jatkaaksesi.<br>Salasana on määritetty <span class="mono">OPERATOR_PASSWORD</span>-ympäristömuuttujassa.</p>
+    <input id="opPw" class="inp" type="password" placeholder="Operaattorin salasana" autocomplete="current-password" data-testid="op-password-input" />
+    <div id="opErr" style="color:#ff9a8e;font-size:.82rem;min-height:1.2rem;margin-bottom:.4rem"></div>
+    <button class="btn-primary" id="opLoginBtn" onclick="opLogin()" style="width:100%" data-testid="op-login-btn">Kirjaudu sisään</button>
+    <div style="margin-top:.8rem;font-size:.78rem"><a href="/asiakas">← Takaisin asiakasnäkymään</a></div>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+  <div class="topbar">
+    <div class="brand">♠ Kasino <span>Operaattori</span></div>
+    <span class="tag-role" data-testid="op-role-tag">OPERAATTORI</span>
+    <div class="spacer"></div>
+    <a class="iconbtn" href="/asiakas">Asiakas</a>
+    <button class="iconbtn" onclick="opLogout()" data-testid="op-logout-btn">Kirjaudu ulos</button>
+  </div>
+
+  <div class="wrap">
+    <!-- Stats -->
+    <div class="card" data-testid="op-stats-card">
+      <div class="section-h">
+        <h2>📊 Yhteenveto</h2>
+        <button class="btn-ghost" onclick="refreshAll()" data-testid="op-refresh-btn">↻ Päivitä</button>
+      </div>
+      <div class="stat-grid" id="statGrid"></div>
+    </div>
+
+    <!-- Blackjack settings -->
+    <div class="card" data-testid="op-settings-card">
+      <div class="section-h">
+        <h2>🎴 Blackjack — Säännöt &amp; pakka</h2>
+        <span class="pill gold" id="settingsHint" data-testid="op-settings-hint">env: SHOE_DECKS · SHOE_CUT_FRACTION</span>
+      </div>
+      <div class="row" id="settingsRow"></div>
+    </div>
+
+    <!-- Shoe management -->
+    <div class="card" data-testid="op-shoes-card">
+      <div class="section-h">
+        <h2>🃏 Pakkojen tila pelaajaa kohti</h2>
+        <div class="row">
+          <button class="btn-danger" onclick="resetAllShoes()" data-testid="op-reset-all-btn">Sekoita kaikki pakat</button>
+        </div>
+      </div>
+      <div class="sub">Jokainen pelaaja jakaa 6 pakan kengästä. Cut-kortti pakottaa sekoituksen, kun ~75 % korteista on jaettu. Voit sekoittaa pakan käsin alla.</div>
+      <div id="shoesTable"></div>
+    </div>
+
+    <!-- Recent rounds -->
+    <div class="card" data-testid="op-rounds-card">
+      <div class="section-h">
+        <h2>📜 Viimeisimmät kierrokset</h2>
+        <span class="pill">50 viimeisintä</span>
+      </div>
+      <div id="roundsTable"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" data-testid="op-toast"></div>
+
+<script>
+const TOKEN_KEY = 'operator_token';
+let token = localStorage.getItem(TOKEN_KEY) || '';
+
+function $(id){ return document.getElementById(id); }
+function toast(msg, kind=''){
+  const t = $('toast'); t.textContent = msg;
+  t.className = 'toast show ' + kind;
+  clearTimeout(toast._t); toast._t = setTimeout(()=>t.className = 'toast', 2400);
+}
+
+async function api(path, opts={}){
+  opts.headers = Object.assign({'Content-Type':'application/json'}, opts.headers||{});
+  if(token) opts.headers['Authorization'] = 'Bearer ' + token;
+  const r = await fetch(path, opts);
+  const j = await r.json().catch(()=>({error:'Virheellinen vastaus.'}));
+  if(r.status === 401){
+    localStorage.removeItem(TOKEN_KEY); token = '';
+    showSplash(); throw new Error(j.error || 'Istunto vanhentunut.');
+  }
+  if(!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
+  return j;
+}
+
+function showSplash(){
+  $('splash').style.display='flex';
+  $('app').style.display='none';
+}
+function showApp(){
+  $('splash').style.display='none';
+  $('app').style.display='block';
+  refreshAll();
+}
+
+async function opLogin(){
+  const pw = $('opPw').value;
+  $('opErr').textContent='';
+  if(!pw){ $('opErr').textContent='Syötä salasana.'; return; }
+  $('opLoginBtn').disabled = true;
+  try{
+    const r = await fetch('/api/operator/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:pw})});
+    const j = await r.json();
+    if(!r.ok){ $('opErr').textContent = j.error || 'Kirjautuminen epäonnistui.'; return; }
+    token = j.access_token;
+    localStorage.setItem(TOKEN_KEY, token);
+    $('opPw').value='';
+    showApp();
+  }catch(e){ $('opErr').textContent = 'Verkkovirhe.'; }
+  finally{ $('opLoginBtn').disabled = false; }
+}
+window.opLogin = opLogin;
+
+function opLogout(){
+  localStorage.removeItem(TOKEN_KEY); token=''; showSplash();
+}
+window.opLogout = opLogout;
+
+async function refreshAll(){
+  try{
+    const [stats, settings, shoes, rounds] = await Promise.all([
+      api('/api/operator/blackjack/stats'),
+      api('/api/operator/blackjack/settings'),
+      api('/api/operator/blackjack/shoes'),
+      api('/api/operator/blackjack/recent_rounds'),
+    ]);
+    renderStats(stats); renderSettings(settings); renderShoes(shoes); renderRounds(rounds);
+  }catch(e){ toast(e.message, 'err'); }
+}
+window.refreshAll = refreshAll;
+
+function renderStats(s){
+  const r = s.rounds || {}, sh = s.shoes || {}, p = s.players || {};
+  const html = [
+    {l:'Pelaajia',         v: (p.c||0).toLocaleString('fi-FI')},
+    {l:'Pistesaldo yht.',  v: (p.bank||0).toLocaleString('fi-FI') + ' p'},
+    {l:'Kierroksia',       v: (r.total_rounds||0).toLocaleString('fi-FI')},
+    {l:'Päättyneet',       v: (r.settled_rounds||0).toLocaleString('fi-FI'), sm:true},
+    {l:'Liikevaihto',      v: (r.handle||0).toLocaleString('fi-FI') + ' p'},
+    {l:'Pakkasekoituksia', v: (sh.total_shuffles||0).toLocaleString('fi-FI'), sm:true},
+  ].map(s=>`<div class="stat"><div class="l">${s.l}</div><div class="v ${s.sm?'sm':''}">${s.v}</div></div>`).join('');
+  $('statGrid').innerHTML = html;
+}
+
+function renderSettings(s){
+  const presets = (s.presets||[]).map(p=>`<span class="pill">${p.name}${p.dealer_hits_soft_17?' · H17':' · S17'}</span>`).join(' ');
+  $('settingsRow').innerHTML = `
+    <div class="stat" style="flex:1;min-width:140px"><div class="l">Min panos</div><div class="v sm">${s.min_bet} p</div></div>
+    <div class="stat" style="flex:1;min-width:140px"><div class="l">Max panos</div><div class="v sm">${s.max_bet} p</div></div>
+    <div class="stat" style="flex:1;min-width:140px"><div class="l">Pakkojen lkm</div><div class="v sm">${s.default_decks}</div></div>
+    <div class="stat" style="flex:1;min-width:140px"><div class="l">Cut-fraction</div><div class="v sm">${Math.round((s.default_cut_fraction||0.75)*100)}%</div></div>
+    <div style="flex:1;min-width:240px"><div class="l" style="font-size:.7rem;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:.3rem">Sääntöasetukset</div><div class="row">${presets}</div></div>
+  `;
+}
+
+function renderShoes(s){
+  const rows = s.shoes || [];
+  if(rows.length === 0){ $('shoesTable').innerHTML = '<div class="empty">Ei aktiivisia pakkoja vielä — pelaa yksi kierros aloittaaksesi pakan.</div>'; return; }
+  const html = `<table class="tbl" data-testid="op-shoes-table">
+    <thead><tr><th>Pelaaja</th><th>Pakat</th><th>Käytetty / Cut</th><th>Käyttöaste</th><th>Sekoitukset</th><th>Viimeksi sekoitettu</th><th>Toiminnot</th></tr></thead>
+    <tbody>${rows.map(r=>{
+      const total = (r.decks||6)*52; const usedPct = Math.round((r.draw_index||0)/total*100);
+      const cutPct = Math.round((r.cut_index||0)/total*100);
+      const stateBadge = r.approaching_cut
+        ? '<span class="pill warn">Lähellä cuttia</span>'
+        : (r.cards_until_cut === 0 ? '<span class="pill danger">Cut saavutettu</span>' : '<span class="pill ok">OK</span>');
+      return `<tr>
+        <td><strong>${r.name || '—'}</strong> <span class="mono pill">#${r.player_id}</span></td>
+        <td>${r.decks}</td>
+        <td>${r.draw_index} / ${r.cut_index}</td>
+        <td style="min-width:160px">
+          <div class="bar"><div class="fill" style="width:${Math.min(100,usedPct)}%"></div><div class="cut" style="left:${Math.min(100,cutPct)}%"></div></div>
+          <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem">${usedPct}% · cut ${cutPct}% · ${stateBadge}</div>
+        </td>
+        <td>${r.shuffles||0}</td>
+        <td class="mono" style="font-size:.78rem">${r.last_shuffled||''}</td>
+        <td><button class="btn-ghost" onclick="resetShoe(${r.player_id})" data-testid="op-reset-shoe-${r.player_id}">Sekoita</button></td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+  $('shoesTable').innerHTML = html;
+}
+
+function renderRounds(s){
+  const rows = s.rounds || [];
+  if(rows.length === 0){ $('roundsTable').innerHTML = '<div class="empty">Ei vielä kierroksia.</div>'; return; }
+  const html = `<table class="tbl" data-testid="op-rounds-table">
+    <thead><tr><th>#</th><th>Pelaaja</th><th>Säännöt</th><th>Panos</th><th>Tila</th><th>Tulos</th><th>Netto</th><th>Aika</th></tr></thead>
+    <tbody>${rows.map(r=>{
+      const out = r.outcome || {};
+      const net = out.net != null ? (out.net>0?`+${out.net}`:`${out.net}`) : '—';
+      const netCls = out.net > 0 ? 'ok' : out.net < 0 ? 'danger' : '';
+      const handsHtml = (out.hands||[]).map(h=>{
+        const cls = h.outcome === 'blackjack' || h.outcome === 'win' ? 'ok' : h.outcome === 'push' ? 'gold' : 'danger';
+        return `<span class="pill ${cls}">${h.outcome||'?'}</span>`;
+      }).join(' ');
+      return `<tr>
+        <td class="mono">#${r.id}</td>
+        <td>${r.name || '—'}</td>
+        <td><span class="pill">${r.preset}</span></td>
+        <td>${r.bet} p</td>
+        <td><span class="pill ${r.status==='settled'?'ok':r.status==='active'?'warn':''}">${r.status}</span></td>
+        <td>${handsHtml||'—'}</td>
+        <td class="mono" style="color:${netCls==='ok'?'var(--ok)':netCls==='danger'?'#ff9a8e':'var(--cream)'}">${net} p</td>
+        <td class="mono" style="font-size:.74rem">${r.ended_at || r.created_at || ''}</td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+  $('roundsTable').innerHTML = html;
+}
+
+async function resetShoe(pid){
+  if(!confirm(`Sekoita pelaajan #${pid} pakat heti?`)) return;
+  try{
+    await api(`/api/operator/blackjack/shoes/${pid}/reset`, {method:'POST'});
+    toast(`✓ Pakat sekoitettu pelaajalle #${pid}`, 'ok');
+    refreshAll();
+  }catch(e){ toast(e.message, 'err'); }
+}
+window.resetShoe = resetShoe;
+
+async function resetAllShoes(){
+  if(!confirm('Sekoita KAIKKI pelaajakohtaiset pakat heti?')) return;
+  try{
+    const j = await api('/api/operator/blackjack/shoes/reset_all', {method:'POST'});
+    toast(`✓ Sekoitettiin ${j.reset} pakkaa`, 'ok');
+    refreshAll();
+  }catch(e){ toast(e.message, 'err'); }
+}
+window.resetAllShoes = resetAllShoes;
+
+// Boot
+if(token){
+  // Validate the cached token quickly.
+  fetch('/api/operator/me', {headers:{'Authorization':'Bearer '+token}}).then(r=>{
+    if(r.ok) showApp(); else { localStorage.removeItem(TOKEN_KEY); token=''; showSplash(); }
+  }).catch(()=>showSplash());
+}else{
+  showSplash();
+}
+
+// Enter key on password
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Enter' && $('splash').style.display !== 'none' && document.activeElement === $('opPw')) opLogin();
+});
+</script>
+</body>
+</html>

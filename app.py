@@ -3195,9 +3195,13 @@ def poker_auto_settle():
     return jsonify({'settled': True, 'winners': awarded, 'side_pots': side_pots})
 
 
-# ─── 3D Blackjack module (provably-fair) ─────────────────────────────────────
+# ─── 3D Blackjack module (6-deck cut-card shoe; no provably-fair) ────────────
 # Integrates with the existing points wallet. Persists in `blackjack3d_games`
-# (new table, idempotent migration). Legacy 2D blackjack endpoints stay intact.
+# + `blackjack3d_shoes` (new tables, idempotent migration). Legacy 2D
+# blackjack endpoints stay intact.
+import operator_auth as _opauth
+_opauth.register(app)
+
 import blackjack3d as _bj3d
 _bj3d.register(app, DATABASE)
 
