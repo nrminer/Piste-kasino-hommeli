@@ -248,9 +248,9 @@ def _persist_shoe(db, player_id: int, shoe: Shoe, new: bool = False) -> None:
     else:
         db.execute(
             """UPDATE blackjack3d_shoes SET cut_index=?, cards_json=?, draw_index=?, shuffles=?,
-              decks=?, cut_fraction=?, last_shuffled=CASE WHEN ?=draw_index THEN last_shuffled ELSE last_shuffled END
+              decks=?, cut_fraction=?
               WHERE player_id=?""",
-            (r["cut_index"], r["cards_json"], r["draw_index"], r["shuffles"], r["decks"], r["cut_fraction"], r["draw_index"], player_id),
+            (r["cut_index"], r["cards_json"], r["draw_index"], r["shuffles"], r["decks"], r["cut_fraction"], player_id),
         )
     db.commit()
 
