@@ -1287,6 +1287,24 @@ SETTINGS_DEFAULTS = {
     'point_expiry_days':'365',
 }
 
+# Operator-configurable visual theme — shared by customer + operator views so
+# both surfaces look like one branded product. All values are plain strings
+# (hex colors or short text); the frontend reads them as CSS custom properties.
+THEME_DEFAULTS = {
+    'theme_brand_name': 'Auditor\u2019s Ledger',
+    'theme_tagline'   : 'Kortit \u2022 Pisteet \u2022 Talo',
+    'theme_logo_text' : '\u2660',
+    'theme_logo_url'  : '',
+    'theme_primary'   : '#c9a84c',   # warm gold accent
+    'theme_accent'    : '#5fa86b',   # green secondary
+    'theme_bg'        : '#0a0d12',   # near-black scandi-noir base
+    'theme_surface'   : '#13171f',   # panels
+    'theme_text'      : '#f4ecd6',   # cream
+    'theme_muted'     : '#8a8e98',
+    'theme_danger'    : '#c44b3b',
+    'theme_felt'      : '#1a2a22',   # 3D table felt color
+}
+
 # Slot machine themes — 5 reels × 3 rows, tiered payouts (3/4/5-of-a-kind),
 # wild substitution, free spins on 3+ scatters, progressive jackpot on 5 wilds.
 SLOT_THEMES = {
@@ -2393,6 +2411,44 @@ def update_settings():
                        (key, str(val)))
     db.commit()
     return jsonify({'ok': True})
+
+# ─── Operator-configurable theme (shared customer + operator branding) ───────
+
+def _load_theme(db):
+    """Read theme keys from system_settings; fall back to THEME_DEFAULTS."""
+    out  = dict(THEME_DEFAULTS)
+    rows = db.execute(
+        "SELECT key, value FROM system_settings WHERE key LIKE 'theme_%'"
+    ).fetchall()
+    for r in rows:
+        out[r['key']] = r['value']
+    return out
+
+@app.route('/api/theme', methods=['GET'])
+def get_theme():
+    """Public endpoint — both customer and operator pages call this on boot to
+    paint the UI with the operator's chosen colors + brand name + logo."""
+    return jsonify(_load_theme(get_db()))
+
+@app.route('/api/operator/theme', methods=['PUT'])
+def update_theme():
+    """Operator-protected. Persists only the whitelisted theme_* keys."""
+    from operator_auth import _decode_token
+    hdr = request.headers.get('Authorization', '')
+    if not hdr.lower().startswith('bearer '):
+        return jsonify({'error': 'Operator token vaaditaan.'}), 401
+    if _decode_token(hdr[7:].strip()) is None:
+        return jsonify({'error': 'Virheellinen tai vanhentunut token.'}), 401
+    d  = request.json or {}
+    db = get_db()
+    for key, val in d.items():
+        if key in THEME_DEFAULTS and isinstance(val, str):
+            db.execute(
+                'INSERT OR REPLACE INTO system_settings(key,value) VALUES(?,?)',
+                (key, val.strip()[:200])
+            )
+    db.commit()
+    return jsonify({'ok': True, 'theme': _load_theme(db)})
 
 # ─── Cash redemption (points → EUR bonus) ────────────────────────────────────
 

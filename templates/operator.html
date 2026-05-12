@@ -3,176 +3,335 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Operaattori · Kasino</title>
+<title>Operaattori · Auditor's Ledger</title>
 <link rel="icon" href="/favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/theme.css">
 <style>
-:root{
-  --bg:#06140d; --bg2:#0a1f15; --panel:rgba(255,255,255,.03); --panel-bd:rgba(201,168,76,.18);
-  --gold:#c9a84c; --gold2:#e8c970; --cream:#f4ecd6; --muted:#9ca18d;
-  --ok:#5fa86b; --danger:#c44b3b; --warn:#e89a3c;
-  --font-display:'Playfair Display',Georgia,serif;
-  --font-body:'Inter','Cormorant Garamond',system-ui,sans-serif;
+/* Operator-only adjustments */
+#splash {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  background:
+    radial-gradient(900px 500px at 20% 0%, color-mix(in srgb, var(--primary) 8%, transparent), transparent 60%),
+    radial-gradient(900px 500px at 80% 100%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 60%);
 }
-*{box-sizing:border-box}
-html,body{margin:0;padding:0;min-height:100%;background:
-  radial-gradient(1200px 600px at 80% -10%,rgba(201,168,76,.06),transparent 60%),
-  radial-gradient(1000px 500px at -10% 110%,rgba(95,168,107,.05),transparent 70%),
-  linear-gradient(180deg,#06140d,#02080a);
-  color:var(--cream);font-family:var(--font-body);
-  -webkit-font-smoothing:antialiased;font-feature-settings:'liga','kern';
+.splash-card {
+  width: min(440px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 2rem 2.2rem;
+  box-shadow: 0 36px 96px rgba(0,0,0,.55);
+  position: relative;
 }
-a{color:var(--gold2);text-decoration:none}
-button{font-family:inherit;cursor:pointer}
-
-.topbar{display:flex;align-items:center;gap:.8rem;padding:.85rem 1.2rem;border-bottom:1px solid var(--panel-bd);
-  background:linear-gradient(180deg,rgba(8,22,16,.95),rgba(8,22,16,.55));backdrop-filter:blur(10px);position:sticky;top:0;z-index:9}
-.brand{font-family:var(--font-display);font-weight:800;font-size:1.2rem;letter-spacing:.5px;color:var(--gold2)}
-.brand span{color:var(--cream);font-weight:600}
-.topbar .spacer{flex:1}
-.tag-role{padding:.3rem .7rem;border-radius:99px;border:1px solid rgba(196,75,59,.45);background:rgba(196,75,59,.12);color:#ff9a8e;font-size:.78rem;letter-spacing:.5px}
-.iconbtn{appearance:none;border:1px solid var(--panel-bd);background:rgba(13,31,23,.6);color:var(--cream);
-  padding:.45rem .85rem;border-radius:10px;font-size:.88rem;transition:all .18s ease}
-.iconbtn:hover{border-color:var(--gold);color:var(--gold2)}
-
-.wrap{max-width:1240px;margin:1.4rem auto;padding:0 1.2rem 2rem}
-
-/* Card / panel */
-.card{background:linear-gradient(180deg,rgba(13,31,23,.85),rgba(8,22,16,.92));border:1px solid var(--panel-bd);
-  border-radius:14px;padding:1rem 1.2rem;box-shadow:0 8px 24px rgba(0,0,0,.35);margin-bottom:1rem}
-.card h2{margin:0 0 .6rem;font-family:var(--font-display);font-size:1.15rem;color:var(--gold2);letter-spacing:.4px}
-.card .sub{color:var(--muted);font-size:.84rem;margin-bottom:.6rem}
-
-/* Login splash */
-#splash{display:flex;align-items:center;justify-content:center;min-height:60vh;padding:2rem 1rem}
-.splash-card{max-width:420px;width:100%;background:linear-gradient(180deg,rgba(13,31,23,.95),rgba(6,20,13,.95));
-  border:1px solid var(--panel-bd);border-radius:16px;padding:1.5rem;text-align:center;box-shadow:0 22px 60px rgba(0,0,0,.55)}
-.splash-card h1{margin:0 0 .3rem;font-family:var(--font-display);color:var(--gold2);font-size:1.55rem}
-.splash-card p{margin:.2rem 0 .9rem;color:var(--muted);font-size:.88rem}
-.inp{width:100%;padding:.6rem .8rem;background:rgba(6,20,13,.85);border:1px solid var(--panel-bd);
-  color:var(--cream);border-radius:8px;font-family:inherit;font-size:.95rem;margin-bottom:.5rem}
-.inp:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,168,76,.18)}
-.btn-primary{appearance:none;border:1px solid rgba(201,168,76,.6);background:linear-gradient(180deg,#e8c970,#a8841f);
-  color:#1a1308;padding:.6rem 1rem;border-radius:10px;font-weight:800;letter-spacing:.5px;
-  font-family:var(--font-display);text-transform:uppercase;font-size:.92rem;
-  box-shadow:0 6px 18px rgba(168,132,31,.28),inset 0 -2px 0 rgba(0,0,0,.18);transition:all .18s ease}
-.btn-primary:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.06)}
-.btn-primary:disabled{opacity:.5;cursor:not-allowed}
-.btn-ghost{appearance:none;border:1px solid var(--panel-bd);background:rgba(13,31,23,.7);color:var(--cream);
-  padding:.5rem .9rem;border-radius:10px;font-size:.88rem;letter-spacing:.3px}
-.btn-ghost:hover{border-color:var(--gold);color:var(--gold2)}
-.btn-danger{appearance:none;border:1px solid rgba(196,75,59,.55);background:rgba(196,75,59,.14);color:#ff9a8e;
-  padding:.5rem .9rem;border-radius:10px;font-size:.88rem;letter-spacing:.3px;font-weight:600}
-.btn-danger:hover{filter:brightness(1.1)}
-
-/* Stat tiles */
-.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.8rem}
-.stat{padding:.85rem 1rem;background:rgba(6,20,13,.55);border:1px solid var(--panel-bd);border-radius:12px}
-.stat .l{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
-.stat .v{font-family:var(--font-display);font-size:1.7rem;color:var(--gold2);line-height:1.15;margin-top:.15rem}
-.stat .v.sm{font-size:1.2rem;color:var(--cream)}
-
-/* Tables */
-table.tbl{width:100%;border-collapse:collapse;font-size:.86rem}
-table.tbl th{text-align:left;padding:.55rem .7rem;color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.6px;font-weight:600;border-bottom:1px solid var(--panel-bd)}
-table.tbl td{padding:.55rem .7rem;border-bottom:1px solid rgba(201,168,76,.07)}
-table.tbl tr:hover td{background:rgba(201,168,76,.04)}
-.mono{font-family:ui-monospace,'Courier New',monospace}
-.pill{display:inline-block;padding:.15rem .55rem;border-radius:99px;font-size:.74rem;border:1px solid var(--panel-bd);background:rgba(6,20,13,.5)}
-.pill.ok{border-color:var(--ok);background:rgba(95,168,107,.12);color:var(--ok)}
-.pill.warn{border-color:var(--warn);background:rgba(232,154,60,.12);color:var(--warn)}
-.pill.danger{border-color:var(--danger);background:rgba(196,75,59,.12);color:#ff9a8e}
-.pill.gold{border-color:rgba(201,168,76,.4);background:rgba(201,168,76,.12);color:var(--gold2)}
-
-/* Progress bar (shoe usage) */
-.bar{position:relative;height:8px;background:rgba(255,255,255,.05);border-radius:99px;overflow:hidden;border:1px solid var(--panel-bd)}
-.bar .fill{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,#5fa86b,#c9a84c)}
-.bar .cut{position:absolute;top:-3px;width:2px;height:14px;background:#ff9a8e}
-
-/* Toast */
-.toast{position:fixed;left:50%;bottom:2rem;transform:translateX(-50%);background:rgba(13,31,23,.95);
-  border:1px solid var(--panel-bd);color:var(--cream);padding:.6rem 1rem;border-radius:99px;
-  font-size:.9rem;letter-spacing:.3px;z-index:1000;box-shadow:0 14px 36px rgba(0,0,0,.5);
-  opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease}
-.toast.show{opacity:1;transform:translate(-50%,-6px)}
-.toast.err{border-color:var(--danger);color:#ffd1cd}
-.toast.ok{border-color:var(--ok);color:#a3e2a3}
-
-.row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
-.row.between{justify-content:space-between}
-.section-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem}
-.section-h h2{margin:0}
-
-.empty{padding:1.2rem;color:var(--muted);text-align:center;font-style:italic}
-
-@media (max-width:560px){
-  .topbar{padding:.7rem 1rem}
-  .brand{font-size:1rem}
-  .wrap{margin-top:.8rem;padding:0 .8rem 2rem}
-  .card{padding:.85rem .9rem}
-  .stat .v{font-size:1.4rem}
+.splash-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(180deg, var(--primary-line), transparent 40%);
+  z-index: -1;
+  filter: blur(20px);
+  opacity: .4;
+}
+.splash-card h1 {
+  font-size: 1.8rem;
+  margin-bottom: .35rem;
+}
+.splash-card .sub {
+  font-size: .9rem;
+  color: var(--muted);
+  margin-bottom: 1.4rem;
+  line-height: 1.5;
+}
+.bar {
+  position: relative;
+  height: 8px;
+  background: var(--surface-2);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.bar .fill {
+  position: absolute; left: 0; top: 0; height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--primary));
+}
+.bar .cut {
+  position: absolute; top: -3px; width: 2px; height: 14px;
+  background: var(--danger);
+}
+.section { display: none; }
+.section.active { display: block; }
+.theme-preview {
+  height: 110px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-strong);
+  background:
+    radial-gradient(60% 80% at 50% 30%, var(--felt), var(--bg) 80%);
+  position: relative;
+  overflow: hidden;
+}
+.theme-preview::after {
+  content: '';
+  position: absolute; left: 50%; bottom: 30%; transform: translateX(-50%);
+  width: 110px; height: 60px;
+  background: var(--surface);
+  border: 1px solid var(--primary);
+  border-radius: 6px;
+  box-shadow: 0 6px 22px rgba(0,0,0,.6);
+}
+.theme-preview .chip {
+  position: absolute; left: 20%; bottom: 22%;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 4px 10px rgba(0,0,0,.5);
+}
+.theme-preview .chip:nth-child(2) { left: 28%; background: var(--accent); }
+.theme-preview .chip:nth-child(3) { left: 36%; background: var(--danger); }
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: .9rem;
+}
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: .8rem;
+}
+.player-actions {
+  display: flex;
+  gap: .35rem;
+}
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.65);
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1.4rem;
+  backdrop-filter: blur(6px);
+}
+.modal.show { display: flex; }
+.modal-card {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  padding: 1.6rem 1.8rem;
+  max-width: 460px;
+  width: 100%;
+  box-shadow: 0 36px 96px rgba(0,0,0,.6);
+}
+.modal-card h3 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  color: var(--primary);
 }
 </style>
 </head>
 <body>
 
-<div id="splash">
+<!-- ─── LOGIN SPLASH ────────────────────────────────────────────────────── -->
+<div id="splash" data-testid="op-splash">
   <div class="splash-card">
-    <h1>Operaattoripaneeli</h1>
-    <p>Anna operaattorin salasana jatkaaksesi.<br>Salasana on määritetty <span class="mono">OPERATOR_PASSWORD</span>-ympäristömuuttujassa.</p>
-    <input id="opPw" class="inp" type="password" placeholder="Operaattorin salasana" autocomplete="current-password" data-testid="op-password-input" />
-    <div id="opErr" style="color:#ff9a8e;font-size:.82rem;min-height:1.2rem;margin-bottom:.4rem"></div>
-    <button class="btn-primary" id="opLoginBtn" onclick="opLogin()" style="width:100%" data-testid="op-login-btn">Kirjaudu sisään</button>
-    <div style="margin-top:.8rem;font-size:.78rem"><a href="/asiakas">← Takaisin asiakasnäkymään</a></div>
+    <div class="brand" style="margin-bottom: 1rem">
+      <div class="brand-mark" id="splashLogo">♠</div>
+      <div>
+        <div class="brand-name" id="splashBrand">Auditor's Ledger</div>
+        <div class="uppercase-label">Operator Console</div>
+      </div>
+    </div>
+    <h1>Tervetuloa takaisin</h1>
+    <p class="sub">Anna operaattorin salasana jatkaaksesi. Salasana on määritetty palvelimen <span class="mono">OPERATOR_PASSWORD</span>-ympäristömuuttujassa.</p>
+    <label class="field">
+      <span class="uppercase-label">Salasana</span>
+      <input id="opPw" class="inp" type="password" autocomplete="current-password" placeholder="••••••••" data-testid="op-password-input">
+    </label>
+    <div id="opErr" style="color: var(--danger); font-size: .85rem; min-height: 1.2em; margin: .6rem 0;"></div>
+    <button class="btn btn-primary" style="width:100%" onclick="opLogin()" id="opLoginBtn" data-testid="op-login-btn">Kirjaudu sisään</button>
+    <div style="margin-top: 1.2rem; text-align: center; font-size: .82rem;">
+      <a href="/asiakas">← Asiakasnäkymään</a>
+    </div>
   </div>
 </div>
 
-<div id="app" style="display:none">
-  <div class="topbar">
-    <div class="brand">♠ Kasino <span>Operaattori</span></div>
-    <span class="tag-role" data-testid="op-role-tag">OPERAATTORI</span>
+<!-- ─── APP (post-login) ───────────────────────────────────────────────── -->
+<div id="app" style="display:none;">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" id="brandLogo">♠</div>
+      <div>
+        <div class="brand-name" id="brandName">Auditor's Ledger</div>
+        <div class="brand-tag" id="brandTag">Operator Console</div>
+      </div>
+    </div>
     <div class="spacer"></div>
-    <a class="iconbtn" href="/asiakas">Asiakas</a>
-    <button class="iconbtn" onclick="opLogout()" data-testid="op-logout-btn">Kirjaudu ulos</button>
-  </div>
+    <a class="btn btn-ghost btn-square" href="/asiakas">Asiakasnäkymä</a>
+    <button class="btn btn-ghost btn-square" onclick="opLogout()" data-testid="op-logout-btn">Kirjaudu ulos</button>
+  </header>
 
   <div class="wrap">
-    <!-- Stats -->
-    <div class="card" data-testid="op-stats-card">
-      <div class="section-h">
-        <h2>📊 Yhteenveto</h2>
-        <button class="btn-ghost" onclick="refreshAll()" data-testid="op-refresh-btn">↻ Päivitä</button>
-      </div>
-      <div class="stat-grid" id="statGrid"></div>
-    </div>
+    <div class="layout-op">
+      <!-- Sidebar -->
+      <nav class="sidebar" data-testid="op-sidebar">
+        <div class="uppercase-label">Hallinta</div>
+        <a href="#" class="active" data-tab="dashboard"  onclick="showTab('dashboard');return false"  data-testid="op-tab-dashboard">Yleiskuva</a>
+        <a href="#"             data-tab="customers" onclick="showTab('customers');return false" data-testid="op-tab-customers">Asiakkaat</a>
+        <a href="#"             data-tab="theme"     onclick="showTab('theme');return false"     data-testid="op-tab-theme">Brändäys</a>
+        <a href="#"             data-tab="activity"  onclick="showTab('activity');return false"  data-testid="op-tab-activity">Aktiviteetti</a>
+        <a href="#"             data-tab="shoes"     onclick="showTab('shoes');return false"     data-testid="op-tab-shoes">Pakat (BJ)</a>
+      </nav>
 
-    <!-- Blackjack settings -->
-    <div class="card" data-testid="op-settings-card">
-      <div class="section-h">
-        <h2>🎴 Blackjack — Säännöt &amp; pakka</h2>
-        <span class="pill gold" id="settingsHint" data-testid="op-settings-hint">env: SHOE_DECKS · SHOE_CUT_FRACTION</span>
-      </div>
-      <div class="row" id="settingsRow"></div>
-    </div>
+      <!-- Main content area -->
+      <main>
+        <!-- DASHBOARD -->
+        <section class="section active" id="tab-dashboard">
+          <div class="card pop-in">
+            <div class="card-row between" style="margin-bottom: .8rem">
+              <h2>Yhteenveto</h2>
+              <button class="btn btn-ghost btn-square" onclick="refreshAll()" data-testid="op-refresh-btn">↻ Päivitä</button>
+            </div>
+            <div class="stat-grid" id="statGrid"></div>
+          </div>
 
-    <!-- Shoe management -->
-    <div class="card" data-testid="op-shoes-card">
-      <div class="section-h">
-        <h2>🃏 Pakkojen tila pelaajaa kohti</h2>
-        <div class="row">
-          <button class="btn-danger" onclick="resetAllShoes()" data-testid="op-reset-all-btn">Sekoita kaikki pakat</button>
-        </div>
-      </div>
-      <div class="sub">Jokainen pelaaja jakaa 6 pakan kengästä. Cut-kortti pakottaa sekoituksen, kun ~75 % korteista on jaettu. Voit sekoittaa pakan käsin alla.</div>
-      <div id="shoesTable"></div>
-    </div>
+          <div class="card pop-in">
+            <h2>Pikatoiminnot</h2>
+            <div class="card-row">
+              <button class="btn btn-primary" onclick="showTab('customers')" data-testid="op-quick-customers">Hallitse asiakkaita</button>
+              <button class="btn" onclick="showTab('theme')" data-testid="op-quick-theme">Muokkaa brändiä</button>
+              <button class="btn" onclick="showTab('activity')" data-testid="op-quick-activity">Selaa kierroksia</button>
+            </div>
+          </div>
+        </section>
 
-    <!-- Recent rounds -->
-    <div class="card" data-testid="op-rounds-card">
-      <div class="section-h">
-        <h2>📜 Viimeisimmät kierrokset</h2>
-        <span class="pill">50 viimeisintä</span>
-      </div>
-      <div id="roundsTable"></div>
+        <!-- CUSTOMERS -->
+        <section class="section" id="tab-customers">
+          <div class="card pop-in">
+            <div class="card-row between" style="margin-bottom: 1rem">
+              <h2>Asiakkaat</h2>
+              <button class="btn btn-primary" onclick="openCreateCustomer()" data-testid="op-add-customer-btn">+ Uusi asiakas</button>
+            </div>
+            <input class="inp" id="customerSearch" placeholder="Hae nimellä..." oninput="renderCustomers()" data-testid="op-customer-search" style="margin-bottom: 1rem">
+            <div id="customersTableWrap"></div>
+          </div>
+        </section>
+
+        <!-- THEME -->
+        <section class="section" id="tab-theme">
+          <div class="card pop-in">
+            <h2>Brändäys ja teema</h2>
+            <p style="color: var(--muted); font-size: .9rem; margin-bottom: 1.1rem; line-height: 1.55">
+              Nämä asetukset näkyvät <strong>sekä operaattoripaneelissa että asiakkaiden pelisivuilla</strong> — yhden brändin yhtenäinen ilme.
+            </p>
+
+            <div class="theme-preview" id="themePreview" data-testid="op-theme-preview" style="margin-bottom: 1.2rem">
+              <div class="chip"></div><div class="chip"></div><div class="chip"></div>
+            </div>
+
+            <div class="theme-grid" id="themeForm"></div>
+
+            <div class="card-row" style="margin-top: 1.2rem">
+              <button class="btn btn-primary" onclick="saveTheme()" data-testid="op-theme-save">Tallenna teema</button>
+              <button class="btn btn-ghost" onclick="resetTheme()" data-testid="op-theme-reset">Palauta oletukset</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ACTIVITY -->
+        <section class="section" id="tab-activity">
+          <div class="card pop-in">
+            <div class="card-row between" style="margin-bottom: .8rem">
+              <h2>Viimeisimmät blackjack-kierrokset</h2>
+              <span class="pill">50 viimeisintä</span>
+            </div>
+            <div id="roundsTableWrap"></div>
+          </div>
+          <div class="card pop-in">
+            <h2>Audit-loki</h2>
+            <div id="auditTableWrap"></div>
+          </div>
+        </section>
+
+        <!-- SHOES -->
+        <section class="section" id="tab-shoes">
+          <div class="card pop-in">
+            <div class="card-row between" style="margin-bottom: 1rem">
+              <h2>Blackjack-pakat (6-deck shoe)</h2>
+              <button class="btn btn-danger" onclick="resetAllShoes()" data-testid="op-reset-all-shoes">Sekoita kaikki</button>
+            </div>
+            <p style="color: var(--muted); font-size: .88rem; margin-bottom: 1rem">
+              Jokainen pelaaja jakaa 6 pakan kengästä. Cut-kortti pakottaa sekoituksen, kun ~75 % korteista on jaettu.
+            </p>
+            <div id="shoesTableWrap"></div>
+          </div>
+          <div class="card pop-in">
+            <h2>Asetukset</h2>
+            <div id="settingsRow" class="card-row"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+</div>
+
+<!-- ── Customer create/edit modal ─────────────────────────────────────── -->
+<div class="modal" id="customerModal" data-testid="op-customer-modal">
+  <div class="modal-card">
+    <h3 id="customerModalTitle">Uusi asiakas</h3>
+    <input type="hidden" id="customerEditId" value="">
+    <label class="field" style="margin-bottom:.7rem">
+      <span class="uppercase-label">Nimi</span>
+      <input class="inp" id="customerName" placeholder="Pelaajan nimi" data-testid="op-customer-name-input">
+    </label>
+    <label class="field" style="margin-bottom:.7rem">
+      <span class="uppercase-label">Salasana</span>
+      <input class="inp" id="customerPw" type="text" placeholder="(jätä tyhjäksi, jos ei muutosta)" data-testid="op-customer-pw-input">
+    </label>
+    <label class="field" style="margin-bottom:.7rem">
+      <span class="uppercase-label">Sähköposti</span>
+      <input class="inp" id="customerEmail" placeholder="esimerkki@email.fi">
+    </label>
+    <label class="field" style="margin-bottom:.7rem">
+      <span class="uppercase-label">VIP-taso</span>
+      <select class="inp" id="customerVip">
+        <option value="Standard">Standard</option>
+        <option value="Silver">Silver</option>
+        <option value="Gold">Gold</option>
+        <option value="Whale">Whale</option>
+      </select>
+    </label>
+    <label class="field" style="margin-bottom: 1rem">
+      <span class="uppercase-label">Aloituspisteet</span>
+      <input class="inp mono" id="customerPoints" type="number" placeholder="1000" min="0" data-testid="op-customer-points-input">
+    </label>
+    <div class="card-row" style="justify-content: flex-end; gap: .5rem">
+      <button class="btn btn-ghost" onclick="closeCustomerModal()">Peruuta</button>
+      <button class="btn btn-primary" onclick="saveCustomer()" data-testid="op-customer-save-btn">Tallenna</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Points grant modal ─────────────────────────────────────────────── -->
+<div class="modal" id="pointsModal" data-testid="op-points-modal">
+  <div class="modal-card">
+    <h3 id="pointsModalTitle">Lisää pisteitä</h3>
+    <input type="hidden" id="pointsPlayerId" value="">
+    <p id="pointsPlayerName" style="color: var(--muted); margin-bottom: 1rem"></p>
+    <label class="field" style="margin-bottom: .7rem">
+      <span class="uppercase-label">Määrä (+/-)</span>
+      <input class="inp mono" id="pointsAmount" type="number" placeholder="1000" data-testid="op-points-amount-input">
+    </label>
+    <label class="field" style="margin-bottom: 1rem">
+      <span class="uppercase-label">Syy (valinnainen)</span>
+      <input class="inp" id="pointsReason" placeholder="Kassan myöntö">
+    </label>
+    <div class="card-row" style="justify-content: flex-end; gap: .5rem">
+      <button class="btn btn-ghost" onclick="closePointsModal()">Peruuta</button>
+      <button class="btn btn-primary" onclick="grantPoints()" data-testid="op-points-save-btn">Lisää</button>
     </div>
   </div>
 </div>
@@ -180,186 +339,496 @@ table.tbl tr:hover td{background:rgba(201,168,76,.04)}
 <div id="toast" class="toast" data-testid="op-toast"></div>
 
 <script>
+/* ─────────────────────────────────────────────────────────────────────────
+   STATE
+───────────────────────────────────────────────────────────────────────── */
 const TOKEN_KEY = 'operator_token';
 let token = localStorage.getItem(TOKEN_KEY) || '';
+let customers = [];
+let theme = {};
 
-function $(id){ return document.getElementById(id); }
-function toast(msg, kind=''){
-  const t = $('toast'); t.textContent = msg;
-  t.className = 'toast show ' + kind;
-  clearTimeout(toast._t); toast._t = setTimeout(()=>t.className = 'toast', 2400);
+const THEME_FIELDS = [
+  { key: 'theme_brand_name', label: 'Brändin nimi',       type: 'text'   },
+  { key: 'theme_tagline',    label: 'Slogan',             type: 'text'   },
+  { key: 'theme_logo_text',  label: 'Logo-merkki',        type: 'text', maxlen: 4 },
+  { key: 'theme_logo_url',   label: 'Logo-URL (vapaa)',   type: 'text'   },
+  { key: 'theme_primary',    label: 'Pääväri',            type: 'color'  },
+  { key: 'theme_accent',     label: 'Korostusväri',       type: 'color'  },
+  { key: 'theme_bg',         label: 'Tausta',             type: 'color'  },
+  { key: 'theme_surface',    label: 'Paneelin tausta',    type: 'color'  },
+  { key: 'theme_text',       label: 'Tekstiväri',         type: 'color'  },
+  { key: 'theme_muted',      label: 'Himmeä tekstiväri',  type: 'color'  },
+  { key: 'theme_danger',     label: 'Varoitusväri',       type: 'color'  },
+  { key: 'theme_felt',       label: 'Pöydän huopa (3D)',  type: 'color'  },
+];
+
+/* ─── Helpers ─────────────────────────────────────────────────────────── */
+function $(id) { return document.getElementById(id); }
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, m => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[m]));
 }
+function toast(msg, kind='') {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + kind;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.className = 'toast', 2600);
+}
+function fmt(n) { return (n || 0).toLocaleString('fi-FI'); }
 
-async function api(path, opts={}){
+/* ─── API wrapper ─────────────────────────────────────────────────────── */
+async function api(path, opts={}) {
   opts.headers = Object.assign({'Content-Type':'application/json'}, opts.headers||{});
-  if(token) opts.headers['Authorization'] = 'Bearer ' + token;
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
   const r = await fetch(path, opts);
-  const j = await r.json().catch(()=>({error:'Virheellinen vastaus.'}));
-  if(r.status === 401){
+  const j = await r.json().catch(() => ({error:'Virheellinen vastaus.'}));
+  if (r.status === 401) {
     localStorage.removeItem(TOKEN_KEY); token = '';
-    showSplash(); throw new Error(j.error || 'Istunto vanhentunut.');
+    showSplash();
+    throw new Error(j.error || 'Istunto vanhentunut.');
   }
-  if(!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
+  if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
   return j;
 }
 
-function showSplash(){
-  $('splash').style.display='flex';
-  $('app').style.display='none';
+/* ─── Theme: load & apply ─────────────────────────────────────────────── */
+async function loadTheme() {
+  try {
+    theme = await api('/api/theme');
+    applyTheme(theme);
+    renderThemeForm();
+    renderBrandInTopBar();
+  } catch (e) { console.warn('theme load failed', e); }
 }
-function showApp(){
-  $('splash').style.display='none';
-  $('app').style.display='block';
-  refreshAll();
+function applyTheme(t) {
+  const root = document.documentElement.style;
+  if (t.theme_primary) root.setProperty('--primary',  t.theme_primary);
+  if (t.theme_accent)  root.setProperty('--accent',   t.theme_accent);
+  if (t.theme_bg)      root.setProperty('--bg',       t.theme_bg);
+  if (t.theme_surface) root.setProperty('--surface',  t.theme_surface);
+  if (t.theme_text)    root.setProperty('--text',     t.theme_text);
+  if (t.theme_muted)   root.setProperty('--muted',    t.theme_muted);
+  if (t.theme_danger)  root.setProperty('--danger',   t.theme_danger);
+  if (t.theme_felt)    root.setProperty('--felt',     t.theme_felt);
+}
+function renderBrandInTopBar() {
+  $('brandName').textContent  = theme.theme_brand_name || 'Auditor\'s Ledger';
+  $('brandTag').textContent   = theme.theme_tagline || 'Operator Console';
+  $('splashBrand').textContent = theme.theme_brand_name || 'Auditor\'s Ledger';
+  const marks = [$('brandLogo'), $('splashLogo')];
+  for (const el of marks) {
+    if (theme.theme_logo_url) {
+      el.innerHTML = `<img src="${escapeHtml(theme.theme_logo_url)}" alt="">`;
+    } else {
+      el.textContent = theme.theme_logo_text || '♠';
+    }
+  }
+}
+function renderThemeForm() {
+  const html = THEME_FIELDS.map(f => {
+    const val = theme[f.key] || '';
+    if (f.type === 'color') {
+      return `
+        <label class="field">
+          <span class="uppercase-label">${escapeHtml(f.label)}</span>
+          <input type="color" class="swatch" data-key="${f.key}" value="${escapeHtml(val || '#000000')}" oninput="onThemeInput('${f.key}', this.value)">
+          <div class="mono" style="font-size:.72rem;color:var(--muted);margin-top:.2rem">${escapeHtml(val)}</div>
+        </label>`;
+    }
+    return `
+      <label class="field">
+        <span class="uppercase-label">${escapeHtml(f.label)}</span>
+        <input type="text" class="inp" data-key="${f.key}" value="${escapeHtml(val)}" maxlength="${f.maxlen || 200}" oninput="onThemeInput('${f.key}', this.value)">
+      </label>`;
+  }).join('');
+  $('themeForm').innerHTML = html;
+}
+function onThemeInput(key, value) {
+  theme[key] = value;
+  applyTheme(theme);
+  renderBrandInTopBar();
+}
+async function saveTheme() {
+  try {
+    const j = await api('/api/operator/theme', { method:'PUT', body: JSON.stringify(theme) });
+    theme = j.theme || theme;
+    applyTheme(theme);
+    renderBrandInTopBar();
+    renderThemeForm();
+    toast('✓ Teema tallennettu', 'ok');
+  } catch (e) { toast(e.message, 'err'); }
+}
+async function resetTheme() {
+  if (!confirm('Palauta oletusteema?')) return;
+  const defaults = {
+    theme_brand_name: "Auditor’s Ledger",
+    theme_tagline:    'Kortit • Pisteet • Talo',
+    theme_logo_text:  '♠',
+    theme_logo_url:   '',
+    theme_primary:    '#c9a84c',
+    theme_accent:     '#5fa86b',
+    theme_bg:         '#0a0d12',
+    theme_surface:    '#13171f',
+    theme_text:       '#f4ecd6',
+    theme_muted:      '#8a8e98',
+    theme_danger:     '#c44b3b',
+    theme_felt:       '#1a2a22',
+  };
+  Object.assign(theme, defaults);
+  await saveTheme();
 }
 
-async function opLogin(){
+/* ─── Auth ────────────────────────────────────────────────────────────── */
+function showSplash() { $('splash').style.display = 'grid'; $('app').style.display = 'none'; }
+function showApp()    { $('splash').style.display = 'none'; $('app').style.display = 'block'; refreshAll(); }
+
+async function opLogin() {
   const pw = $('opPw').value;
-  $('opErr').textContent='';
-  if(!pw){ $('opErr').textContent='Syötä salasana.'; return; }
+  $('opErr').textContent = '';
+  if (!pw) { $('opErr').textContent = 'Syötä salasana.'; return; }
   $('opLoginBtn').disabled = true;
-  try{
-    const r = await fetch('/api/operator/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:pw})});
+  try {
+    const r = await fetch('/api/operator/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({password: pw}),
+    });
     const j = await r.json();
-    if(!r.ok){ $('opErr').textContent = j.error || 'Kirjautuminen epäonnistui.'; return; }
+    if (!r.ok) { $('opErr').textContent = j.error || 'Kirjautuminen epäonnistui.'; return; }
     token = j.access_token;
     localStorage.setItem(TOKEN_KEY, token);
-    $('opPw').value='';
+    $('opPw').value = '';
     showApp();
-  }catch(e){ $('opErr').textContent = 'Verkkovirhe.'; }
-  finally{ $('opLoginBtn').disabled = false; }
+  } catch (e) { $('opErr').textContent = 'Verkkovirhe.'; }
+  finally { $('opLoginBtn').disabled = false; }
 }
 window.opLogin = opLogin;
 
-function opLogout(){
-  localStorage.removeItem(TOKEN_KEY); token=''; showSplash();
+function opLogout() {
+  localStorage.removeItem(TOKEN_KEY);
+  token = '';
+  showSplash();
 }
 window.opLogout = opLogout;
 
-async function refreshAll(){
-  try{
-    const [stats, settings, shoes, rounds] = await Promise.all([
-      api('/api/operator/blackjack/stats'),
-      api('/api/operator/blackjack/settings'),
-      api('/api/operator/blackjack/shoes'),
-      api('/api/operator/blackjack/recent_rounds'),
+/* ─── Tabs ────────────────────────────────────────────────────────────── */
+function showTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.toggle('active', s.id === 'tab-' + name));
+  document.querySelectorAll('.sidebar a').forEach(a => a.classList.toggle('active', a.dataset.tab === name));
+  if (name === 'customers') refreshCustomers();
+  if (name === 'activity')  refreshActivity();
+  if (name === 'shoes')     refreshShoes();
+  if (name === 'theme')     renderThemeForm();
+}
+window.showTab = showTab;
+
+/* ─── Refresh data ────────────────────────────────────────────────────── */
+async function refreshAll() {
+  try {
+    const [stats, players] = await Promise.all([
+      api('/api/operator/blackjack/stats').catch(() => ({})),
+      api('/api/players').catch(() => []),
     ]);
-    renderStats(stats); renderSettings(settings); renderShoes(shoes); renderRounds(rounds);
-  }catch(e){ toast(e.message, 'err'); }
+    renderStats(stats, players);
+    customers = Array.isArray(players) ? players : [];
+    renderCustomers();
+  } catch (e) { toast(e.message, 'err'); }
 }
 window.refreshAll = refreshAll;
 
-function renderStats(s){
-  const r = s.rounds || {}, sh = s.shoes || {}, p = s.players || {};
+function renderStats(s, players) {
+  const r = s.rounds || {}, sh = s.shoes || {};
+  const totalPoints = (players || []).reduce((a,p) => a + (p.points||0), 0);
   const html = [
-    {l:'Pelaajia',         v: (p.c||0).toLocaleString('fi-FI')},
-    {l:'Pistesaldo yht.',  v: (p.bank||0).toLocaleString('fi-FI') + ' p'},
-    {l:'Kierroksia',       v: (r.total_rounds||0).toLocaleString('fi-FI')},
-    {l:'Päättyneet',       v: (r.settled_rounds||0).toLocaleString('fi-FI'), sm:true},
-    {l:'Liikevaihto',      v: (r.handle||0).toLocaleString('fi-FI') + ' p'},
-    {l:'Pakkasekoituksia', v: (sh.total_shuffles||0).toLocaleString('fi-FI'), sm:true},
-  ].map(s=>`<div class="stat"><div class="l">${s.l}</div><div class="v ${s.sm?'sm':''}">${s.v}</div></div>`).join('');
+    {l:'Asiakkaita',         v: fmt(players ? players.length : 0)},
+    {l:'Pistepotti yht.',    v: fmt(totalPoints) + ' p'},
+    {l:'BJ-kierroksia',      v: fmt(r.total_rounds||0)},
+    {l:'Päättyneet',         v: fmt(r.settled_rounds||0), sm:true},
+    {l:'Liikevaihto (BJ)',   v: fmt(r.handle||0) + ' p'},
+    {l:'Pakkasekoituksia',   v: fmt(sh.total_shuffles||0), sm:true},
+  ].map(x => `
+    <div class="stat-tile" data-testid="op-stat-${x.l.toLowerCase().replace(/\W+/g,'-')}">
+      <div class="l">${x.l}</div>
+      <div class="v ${x.sm?'small':'primary'}">${x.v}</div>
+    </div>`).join('');
   $('statGrid').innerHTML = html;
 }
 
-function renderSettings(s){
-  const presets = (s.presets||[]).map(p=>`<span class="pill">${p.name}${p.dealer_hits_soft_17?' · H17':' · S17'}</span>`).join(' ');
-  $('settingsRow').innerHTML = `
-    <div class="stat" style="flex:1;min-width:140px"><div class="l">Min panos</div><div class="v sm">${s.min_bet} p</div></div>
-    <div class="stat" style="flex:1;min-width:140px"><div class="l">Max panos</div><div class="v sm">${s.max_bet} p</div></div>
-    <div class="stat" style="flex:1;min-width:140px"><div class="l">Pakkojen lkm</div><div class="v sm">${s.default_decks}</div></div>
-    <div class="stat" style="flex:1;min-width:140px"><div class="l">Cut-fraction</div><div class="v sm">${Math.round((s.default_cut_fraction||0.75)*100)}%</div></div>
-    <div style="flex:1;min-width:240px"><div class="l" style="font-size:.7rem;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:.3rem">Sääntöasetukset</div><div class="row">${presets}</div></div>
-  `;
+/* ─── Customers tab ───────────────────────────────────────────────────── */
+async function refreshCustomers() {
+  try {
+    customers = await api('/api/players');
+    renderCustomers();
+  } catch (e) { toast(e.message, 'err'); }
 }
-
-function renderShoes(s){
-  const rows = s.shoes || [];
-  if(rows.length === 0){ $('shoesTable').innerHTML = '<div class="empty">Ei aktiivisia pakkoja vielä — pelaa yksi kierros aloittaaksesi pakan.</div>'; return; }
-  const html = `<table class="tbl" data-testid="op-shoes-table">
-    <thead><tr><th>Pelaaja</th><th>Pakat</th><th>Käytetty / Cut</th><th>Käyttöaste</th><th>Sekoitukset</th><th>Viimeksi sekoitettu</th><th>Toiminnot</th></tr></thead>
-    <tbody>${rows.map(r=>{
-      const total = (r.decks||6)*52; const usedPct = Math.round((r.draw_index||0)/total*100);
-      const cutPct = Math.round((r.cut_index||0)/total*100);
-      const stateBadge = r.approaching_cut
-        ? '<span class="pill warn">Lähellä cuttia</span>'
-        : (r.cards_until_cut === 0 ? '<span class="pill danger">Cut saavutettu</span>' : '<span class="pill ok">OK</span>');
-      return `<tr>
-        <td><strong>${r.name || '—'}</strong> <span class="mono pill">#${r.player_id}</span></td>
-        <td>${r.decks}</td>
-        <td>${r.draw_index} / ${r.cut_index}</td>
-        <td style="min-width:160px">
-          <div class="bar"><div class="fill" style="width:${Math.min(100,usedPct)}%"></div><div class="cut" style="left:${Math.min(100,cutPct)}%"></div></div>
-          <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem">${usedPct}% · cut ${cutPct}% · ${stateBadge}</div>
+function renderCustomers() {
+  const q = ($('customerSearch').value || '').trim().toLowerCase();
+  const rows = customers.filter(c => !q || (c.name||'').toLowerCase().includes(q));
+  if (rows.length === 0) {
+    $('customersTableWrap').innerHTML = '<div class="empty">Ei asiakkaita</div>';
+    return;
+  }
+  const html = `<table class="tbl" data-testid="op-customers-table">
+    <thead><tr>
+      <th>#</th><th>Nimi</th><th>VIP</th><th class="mono">Pisteet</th><th>Sähköposti</th><th>Toiminnot</th>
+    </tr></thead>
+    <tbody>${rows.map(c => `
+      <tr>
+        <td class="mono">#${c.id}</td>
+        <td><strong>${escapeHtml(c.name)}</strong></td>
+        <td><span class="pill ${vipPill(c.vip_level)}">${escapeHtml(c.vip_level)}</span></td>
+        <td class="mono">${fmt(c.points||0)} p</td>
+        <td>${escapeHtml(c.email||'—')}</td>
+        <td>
+          <div class="player-actions">
+            <button class="btn btn-ghost btn-square" onclick="openPointsModal(${c.id}, ${JSON.stringify(c.name).replace(/"/g,'&quot;')})" data-testid="op-points-btn-${c.id}">+/− Pisteet</button>
+            <button class="btn btn-ghost btn-square" onclick="openEditCustomer(${c.id})" data-testid="op-edit-btn-${c.id}">Muokkaa</button>
+            <button class="btn btn-danger btn-square" onclick="deleteCustomer(${c.id})" data-testid="op-delete-btn-${c.id}">Poista</button>
+          </div>
         </td>
-        <td>${r.shuffles||0}</td>
-        <td class="mono" style="font-size:.78rem">${r.last_shuffled||''}</td>
-        <td><button class="btn-ghost" onclick="resetShoe(${r.player_id})" data-testid="op-reset-shoe-${r.player_id}">Sekoita</button></td>
-      </tr>`;
-    }).join('')}</tbody></table>`;
-  $('shoesTable').innerHTML = html;
+      </tr>
+    `).join('')}</tbody></table>`;
+  $('customersTableWrap').innerHTML = html;
+}
+function vipPill(v) {
+  return v === 'Whale' ? 'gold' : v === 'Gold' ? 'gold' : v === 'Silver' ? '' : 'green';
 }
 
-function renderRounds(s){
+function openCreateCustomer() {
+  $('customerModalTitle').textContent = 'Uusi asiakas';
+  $('customerEditId').value = '';
+  $('customerName').value = '';
+  $('customerPw').value = '';
+  $('customerEmail').value = '';
+  $('customerVip').value = 'Standard';
+  $('customerPoints').value = '1000';
+  $('customerPoints').disabled = false;
+  $('customerModal').classList.add('show');
+  $('customerName').focus();
+}
+window.openCreateCustomer = openCreateCustomer;
+
+function openEditCustomer(id) {
+  const c = customers.find(x => x.id === id);
+  if (!c) return;
+  $('customerModalTitle').textContent = 'Muokkaa asiakasta';
+  $('customerEditId').value = String(id);
+  $('customerName').value = c.name || '';
+  $('customerPw').value = '';
+  $('customerEmail').value = c.email || '';
+  $('customerVip').value = c.vip_level || 'Standard';
+  $('customerPoints').value = c.points || 0;
+  $('customerPoints').disabled = true;
+  $('customerModal').classList.add('show');
+}
+window.openEditCustomer = openEditCustomer;
+
+function closeCustomerModal() { $('customerModal').classList.remove('show'); }
+window.closeCustomerModal = closeCustomerModal;
+
+async function saveCustomer() {
+  const editId = $('customerEditId').value;
+  const body = {
+    name:      $('customerName').value.trim(),
+    password:  $('customerPw').value,
+    email:     $('customerEmail').value.trim(),
+    vip_level: $('customerVip').value,
+  };
+  if (!body.name) { toast('Nimi vaaditaan', 'err'); return; }
+  try {
+    let created;
+    if (editId) {
+      await api(`/api/players/${editId}`, { method:'PUT', body: JSON.stringify(body) });
+    } else {
+      created = await api('/api/players', { method:'POST', body: JSON.stringify(body) });
+      const pts = parseInt($('customerPoints').value || '0', 10);
+      if (created.id && pts > 0) {
+        await api(`/api/players/${created.id}/points/grant`, {
+          method:'POST', body: JSON.stringify({count: pts, reason: 'Aloituspisteet'})
+        });
+      }
+    }
+    closeCustomerModal();
+    toast('✓ Tallennettu', 'ok');
+    refreshCustomers();
+  } catch (e) { toast(e.message, 'err'); }
+}
+window.saveCustomer = saveCustomer;
+
+async function deleteCustomer(id) {
+  const c = customers.find(x => x.id === id);
+  if (!c) return;
+  if (!confirm(`Poistetaanko asiakas ${c.name}? Kaikki pisteet ja kierrokset menetetään.`)) return;
+  try {
+    await api(`/api/players/${id}`, { method:'DELETE' });
+    toast('✓ Poistettu', 'ok');
+    refreshCustomers();
+  } catch (e) { toast(e.message, 'err'); }
+}
+window.deleteCustomer = deleteCustomer;
+
+function openPointsModal(id, name) {
+  $('pointsPlayerId').value = String(id);
+  $('pointsPlayerName').textContent = `${name} (#${id})`;
+  $('pointsAmount').value = '';
+  $('pointsReason').value = '';
+  $('pointsModal').classList.add('show');
+  $('pointsAmount').focus();
+}
+window.openPointsModal = openPointsModal;
+
+function closePointsModal() { $('pointsModal').classList.remove('show'); }
+window.closePointsModal = closePointsModal;
+
+async function grantPoints() {
+  const id = parseInt($('pointsPlayerId').value, 10);
+  const count = parseInt($('pointsAmount').value, 10);
+  const reason = $('pointsReason').value.trim() || undefined;
+  if (!id || !count) { toast('Anna pistemäärä', 'err'); return; }
+  try {
+    await api(`/api/players/${id}/points/grant`, {
+      method:'POST', body: JSON.stringify({count, reason})
+    });
+    closePointsModal();
+    toast(`✓ ${count > 0 ? '+' : ''}${count} pistettä`, 'ok');
+    refreshCustomers();
+  } catch (e) { toast(e.message, 'err'); }
+}
+window.grantPoints = grantPoints;
+
+/* ─── Activity tab ────────────────────────────────────────────────────── */
+async function refreshActivity() {
+  try {
+    const [rounds, audit] = await Promise.all([
+      api('/api/operator/blackjack/recent_rounds').catch(() => ({rounds: []})),
+      fetch('/api/audit', { headers: {Authorization:'Bearer '+token} }).then(r => r.ok ? r.json() : {events: []}).catch(() => ({events: []})),
+    ]);
+    renderRounds(rounds);
+    renderAudit(audit);
+  } catch (e) { toast(e.message, 'err'); }
+}
+function renderRounds(s) {
   const rows = s.rounds || [];
-  if(rows.length === 0){ $('roundsTable').innerHTML = '<div class="empty">Ei vielä kierroksia.</div>'; return; }
-  const html = `<table class="tbl" data-testid="op-rounds-table">
-    <thead><tr><th>#</th><th>Pelaaja</th><th>Säännöt</th><th>Panos</th><th>Tila</th><th>Tulos</th><th>Netto</th><th>Aika</th></tr></thead>
-    <tbody>${rows.map(r=>{
-      const out = r.outcome || {};
-      const net = out.net != null ? (out.net>0?`+${out.net}`:`${out.net}`) : '—';
-      const netCls = out.net > 0 ? 'ok' : out.net < 0 ? 'danger' : '';
-      const handsHtml = (out.hands||[]).map(h=>{
-        const cls = h.outcome === 'blackjack' || h.outcome === 'win' ? 'ok' : h.outcome === 'push' ? 'gold' : 'danger';
-        return `<span class="pill ${cls}">${h.outcome||'?'}</span>`;
-      }).join(' ');
+  if (rows.length === 0) { $('roundsTableWrap').innerHTML = '<div class="empty">Ei vielä kierroksia.</div>'; return; }
+  $('roundsTableWrap').innerHTML = `<table class="tbl">
+    <thead><tr><th>#</th><th>Pelaaja</th><th>Säännöt</th><th>Panos</th><th>Tila</th><th>Netto</th><th>Aika</th></tr></thead>
+    <tbody>${rows.map(r => {
+      const net = r.outcome && r.outcome.net != null ? r.outcome.net : null;
+      const netCls = net > 0 ? 'green' : net < 0 ? 'danger' : '';
       return `<tr>
         <td class="mono">#${r.id}</td>
-        <td>${r.name || '—'}</td>
-        <td><span class="pill">${r.preset}</span></td>
-        <td>${r.bet} p</td>
-        <td><span class="pill ${r.status==='settled'?'ok':r.status==='active'?'warn':''}">${r.status}</span></td>
-        <td>${handsHtml||'—'}</td>
-        <td class="mono" style="color:${netCls==='ok'?'var(--ok)':netCls==='danger'?'#ff9a8e':'var(--cream)'}">${net} p</td>
-        <td class="mono" style="font-size:.74rem">${r.ended_at || r.created_at || ''}</td>
+        <td>${escapeHtml(r.name||'—')}</td>
+        <td><span class="pill">${escapeHtml(r.preset||'—')}</span></td>
+        <td class="mono">${fmt(r.bet)} p</td>
+        <td><span class="pill ${r.status==='settled'?'green':''}">${escapeHtml(r.status)}</span></td>
+        <td class="mono"><span class="pill ${netCls}">${net == null ? '—' : (net > 0 ? '+' : '') + fmt(net)}</span></td>
+        <td class="mono" style="font-size:.78rem">${escapeHtml(r.ended_at || r.created_at || '')}</td>
       </tr>`;
     }).join('')}</tbody></table>`;
-  $('roundsTable').innerHTML = html;
+}
+function renderAudit(s) {
+  const rows = (s.events || []).slice(0, 40);
+  if (rows.length === 0) { $('auditTableWrap').innerHTML = '<div class="empty">Ei audit-tapahtumia.</div>'; return; }
+  $('auditTableWrap').innerHTML = `<table class="tbl">
+    <thead><tr><th>Aika</th><th>Tapahtuma</th><th>Pelaaja</th><th>Tiedot</th></tr></thead>
+    <tbody>${rows.map(r => `
+      <tr>
+        <td class="mono" style="font-size:.78rem">${escapeHtml(r.created_at||'')}</td>
+        <td><span class="pill">${escapeHtml(r.action)}</span></td>
+        <td>${escapeHtml(r.player_name||'')}</td>
+        <td class="mono" style="font-size:.78rem;color:var(--muted)">${escapeHtml((r.details||'').slice(0,80))}</td>
+      </tr>
+    `).join('')}</tbody></table>`;
 }
 
-async function resetShoe(pid){
-  if(!confirm(`Sekoita pelaajan #${pid} pakat heti?`)) return;
-  try{
-    await api(`/api/operator/blackjack/shoes/${pid}/reset`, {method:'POST'});
-    toast(`✓ Pakat sekoitettu pelaajalle #${pid}`, 'ok');
-    refreshAll();
-  }catch(e){ toast(e.message, 'err'); }
+/* ─── Shoes tab ───────────────────────────────────────────────────────── */
+async function refreshShoes() {
+  try {
+    const [shoes, settings] = await Promise.all([
+      api('/api/operator/blackjack/shoes'),
+      api('/api/operator/blackjack/settings'),
+    ]);
+    renderShoes(shoes);
+    renderShoeSettings(settings);
+  } catch (e) { toast(e.message, 'err'); }
+}
+function renderShoes(s) {
+  const rows = s.shoes || [];
+  if (rows.length === 0) {
+    $('shoesTableWrap').innerHTML = '<div class="empty">Ei aktiivisia pakkoja vielä — pelaa yksi kierros aloittaaksesi pakan.</div>';
+    return;
+  }
+  $('shoesTableWrap').innerHTML = `<table class="tbl">
+    <thead><tr><th>Pelaaja</th><th>Pakat</th><th>Käytetty / Cut</th><th>Käyttöaste</th><th>Sekoitukset</th><th>Toiminnot</th></tr></thead>
+    <tbody>${rows.map(r => {
+      const total = (r.decks||6)*52;
+      const usedPct = Math.round((r.draw_index||0)/total*100);
+      const cutPct = Math.round((r.cut_index||0)/total*100);
+      return `<tr>
+        <td><strong>${escapeHtml(r.name||'—')}</strong> <span class="mono pill">#${r.player_id}</span></td>
+        <td>${r.decks}</td>
+        <td class="mono">${r.draw_index} / ${r.cut_index}</td>
+        <td style="min-width: 160px">
+          <div class="bar">
+            <div class="fill" style="width:${Math.min(100,usedPct)}%"></div>
+            <div class="cut" style="left:${Math.min(100,cutPct)}%"></div>
+          </div>
+          <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem">${usedPct}% käytetty</div>
+        </td>
+        <td class="mono">${r.shuffles||0}</td>
+        <td><button class="btn btn-ghost btn-square" onclick="resetShoe(${r.player_id})">Sekoita</button></td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+function renderShoeSettings(s) {
+  $('settingsRow').innerHTML = `
+    <div class="stat-tile" style="flex:1;min-width:140px"><div class="l">Min panos</div><div class="v small">${s.min_bet||25} p</div></div>
+    <div class="stat-tile" style="flex:1;min-width:140px"><div class="l">Max panos</div><div class="v small">${s.max_bet||10000} p</div></div>
+    <div class="stat-tile" style="flex:1;min-width:140px"><div class="l">Pakat</div><div class="v small">${s.default_decks||6}</div></div>
+    <div class="stat-tile" style="flex:1;min-width:140px"><div class="l">Cut</div><div class="v small">${Math.round((s.default_cut_fraction||0.75)*100)}%</div></div>
+  `;
+}
+async function resetShoe(pid) {
+  if (!confirm(`Sekoita pelaajan #${pid} pakat heti?`)) return;
+  try {
+    await api(`/api/operator/blackjack/shoes/${pid}/reset`, { method: 'POST' });
+    toast('✓ Pakat sekoitettu', 'ok');
+    refreshShoes();
+  } catch (e) { toast(e.message, 'err'); }
 }
 window.resetShoe = resetShoe;
-
-async function resetAllShoes(){
-  if(!confirm('Sekoita KAIKKI pelaajakohtaiset pakat heti?')) return;
-  try{
-    const j = await api('/api/operator/blackjack/shoes/reset_all', {method:'POST'});
+async function resetAllShoes() {
+  if (!confirm('Sekoita kaikki pakat heti?')) return;
+  try {
+    const j = await api('/api/operator/blackjack/shoes/reset_all', { method:'POST' });
     toast(`✓ Sekoitettiin ${j.reset} pakkaa`, 'ok');
-    refreshAll();
-  }catch(e){ toast(e.message, 'err'); }
+    refreshShoes();
+  } catch (e) { toast(e.message, 'err'); }
 }
 window.resetAllShoes = resetAllShoes;
 
-// Boot
-if(token){
-  // Validate the cached token quickly.
-  fetch('/api/operator/me', {headers:{'Authorization':'Bearer '+token}}).then(r=>{
-    if(r.ok) showApp(); else { localStorage.removeItem(TOKEN_KEY); token=''; showSplash(); }
-  }).catch(()=>showSplash());
-}else{
-  showSplash();
-}
+/* ─── Boot ────────────────────────────────────────────────────────────── */
+(async function boot() {
+  await loadTheme();
+  if (token) {
+    try {
+      await fetch('/api/operator/me', {headers:{'Authorization':'Bearer '+token}}).then(r => {
+        if (r.ok) showApp(); else { localStorage.removeItem(TOKEN_KEY); token=''; showSplash(); }
+      });
+    } catch { showSplash(); }
+  } else {
+    showSplash();
+  }
+})();
 
-// Enter key on password
-document.addEventListener('keydown', e=>{
-  if(e.key === 'Enter' && $('splash').style.display !== 'none' && document.activeElement === $('opPw')) opLogin();
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && $('splash').style.display !== 'none' && document.activeElement === $('opPw')) opLogin();
+  if (e.key === 'Escape') {
+    closeCustomerModal();
+    closePointsModal();
+  }
 });
 </script>
 </body>

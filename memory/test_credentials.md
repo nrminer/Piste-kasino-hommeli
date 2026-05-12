@@ -1,31 +1,33 @@
 # Test Credentials
 
-## Customer (player) — existing wallet flow
+## Customer (player) — for /asiakas
 | Field        | Value          |
 | ------------ | -------------- |
 | Player ID    | 1              |
-| Name         | BJ3D Test      |
+| Name         | Pelaaja        |
 | Password     | test123        |
-| Email        | bj3d@test.com  |
-| VIP Level    | Standard       |
-| Balance      | ~10 040 pts after iter11 automated test run (top up via `/api/players/1/points/grant` if needed) |
+| Email        | test@test.fi   |
+| VIP Level    | Gold           |
+| Balance      | ~9,900 points (top up via operator panel or `/api/players/1/points/grant`)  |
 
-Both `/asiakas` and `/operator` are reachable directly; the customer credentials are *only* used on `/asiakas`. The customer page stores the session as `cust_player_id`, `cust_player_name`, `cust_player_pw` in `localStorage` — those keys are read by the inline Blackjack flow.
+The customer page is at `/asiakas`. Login via name + password fields (data-testids `cust-login-name`, `cust-login-pw`, `cust-login-btn`).
+Session is stored in `localStorage` key `cust_session`.
 
-### Topping up the test balance (operator/cashier helper)
+### Topping up the test balance
 ```bash
-API_URL=$(grep REACT_APP_BACKEND_URL /app/frontend/.env | cut -d= -f2)
-curl -X POST "$API_URL/api/players/1/points/grant" \
-     -H "Content-Type: application/json" \
-     -d '{"count":5000,"reason":"Top-up for testing"}'
+curl -X POST http://localhost:8001/api/players/1/points/grant \
+  -H "Content-Type: application/json" \
+  -d '{"count":5000,"reason":"Top-up for testing"}'
 ```
 
-### Re-creating the player from scratch (if `casino.db` is reset)
+### Re-creating the player from scratch (if SQLite is reset)
 ```bash
-API_URL=$(grep REACT_APP_BACKEND_URL /app/frontend/.env | cut -d= -f2)
-curl -X POST "$API_URL/api/players" -H "Content-Type: application/json" \
-     -d '{"name":"BJ3D Test","email":"bj3d@test.com","password":"test123","vip_level":"Standard"}'
-# Then grant 5000 points (see above).
+curl -X POST http://localhost:8001/api/players \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Pelaaja","email":"test@test.fi","password":"test123","vip_level":"Gold"}'
+curl -X POST http://localhost:8001/api/players/1/points/grant \
+  -H "Content-Type: application/json" \
+  -d '{"count":10000,"reason":"Top-up"}'
 ```
 
 ---
@@ -35,20 +37,23 @@ curl -X POST "$API_URL/api/players" -H "Content-Type: application/json" \
 | ------------ | ---------- | -------------- |
 | URL          | `/operator` | Flask template |
 | Password     | `admin123` | `/app/.env` → `OPERATOR_PASSWORD` |
-| Token TTL    | 60 min     | `/app/.env` → `OPERATOR_TOKEN_TTL_MIN` |
+| Token TTL    | 120 min    | `/app/.env` → `OPERATOR_TOKEN_TTL_MIN` |
 | Token secret | (32+ chars) | `/app/.env` → `OPERATOR_TOKEN_SECRET` |
 
-The page issues a PyJWT (HS256) Bearer token after a successful POST to `/api/operator/login`. The token is stored client-side in `localStorage` under `operator_token`. All `/api/operator/*` endpoints require an `Authorization: Bearer <token>` header.
-
-### Rotating the operator password
-1. Edit `/app/.env`, change `OPERATOR_PASSWORD=…` (and ideally `OPERATOR_TOKEN_SECRET` so existing tokens are invalidated).
-2. `sudo supervisorctl restart backend` to reload env.
+The page issues a PyJWT (HS256) Bearer token after a successful POST to `/api/operator/login`. Token stored client-side in `localStorage` under `operator_token`. All `/api/operator/*` endpoints require an `Authorization: Bearer <token>` header.
 
 ### Programmatic operator login (curl)
 ```bash
-API_URL=$(grep REACT_APP_BACKEND_URL /app/frontend/.env | cut -d= -f2)
-TOK=$(curl -s -X POST "$API_URL/api/operator/login" \
+TOK=$(curl -s -X POST http://localhost:8001/api/operator/login \
        -H "Content-Type: application/json" \
        -d '{"password":"admin123"}' | python3 -c "import sys,json;print(json.load(sys.stdin)['access_token'])")
-curl -s "$API_URL/api/operator/blackjack/stats" -H "Authorization: Bearer $TOK"
+curl -s http://localhost:8001/api/operator/blackjack/stats -H "Authorization: Bearer $TOK"
+```
+
+### Theme update
+```bash
+curl -X PUT http://localhost:8001/api/operator/theme \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOK" \
+  -d '{"theme_brand_name":"My Casino","theme_primary":"#ff6b6b"}'
 ```

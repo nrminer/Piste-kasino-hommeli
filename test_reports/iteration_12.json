@@ -1,0 +1,54 @@
+{
+  "summary": "Iter12 verified the 3D redo of Blackjack/Baccarat/Pikapokeri/Casino War + shared theme system. 15/15 new pytest cases pass against the public preview URL. Playwright runs on /asiakas (all 4 games dealt 3D cards via Three.js and resolved to outcome banners) and /operator (login, 5 tabs, theme editor, customer modal, points grant, audit/activity, shoes) succeeded with zero JS errors.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Casino War", "issues": ["Player & dealer cards overlap the 'Voitto +100 p' result banner — banner z-index is in front of the cards but visually the cards float over it; consider reserving banner space above the table or moving cards apart."]},
+      {"screen": "Blackjack", "issues": ["Result banner 'BLACKJACK! +300 p' overlaps the dealt cards instead of sitting clear above/below the table felt."]},
+      {"screen": "Pikapokeri", "issues": ["After 'Vaihda' the 5 cards bunch into the lower-right corner of the 3D table rather than centring across the felt; result banner 'Häviö' overlaps them."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_theme_and_3d_games.py",
+    "/app/test_reports/pytest/iter12_theme_and_3d.xml"
+  ],
+  "action_items": [
+    "Adjust 3D card layout vs. result banner so cards don't overlap the outcome chip in Blackjack/Pikapokeri/War.",
+    "Pikapokeri: re-centre the 5-card row after draw (cards currently cluster bottom-right).",
+    "(Non-blocking) customer.html is now ~1105 lines; per-game JS chunks can move to /static/js/customer/*.js for readability.",
+    "(Non-blocking) app.py is 3266 lines; split blackjack/baccarat/pikapokeri/war routes into a games blueprint."
+  ],
+  "critical_code_review_comments": [
+    "PUT /api/operator/theme silently ignores unknown keys — good; but it also silently coerces non-strings to skipped (no 400). Consider returning the list of rejected keys in the response for operator clarity.",
+    "/api/theme has no caching headers; it's called on every page load from both customer and operator surfaces. Set a short Cache-Control (e.g. max-age=30, must-revalidate) and a hash-based ETag to halve theme round-trips.",
+    "casino_3d.js (~496 lines) keeps a single global scene; calling createTableScene a second time without first calling .dispose() will leak a WebGL context. Confirm closeGame() invokes scene.dispose().",
+    "templates/customer.html mixes data-testid with onclick='loginCustomer()'-style inline handlers — fine for now but harder to tree-shake later. Consider moving to a single delegated listener.",
+    "Operator points modal returns to the customers table but the table refresh is full-fetch; with many players the +/- Pisteet flow will N+1. Patch the single row in-place instead."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_theme_and_3d_games.py"
+  ],
+  "success_rate": { "backend": "100% (15/15)", "frontend": "100% on critical flows; minor 3D layout overlap noted" },
+  "test_credentials": "Customer: Pelaaja / test123 (player_id=1, ~10145 pts at start). Operator: admin123 from /app/.env.",
+  "seed_data_creation": "Autouse fixture _ensure_balance tops up player 1 to >=5000 pts before each backend test (reason='TEST_topup').",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend tests in /app/backend/tests/test_theme_and_3d_games.py run in ~3.5s. Blackjack response keys are 'player_cards'/'dealer_cards' (NOT 'player'/'dealer'). Pikapokeri returns 'hand' and 'result_name'. Baccarat returns 'player'+'banker' lists + 'winner'. War returns 'player_card'+'dealer_card' (single card objects, not arrays) + 'outcome'. Theme PUT requires Bearer token from /api/operator/login. Customer SPA at /asiakas; operator SPA at /operator. 3D rendering uses Three.js via CDN ESM (no React). After clicking 'Jaa kortit' in BJ, allow ~4s for the 4-card deal; pikapokeri full 5-card deal needs ~5s.",
+  "verified_features": [
+    "GET /api/theme returns full theme dict (brand, primary, bg, surface, text, etc.) with default Auditor's Ledger values",
+    "PUT /api/operator/theme — 401 without token, 401 with bad token, 200 + persists with valid token, restored cleanly",
+    "POST /api/operator/login wrong→401, correct→access_token; GET /api/operator/me 401 without / 200 with Bearer",
+    "POST /api/customer/login Pelaaja/test123 → 200 returns id=1",
+    "GET /api/players/1/points → int balance",
+    "Blackjack: POST /start → game_id + 2 player_cards + dealer_cards (hole hidden); POST /action stand → resolves with outcome",
+    "Baccarat: POST player & banker bets → 200 with hands + winner",
+    "Pikapokeri: /start deals 5; /draw with all-false hold replaces all 5 + returns result_name",
+    "Casino War: /war 3 plays → all return player_card/dealer_card + outcome",
+    "Frontend /asiakas: splash → login → lobby (4 tiles) → each game opens, deals 3D cards in Three.js, settles with outcome banner, returns to lobby. Topbar balance updated live (10 445 → 10 345 → 10 245 across rounds).",
+    "Frontend /operator: admin123 login → dashboard 6 stat tiles → Brändäys preview + 12 inputs incl. brand name 'Auditor\\'s Ledger', tagline, logo, 8 color pickers + Tallenna/Palauta buttons → Asiakkaat table → + Uusi asiakas modal opens with name/pw/email/VIP/aloituspisteet → +/− Pisteet modal +100 succeeded → Aktiviteetti shows BJ rounds + audit-log → Pakat (BJ) shoe management.",
+    "Theme matching confirmed: SAME brand name 'Auditor's Ledger' and spade logo render in topbar on both /asiakas and /operator."
+  ],
+  "rca of the issue": "No defects found. The only call-out is cosmetic: in Blackjack/Pikapokeri/War the WebGL card meshes sometimes render on top of (overlapping) the DOM-overlay result banner, instead of beneath it. Likely cause: the result chip uses absolute positioning with default z-index inside the .scene-3d wrapper, but the Three.js <canvas> stacks above it because the canvas is appended last in createTableScene. Fix: give the result banner z-index higher than the canvas, or move it OUTSIDE the .scene-3d container in the templates."
+}
