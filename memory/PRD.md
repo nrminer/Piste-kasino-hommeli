@@ -32,7 +32,29 @@
 - WCAG-friendly badges, focus rings, reduced-motion path
 
 ## Implemented (this session — 2026-05)
-- 2026-05: **3D Blackjack module integrated into existing Flask + SQLite point system**.
+- 2026-05 (follow-up): **3D Blackjack pulled INLINE into the `/asiakas` Pisteet → Blackjack panel; older 2D Blackjack flow removed; visible 3D chip stack added.**
+  - `/app/templates/customer.html` Blackjack panel (HTML+JS) rewritten:
+    - Removed the "✨ Pelaa 3D Blackjack →" launch link to the standalone page.
+    - New bet UI: numeric input + slider + 25/100/500/1K denomination chip buttons + Clear, preset selector (Vegas Strip / Vegas Classic / European NHC), and a strategy-hint checkbox.
+    - Action row expanded: Hit / Stand / Double / **Split** / **Surrender** (the older flow had only Hit/Stand/Double).
+    - Insurance prompt now uses the new `decline_insurance` server action — no more local-only decline state.
+    - After settle: new "🔒 Tarkista reiluus" button opens a provably-fair modal that calls `/api/blackjack3d/round/<id>/reveal` and verifies `SHA-256(server_seed) == server_seed_hash` client-side via `crypto.subtle`.
+    - `doBlackjackStart` / `doBlackjackAction` / `bjReset` / `renderBjState` were re-pointed from the legacy `/api/points/<pid>/blackjack/*` endpoints to the new `/api/blackjack3d/round/*` provably-fair endpoints.
+    - Added `_bj3dToFlatState` adapter so the existing `BJ3D` Three.js scene manager keeps rendering player/dealer cards without changes.
+    - Added a hand-pills row (`bj-hand-pill-N`) for multi-hand visibility after splits, with the active hand visually highlighted.
+  - Existing `BJ3D._addChipStack` upgraded with `setBetVisual(bet)`:
+    - Stack now lives next to the player's cards at `(2.1, 0, 1.5)`.
+    - Chip count scales with bet (`ceil(bet/25)`, capped at 18 chips).
+    - Color tiers cycle through gold → blue → red → black → green as stack grows.
+    - Decorative top cap chip + small per-chip Y-rotation for hand-stacked realism.
+  - Legacy 2D Blackjack endpoints in `/app/app.py` remain intact for backwards compatibility (regression confirmed — they still return 200) but are no longer called by any UI.
+  - Standalone `/blackjack3d` page kept as-is — still HTTP 200, available as a fullscreen alternative. Not removed because the user only asked to remove the "older one" (the 2D flow).
+- 2026-05 (initial): 3D Blackjack module shipped (see PRD history below).
+- 2026-05: **Automated testing**: iteration_10.json — 13/13 backend + frontend critical-flow E2E all green (launch link removed, bet panel, deal, settle, fairness ✓ Vahvistus onnistui, new round, regression on coinflip + legacy 2D + standalone /blackjack3d). One non-blocking note: customer.html now ~3700 lines — recommended to extract Blackjack JS into `/app/static/js/blackjack3d_inline.js` in a future cleanup pass.
+
+### Historical (initial integration)
+- 3D Blackjack backend module: `/app/blackjack3d.py` (~700 lines) — provably-fair HMAC-SHA256 RNG, Blueprint with `/api/blackjack3d/{presets, round/start, round/<id>/action, round/<id>, round/<id>/reveal, round/<id>/hint}`, multi-hand state machine, basic-strategy table, idempotent `blackjack3d_games` table migration, wallet integration via `_atomic_deduct_points` / `_add_points`.
+- Standalone `/blackjack3d` template (`/app/templates/blackjack3d.html`) with full Three.js scene, settings drawer, profile drawer, fairness modal — still served at the same URL but no longer the primary entry point.
   - **Backend** (`/app/blackjack3d.py`, ~700 lines):
     - Provably-fair RNG (HMAC-SHA256 byte stream → rejection-sampled uint32 Fisher-Yates).
     - Blueprint registers 5 endpoints + 1 HTML route:
