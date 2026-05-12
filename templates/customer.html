@@ -800,24 +800,40 @@ button.btn-primary,.pts-input-row button{background:linear-gradient(135deg,var(-
         <div id="bac-result"></div>
       </div>
 
-      <!-- Blackjack -->
+      <!-- Blackjack (3D + provably-fair) -->
       <div class="game-panel" id="gpanel-blackjack">
-        <div style="margin-bottom:.6rem;text-align:center">
-          <a href="/blackjack3d" class="btn-primary" style="display:inline-block;text-decoration:none;padding:.5rem 1rem;border-radius:8px;background:linear-gradient(180deg,#e8c970,#a8841f);color:#1a1308;font-weight:700;letter-spacing:.5px" data-testid="bj3d-launch-link">✨ Pelaa 3D Blackjack →</a>
-        </div>
         <div id="bj-start-area">
           <!-- 3D Blackjack scene (idle state) -->
           <div class="casino3d-wrap" id="bj-3d-wrap-start" data-testid="bj-3d-wrap-start">
             <div class="casino3d-hud">
               <span class="hud-tag dealer">🎴 Jakaja odottaa</span>
-              <span class="hud-tag">Blackjack</span>
+              <span class="hud-tag">Blackjack · Provably-Fair</span>
             </div>
           </div>
-          <div class="bet-row">
-            <label>Panos (pistettä)</label>
+          <div class="bet-row" style="justify-content:space-between">
+            <label>Panos</label>
             <input class="bet-inp" type="number" id="bj-bet" value="100" min="10" max="10000" step="10" data-testid="bj-bet-input">
+            <input type="range" id="bj-bet-slider" min="10" max="2000" step="10" value="100" style="flex:1;min-width:120px;accent-color:var(--gold)" data-testid="bj-bet-slider">
           </div>
-          <button class="btn-primary" id="bj-start-btn" onclick="doBlackjackStart()" data-testid="bj-start-btn">Aloita peli</button>
+          <div class="bet-row" id="bj-chip-row" style="justify-content:center;gap:.45rem">
+            <button type="button" class="bj-chip-btn" onclick="bjAddToBet(25)" data-testid="bj-chip-25" style="width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;background:radial-gradient(circle at 30% 30%,#fde6a8,#c9a84c 55%,#7c5e1f);color:#1a1308;font-weight:800;font-size:.82rem;box-shadow:inset 0 -3px 0 rgba(0,0,0,.3),0 4px 10px rgba(0,0,0,.45)">25</button>
+            <button type="button" class="bj-chip-btn" onclick="bjAddToBet(100)" data-testid="bj-chip-100" style="width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;background:radial-gradient(circle at 30% 30%,#9bd2e1,#1f6f87 55%,#0d3a48);color:#fff;font-weight:800;font-size:.82rem;box-shadow:inset 0 -3px 0 rgba(0,0,0,.3),0 4px 10px rgba(0,0,0,.45)">100</button>
+            <button type="button" class="bj-chip-btn" onclick="bjAddToBet(500)" data-testid="bj-chip-500" style="width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;background:radial-gradient(circle at 30% 30%,#ff9da1,#a02132 55%,#52101a);color:#fff;font-weight:800;font-size:.82rem;box-shadow:inset 0 -3px 0 rgba(0,0,0,.3),0 4px 10px rgba(0,0,0,.45)">500</button>
+            <button type="button" class="bj-chip-btn" onclick="bjAddToBet(1000)" data-testid="bj-chip-1000" style="width:44px;height:44px;border-radius:50%;border:1px solid #c9a84c;cursor:pointer;background:radial-gradient(circle at 30% 30%,#1c1c1c,#000 55%,#000);color:#c9a84c;font-weight:800;font-size:.78rem;box-shadow:inset 0 -3px 0 rgba(0,0,0,.3),0 4px 10px rgba(0,0,0,.45)">1K</button>
+            <button type="button" class="bj-chip-btn" onclick="bjClearBet()" data-testid="bj-chip-clear" style="padding:.4rem .7rem;border-radius:99px;border:1px solid rgba(201,168,76,.4);background:rgba(13,31,23,.6);color:var(--cream);font-size:.78rem;cursor:pointer">Tyhjennä</button>
+          </div>
+          <div class="bet-row" style="justify-content:space-between;gap:.45rem">
+            <label style="white-space:nowrap">Säännöt</label>
+            <select id="bj-preset" class="bet-inp" style="flex:1;width:auto" data-testid="bj-preset-select">
+              <option value="vegas_strip" selected>Vegas Strip (S17 · ≈0.4%)</option>
+              <option value="vegas_classic">Vegas Classic (H17 · ≈0.6%)</option>
+              <option value="european_nhc">European (No-hole · ≈0.6%)</option>
+            </select>
+            <label style="display:inline-flex;align-items:center;gap:.35rem;font-size:.8rem;color:var(--muted);cursor:pointer">
+              <input type="checkbox" id="bj-hint-toggle" data-testid="bj-hint-toggle" style="accent-color:var(--gold)"> Vinkki
+            </label>
+          </div>
+          <button class="btn-primary" id="bj-start-btn" onclick="doBlackjackStart()" data-testid="bj-start-btn">Jaa kortit</button>
         </div>
         <div id="bj-game-area" style="display:none">
           <!-- 3D Blackjack scene (active game) -->
@@ -825,17 +841,20 @@ button.btn-primary,.pts-input-row button{background:linear-gradient(135deg,var(-
             <div class="casino3d-hud">
               <span class="hud-tag dealer">🎴 Jakaja</span>
               <span class="hud-tag" id="bj3d-stage-tag">Peli käynnissä</span>
+              <span class="hud-tag" id="bj3d-bet-tag" style="background:rgba(201,168,76,.18);border-color:rgba(201,168,76,.5);color:var(--gold2)" data-testid="bj3d-bet-tag">Panos: 100 pts</span>
             </div>
-            <div class="casino3d-total dealer" id="bj3d-dealer-total">—</div>
-            <div class="casino3d-total player" id="bj3d-player-total">—</div>
-            <div class="casino3d-burst" id="bj3d-burst"></div>
+            <div class="casino3d-total dealer" id="bj3d-dealer-total" data-testid="bj3d-dealer-total">—</div>
+            <div class="casino3d-total player" id="bj3d-player-total" data-testid="bj3d-player-total">—</div>
+            <div class="casino3d-burst" id="bj3d-burst" data-testid="bj3d-burst"></div>
           </div>
+          <!-- Hidden legacy DOM (kept for back-compat with helpers that read these nodes) -->
           <div style="display:none">
             <div class="mini-cards" id="bj-dealer-cards"></div>
             <div id="bj-dealer-total"></div>
             <div class="mini-cards" id="bj-player-cards"></div>
             <div id="bj-player-total"></div>
           </div>
+          <div id="bj-hand-pills" style="display:flex;flex-wrap:wrap;gap:.35rem;justify-content:center;margin:.4rem 0;font-size:.82rem"></div>
           <div id="bj-insurance-area" style="display:none;margin-bottom:.6rem">
             <div style="background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);border-radius:8px;padding:.75rem;margin-bottom:.5rem;font-size:.85rem;text-align:center">
               🛡 Jakajalla on ässä. Haluatko ottaa vakuutuksen ennen kuin kortti tarkistetaan?<br>
@@ -843,16 +862,21 @@ button.btn-primary,.pts-input-row button{background:linear-gradient(135deg,var(-
             </div>
             <div class="bj-actions">
               <button id="bj-ins-take" onclick="doBlackjackAction('insurance')" style="border-color:rgba(201,168,76,.5);color:var(--gold)" data-testid="bj-insurance-take-btn">🛡 Vakuutus</button>
-              <button id="bj-ins-decline" onclick="declineInsurance()" data-testid="bj-insurance-decline-btn">✗ Ei vakuutusta</button>
+              <button id="bj-ins-decline" onclick="doBlackjackAction('decline_insurance')" data-testid="bj-insurance-decline-btn">✗ Ei vakuutusta</button>
             </div>
           </div>
           <div class="bj-actions" id="bj-action-row">
-            <button id="bj-hit" onclick="doBlackjackAction('hit')" data-testid="bj-hit-btn">🃏 Ota kortti</button>
-            <button id="bj-stand" onclick="doBlackjackAction('stand')" data-testid="bj-stand-btn">🛑 Jää</button>
-            <button id="bj-double" onclick="doBlackjackAction('double')" data-testid="bj-double-btn">✌️ Tuplaa</button>
+            <button id="bj-hit" onclick="doBlackjackAction('hit')" data-testid="bj-hit-btn">🃏 Hit</button>
+            <button id="bj-stand" onclick="doBlackjackAction('stand')" data-testid="bj-stand-btn">🛑 Stand</button>
+            <button id="bj-double" onclick="doBlackjackAction('double')" data-testid="bj-double-btn">✌️ Double</button>
+            <button id="bj-split" onclick="doBlackjackAction('split')" data-testid="bj-split-btn">🔀 Split</button>
+            <button id="bj-surrender" onclick="doBlackjackAction('surrender')" data-testid="bj-surrender-btn">🏳 Surrender</button>
           </div>
           <div id="bj-result"></div>
-          <button class="btn-secondary" id="bj-new-btn" onclick="bjReset()" style="display:none;margin-top:.75rem;width:100%" data-testid="bj-new-btn">Uusi peli</button>
+          <div id="bj-end-actions" style="display:none;gap:.5rem;margin-top:.75rem">
+            <button class="btn-secondary" id="bj-verify-btn" onclick="bjOpenFairness()" style="flex:1" data-testid="bj-verify-btn">🔒 Tarkista reiluus</button>
+            <button class="btn-primary" id="bj-new-btn" onclick="bjReset()" style="flex:1" data-testid="bj-new-btn">Uusi kierros</button>
+          </div>
         </div>
       </div>
 
@@ -1764,154 +1788,356 @@ let bjGameId = null;
 let prevBjPlayerCount = 0;
 let prevBjActive = null; // null=no game, true=in-progress, false=finished
 let bjInsuranceDeclined = false;
+let bjLastReveal = null;     // {server_seed, server_seed_hash, client_seed, nonce}
+let bjLastGameState = null;  // last server response (for fairness modal lookup)
 
 function bjReset(){
   bjGameId=null; prevBjPlayerCount=0; prevBjActive=null; bjInsuranceDeclined=false;
+  bjLastReveal=null;
   $('bj-start-area').style.display='block';
   $('bj-game-area').style.display='none';
   $('bj-insurance-area').style.display='none';
-  ['bj-ins-take','bj-ins-decline','bj-hit','bj-stand','bj-double'].forEach(id=>{const el=$(id); if(el) el.disabled=false;});
+  ['bj-ins-take','bj-ins-decline','bj-hit','bj-stand','bj-double','bj-split','bj-surrender'].forEach(id=>{const el=$(id); if(el) el.disabled=false;});
   $('bj-result').innerHTML='';
-  $('bj-new-btn').style.display='none';
+  $('bj-end-actions').style.display='none';
   $('bj-start-btn').disabled=false;
+  const hp=$('bj-hand-pills'); if(hp) hp.innerHTML='';
+  // Also clean any prior 3D scene state
+  if(window.BJ3D && typeof BJ3D.reset==='function') BJ3D.reset();
+  if(window.BJ3D && typeof BJ3D.initStartScene==='function') BJ3D.initStartScene();
 }
 
-function renderBjState(d, resultHtml=''){
-  const pc=d.player_cards||[]; const dc=d.dealer_cards||[];
-  const isActive=d.status==='active';
+// Translate the new /api/blackjack3d response into the shape BJ3D.sync expects
+// (flat player_cards / dealer_cards / totals). For splits, render every hand's
+// cards in a single fan; the active hand is highlighted via the hand-pills row.
+function _bj3dToFlatState(j){
+  const hands = j.hands || [];
+  const playerCards = [];
+  hands.forEach(h => (h.cards || []).forEach(c => playerCards.push({rank:c.r, suit:c.s})));
+  const dealerCards = (j.dealer || []).map(c => c ? {rank:c.r, suit:c.s} : {rank:'?', suit:'?'});
+  const isActive = j.status === 'active';
+  // Pick a player_total to display (active hand if any, else last)
+  let displayHand = hands[j.active_hand] || hands[hands.length-1] || {total:0, soft:false};
+  const playerTotal = displayHand.total;
+  const dealerTotal = j.dealer_total;
+  // Outcome / net
+  let outcome = null, net = 0;
+  if(j.outcome){
+    net = j.outcome.net || 0;
+    // Derive a single "outcome" label for the burst (priority: blackjack > bust > win > push > lose > surrender)
+    const outs = (j.outcome.hands||[]).map(h=>h.outcome);
+    if(outs.includes('blackjack')) outcome = 'blackjack';
+    else if(net > 0) outcome = 'win';
+    else if(outs.every(o=>o==='surrender')) outcome = 'bust'; // map to red burst
+    else if(net === 0) outcome = 'push';
+    else outcome = 'loss';
+  }
+  return {
+    player_cards: playerCards,
+    dealer_cards: dealerCards,
+    player_total: playerTotal,
+    dealer_total: dealerTotal,
+    status: j.status,
+    outcome,
+    net,
+    bet: j.bet,
+  };
+}
 
-  // Player cards: animate only newly dealt ones
-  $('bj-player-cards').innerHTML=pc.map((c,i)=>{
-    const isNew=i>=prevBjPlayerCount;
-    return renderMiniCard(c,'md',isNew?(i-prevBjPlayerCount)*200:-1);
+function _bjRenderHandPills(j){
+  const el = $('bj-hand-pills'); if(!el) return;
+  const hands = j.hands || [];
+  if(hands.length === 0){ el.innerHTML=''; return; }
+  el.innerHTML = hands.map((h,i)=>{
+    const isAct = h.is_active && j.status === 'active';
+    let label = `${h.total}${h.soft?' (pehmeä)':''}`;
+    if(h.is_blackjack && h.status!=='playing') label = 'BLACKJACK';
+    else if(h.status === 'bust') label += ' · BUST';
+    else if(h.status === 'surrendered') label = 'SURRENDER';
+    else if(h.status === 'stand') label += ' · STAND';
+    else if(h.status === 'doubled') label += ' · DOUBLED';
+    const handLabel = hands.length>1 ? `K${i+1}: ` : '';
+    const css = isAct
+      ? 'background:rgba(201,168,76,.18);border:1px solid var(--gold);color:var(--gold);box-shadow:0 0 0 1px rgba(201,168,76,.3)'
+      : 'background:rgba(13,31,23,.6);border:1px solid rgba(201,168,76,.18);color:var(--cream)';
+    return `<span data-testid="bj-hand-pill-${i}" style="${css};padding:.25rem .6rem;border-radius:99px;letter-spacing:.3px">${handLabel}${label} <span style="opacity:.7">· ${h.bet}p</span></span>`;
   }).join('');
+}
 
-  // Dealer cards: animate face-up card on initial deal; animate all on reveal
-  $('bj-dealer-cards').innerHTML=dc.map((c,i)=>{
-    if(isActive&&i>0) return '<div class="card back md"></div>';
-    let delay=-1;
-    if(prevBjActive===null&&i===0) delay=pc.length*200; // initial deal: after player cards
-    if(prevBjActive===true&&!isActive) delay=i*200;     // reveal: stagger all dealer cards
-    return renderMiniCard(c,'md',delay);
-  }).join('');
-
-  $('bj-player-total').textContent=`Yhteensä: ${d.player_total}`;
-  $('bj-dealer-total').textContent=isActive?`Näkyy: ${d.dealer_total}`:`Yhteensä: ${d.dealer_total}`;
-
-  // Insurance prompt: show when available and not yet declined
-  const insAvail = d.insurance_available && !bjInsuranceDeclined;
+function _bjRenderInsurance(j){
+  const insAvail = !!j.insurance_available;
   $('bj-insurance-area').style.display = insAvail ? 'block' : 'none';
   if(insAvail){
-    const insCost = Math.max(1, Math.floor(d.bet/2));
+    const insCost = Math.max(1, Math.floor((j.bet||0)/2));
     $('bj-ins-cost').textContent = `Vakuutus maksaa ${insCost} pistettä · Voitto 2:1 jos jakajalla on BJ`;
     $('bj-ins-take').disabled = false;
     $('bj-ins-decline').disabled = false;
-  } else {
-    $('bj-ins-take').disabled = true;
-    $('bj-ins-decline').disabled = true;
   }
-
-  // Disable action buttons while insurance prompt is showing
-  const canAct = isActive && !insAvail;
-  $('bj-hit').disabled=!canAct;
-  $('bj-stand').disabled=!canAct;
-  $('bj-double').disabled=!canAct || pc.length!==2;
-
-  // Hide the action-button row entirely when the round has concluded
-  const actionsRow = $('bj-action-row');
-  if(actionsRow) actionsRow.style.display = isActive ? 'flex' : 'none';
-
-  if(resultHtml) $('bj-result').innerHTML=resultHtml;
-  if(!isActive) $('bj-new-btn').style.display='block';
-
-  prevBjPlayerCount=pc.length;
-  prevBjActive=isActive;
 }
 
-async function doBlackjackStart(){
-  const bet=getBet('bj-bet'); if(!bet) return;
-  const btn=$('bj-start-btn'); btn.disabled=true;
-  try{
-    const r=await fetch(`/api/points/${player.id}/blackjack/start`,{
-      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bet})
+function _bjSetLegalActions(j){
+  const legal = new Set(j.legal_actions || []);
+  const isActive = j.status === 'active';
+  const insAvail = !!j.insurance_available;
+  // Hide entire row if not active or insurance prompt is up.
+  const row = $('bj-action-row');
+  row.style.display = (isActive && !insAvail) ? 'flex' : 'none';
+  [['bj-hit','hit'],['bj-stand','stand'],['bj-double','double'],['bj-split','split'],['bj-surrender','surrender']]
+    .forEach(([id,a])=>{
+      const el = $(id); if(!el) return;
+      el.disabled = !legal.has(a);
+      el.style.outline = '';
+      el.style.boxShadow = '';
     });
-    const d=await r.json();
-    if(!r.ok){alert(d.error);btn.disabled=false;return;}
-    player.points=d.points; bjGameId=d.game_id;
+}
+
+async function _bjMaybeShowHint(j){
+  if(!$('bj-hint-toggle')?.checked) return;
+  if(j.status !== 'active') return;
+  try{
+    const r = await fetch(`/api/blackjack3d/round/${j.game_id}/hint`);
+    if(!r.ok) return;
+    const h = await r.json();
+    if(!h.hint) return;
+    const map = {hit:'bj-hit',stand:'bj-stand',double:'bj-double',split:'bj-split',surrender:'bj-surrender'};
+    const el = $(map[h.hint]); if(!el) return;
+    el.style.boxShadow = '0 0 0 2px rgba(95,168,107,.7),0 0 22px rgba(95,168,107,.35)';
+    el.style.outline = 'none';
+  }catch(e){}
+}
+
+function _bjPaintBetTag(j){
+  const tag = $('bj3d-bet-tag'); if(!tag) return;
+  const totalCommitted = (j.hands||[]).reduce((s,h)=>s+(h.bet||0),0) + (j.insurance_bet||0);
+  tag.textContent = `Panos: ${totalCommitted} pts`;
+}
+
+function renderBjState(j, resultHtml=''){
+  // Mirror flat shape into the legacy hidden DOM so anything else that reads
+  // it keeps working (also keeps BJ3D.sync's prev-card book-keeping in sync).
+  const flat = _bj3dToFlatState(j);
+  $('bj-player-cards').innerHTML = ''; // legacy 2D row hidden
+  $('bj-dealer-cards').innerHTML = '';
+  $('bj-player-total').textContent = `Yhteensä: ${flat.player_total}`;
+  $('bj-dealer-total').textContent = (j.status==='active' ? `Näkyy: ${flat.dealer_total}` : `Yhteensä: ${flat.dealer_total}`);
+
+  _bjRenderHandPills(j);
+  _bjRenderInsurance(j);
+  _bjSetLegalActions(j);
+  _bjPaintBetTag(j);
+
+  if(resultHtml) $('bj-result').innerHTML = resultHtml;
+
+  if(j.status !== 'active'){
+    const ea = $('bj-end-actions');
+    ea.style.display = 'flex';
+  }
+
+  // 3D scene sync (init lazily once game-area is visible)
+  const prevPlayerCount = prevBjPlayerCount;
+  const prevActive = prevBjActive;
+  whenThreeReady(()=>{
+    BJ3D.init();
+    BJ3D.sync(flat, prevPlayerCount, prevActive);
+    if(typeof BJ3D.setBetVisual === 'function') BJ3D.setBetVisual(j.bet || 0);
+  });
+  prevBjPlayerCount = flat.player_cards.length;
+  prevBjActive = j.status === 'active';
+
+  if(j.status !== 'active') _bjMaybeShowHint(j); // no-op (only active hints)
+  else _bjMaybeShowHint(j);
+
+  bjLastGameState = j;
+}
+
+window.bjAddToBet = function(d){
+  const inp = $('bj-bet'); const sl = $('bj-bet-slider');
+  let v = parseInt(inp.value||0,10) || 0;
+  v = Math.min(10000, Math.max(0, v + d));
+  if(player && player.points != null) v = Math.min(v, player.points);
+  inp.value = v;
+  if(sl) sl.value = Math.min(parseInt(sl.max,10), v);
+};
+window.bjClearBet = function(){
+  $('bj-bet').value = 10;
+  if($('bj-bet-slider')) $('bj-bet-slider').value = 10;
+};
+// keep slider <-> input in sync
+(function(){
+  document.addEventListener('input', (e)=>{
+    if(!e.target) return;
+    if(e.target.id === 'bj-bet-slider'){ $('bj-bet').value = e.target.value; }
+    if(e.target.id === 'bj-bet'){
+      const sl = $('bj-bet-slider'); if(sl){ const v = parseInt(e.target.value||0,10)||0; sl.value = Math.min(parseInt(sl.max,10), Math.max(parseInt(sl.min,10), v)); }
+    }
+  });
+})();
+
+async function doBlackjackStart(){
+  const bet = getBet('bj-bet'); if(!bet) return;
+  const preset = $('bj-preset') ? $('bj-preset').value : 'vegas_strip';
+  const btn = $('bj-start-btn'); btn.disabled = true;
+  try{
+    const r = await fetch(`/api/blackjack3d/round/start`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({player_id: player.id, bet, preset})
+    });
+    const j = await r.json();
+    if(!r.ok){ alert(j.error || 'Virhe.'); btn.disabled=false; return; }
+    player.points = j.balance;
+    bjGameId = j.game_id;
     $('bj-start-area').style.display='none';
     $('bj-game-area').style.display='block';
     let resHtml='';
-    if(d.outcome){
-      const outcomes={blackjack:'🃏 Luonnollinen Blackjack!',win:'Voitit!',push:'Tasapeli!',loss:'Jakajalla Blackjack',bust:'Ylitit 21!'};
-      resHtml=`<div class="game-result ${d.outcome==='loss'||d.outcome==='bust'?'loss':d.outcome==='push'?'push':'win'}">
-        <div class="res-emoji">${d.outcome==='blackjack'||d.outcome==='win'?'🏆':d.outcome==='push'?'🤝':'😞'}</div>
-        <div class="res-outcome">${outcomes[d.outcome]||d.outcome}</div>
-        <div class="res-pts">${d.net>0?'+':''}${d.net} pistettä</div>
+    if(j.status === 'settled' && j.outcome){
+      // Auto-settled at start (e.g. natural blackjack).
+      const net = j.outcome.net;
+      const handsOut = j.outcome.hands || [];
+      const labels = {blackjack:'🃏 Luonnollinen Blackjack!', win:'Voitit!', push:'Tasapeli!', lose:'Hävisit', surrender:'Antautuminen'};
+      const headline = handsOut.find(h=>h.outcome==='blackjack') ? labels.blackjack
+                      : net>0 ? labels.win : net<0 ? labels.lose : labels.push;
+      const cls = net>0 ? 'win' : net<0 ? 'loss' : 'push';
+      resHtml = `<div class="game-result ${cls}">
+        <div class="res-emoji">${cls==='win'?'🏆':cls==='push'?'🤝':'😞'}</div>
+        <div class="res-outcome">${headline}</div>
+        <div class="res-pts">${net>0?'+':''}${net} pistettä</div>
       </div>`;
     }
-    renderBjState(d, resHtml);
+    renderBjState(j, resHtml);
     pollPoints();
-  }catch(e){alert('Virhe.');btn.disabled=false;}
+  }catch(e){ alert('Virhe.'); btn.disabled=false; }
 }
 
 async function doBlackjackAction(action){
   if(!bjGameId) return;
-  ['bj-hit','bj-stand','bj-double','bj-ins-take','bj-ins-decline'].forEach(id=>{const el=$(id);if(el)el.disabled=true;});
+  ['bj-hit','bj-stand','bj-double','bj-split','bj-surrender','bj-ins-take','bj-ins-decline']
+    .forEach(id=>{const el=$(id); if(el) el.disabled=true;});
   try{
-    const r=await fetch(`/api/points/blackjack/${bjGameId}/action`,{
-      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action})
+    const r = await fetch(`/api/blackjack3d/round/${bjGameId}/action`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({action})
     });
-    const d=await r.json();
+    const j = await r.json();
     if(!r.ok){
-      alert(d.error);
-      ['bj-hit','bj-stand','bj-double','bj-ins-take','bj-ins-decline'].forEach(id=>{const el=$(id);if(el)el.disabled=false;});
+      alert(j.error || 'Virhe.');
+      renderBjState(bjLastGameState || {hands:[], dealer:[], status:'active', legal_actions:[]});
       return;
     }
-    player.points=d.points;
+    player.points = j.balance;
 
-    if(action==='insurance'){
-      if(d.insurance_result==='loss'){
-        // Dealer has no BJ: insurance lost, game continues
-        bjInsuranceDeclined=true; // treat as resolved so prompt hides
-        const lostHtml=`<div style="background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.2);border-radius:8px;padding:.6rem;text-align:center;font-size:.83rem;color:#e74c3c;margin-bottom:.5rem">
-          🛡 Vakuutus hävisi (ei BJ) — ${d.net} pistettä · Peli jatkuu</div>`;
-        renderBjState(d, lostHtml);
-      } else {
-        // Dealer has BJ: insurance wins, main hand settled
-        const ins=d.insurance_amount||0, insPayout=d.insurance_payout||0;
-        const mainLabel=d.outcome==='push'?'🤝 Molemmat BJ — tasapeli':'😞 Jakajalla Blackjack';
-        const cls=d.outcome==='push'?'push':'loss';
-        const resHtml=`<div class="game-result ${cls}">
-          <div style="color:var(--green);font-size:.88rem;margin-bottom:.35rem">🛡 Vakuutus voitti! +${insPayout-ins} p</div>
-          <div class="res-outcome">${mainLabel}</div>
-          <div class="res-pts">${d.net>=0?'+':''}${d.net} pistettä yhteensä</div>
+    // Insurance-specific UX message
+    let resHtml='';
+    if(action === 'insurance'){
+      const net = j.outcome ? j.outcome.net : -Math.max(1, Math.floor(j.bet/2));
+      if(j.insurance_result === 'win'){
+        const cls = (j.outcome && j.outcome.net >= 0) ? 'push' : 'loss';
+        const head = (j.outcome && j.outcome.hands && j.outcome.hands[0] && j.outcome.hands[0].outcome === 'push')
+          ? '🤝 Molemmat BJ — tasapeli' : '😞 Jakajalla Blackjack';
+        resHtml = `<div class="game-result ${cls}">
+          <div style="color:var(--green);font-size:.88rem;margin-bottom:.35rem">🛡 Vakuutus voitti! +${j.bet} p (2:1)</div>
+          <div class="res-outcome">${head}</div>
+          <div class="res-pts">${net>=0?'+':''}${net} pistettä yhteensä</div>
         </div>`;
-        renderBjState(d, resHtml);
+      } else if(j.status === 'active') {
+        resHtml = `<div style="background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.2);border-radius:8px;padding:.6rem;text-align:center;font-size:.83rem;color:#e74c3c;margin-bottom:.5rem">
+          🛡 Vakuutus hävisi (ei BJ) · Peli jatkuu</div>`;
       }
-      pollPoints(); return;
     }
 
-    let resHtml='';
-    if(d.outcome){
-      const labels={win:'🏆 Voitit!',push:'🤝 Tasapeli!',loss:'😞 Hävisit',bust:'💥 Ylitit 21!'};
-      const cls=d.outcome==='win'?'win':d.outcome==='push'?'push':'loss';
-      resHtml=`<div class="game-result ${cls}">
-        <div class="res-outcome">${labels[d.outcome]||d.outcome}</div>
-        <div class="res-pts">${d.net>0?'+':''}${d.net} pistettä</div>
+    if(j.status === 'settled' && j.outcome && !resHtml){
+      const net = j.outcome.net;
+      const handsOut = j.outcome.hands || [];
+      const bjWin = handsOut.find(h=>h.outcome==='blackjack');
+      const allSurr = handsOut.length && handsOut.every(h=>h.outcome==='surrender');
+      let head, cls;
+      if(allSurr){ head='🏳 Antautuminen'; cls='loss'; }
+      else if(bjWin && net>0){ head='🃏 Blackjack!'; cls='win'; }
+      else if(net > 0){ head='🏆 Voitit!'; cls='win'; }
+      else if(net === 0){ head='🤝 Tasapeli!'; cls='push'; }
+      else {
+        const bust = handsOut.find(h=>h.outcome==='lose' && h.payout===0); // crude
+        head = '😞 Hävisit'; cls='loss';
+        if(handsOut.length === 1 && action==='hit') head = '💥 Ylitit 21!';
+      }
+      resHtml = `<div class="game-result ${cls}">
+        <div class="res-outcome">${head}</div>
+        <div class="res-pts">${net>0?'+':''}${net} pistettä</div>
       </div>`;
     }
-    renderBjState(d, resHtml);
+
+    renderBjState(j, resHtml);
     pollPoints();
-  }catch(e){alert('Virhe.');}
+  }catch(e){ alert('Virhe.'); }
 }
 
-function declineInsurance(){
-  bjInsuranceDeclined=true;
-  $('bj-insurance-area').style.display='none';
-  $('bj-ins-take').disabled=true;
-  $('bj-ins-decline').disabled=true;
-  ['bj-hit','bj-stand','bj-double'].forEach(id=>$(id).disabled=false);
+// Provably-fair: reveal + client-side SHA-256 check
+async function bjOpenFairness(){
+  if(!bjGameId){ alert('Ei viimeisintä kierrosta.'); return; }
+  try{
+    const r = await fetch(`/api/blackjack3d/round/${bjGameId}/reveal`, {method:'POST'});
+    const j = await r.json();
+    if(!r.ok){ alert(j.error || 'Reveal epäonnistui.'); return; }
+    bjLastReveal = j;
+    // Compute SHA-256(server_seed) and compare to committed hash
+    const enc = new TextEncoder().encode(j.server_seed);
+    const buf = await crypto.subtle.digest('SHA-256', enc);
+    const calc = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    const ok = calc === j.server_seed_hash;
+    const okBadge = ok
+      ? `<div style="padding:.6rem;border:1px solid var(--green);background:rgba(95,168,107,.12);border-radius:8px;color:var(--green);font-weight:600">✓ Vahvistus onnistui — hash täsmää.</div>`
+      : `<div style="padding:.6rem;border:1px solid #e74c3c;background:rgba(231,76,60,.1);border-radius:8px;color:#e74c3c;font-weight:600">✗ Vahvistus epäonnistui.</div>`;
+    const html = `
+      <div style="font-size:.84rem;color:var(--muted);margin-bottom:.6rem">Palvelin sitoutuu siemenelleen ennen jakoa (SHA-256). Kierroksen jälkeen siemen paljastetaan — pakkaa ei voi muuttaa pelin aikana.</div>
+      <div style="margin:.4rem 0">
+        <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.2rem">Server seed hash (commit)</div>
+        <div style="font-family:ui-monospace,monospace;font-size:.74rem;background:var(--bg);padding:.5rem;border-radius:6px;word-break:break-all;border:1px solid var(--border)" data-testid="bj-fair-commit">${j.server_seed_hash}</div>
+      </div>
+      <div style="margin:.4rem 0">
+        <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.2rem">Server seed (revealed)</div>
+        <div style="font-family:ui-monospace,monospace;font-size:.74rem;background:var(--bg);padding:.5rem;border-radius:6px;word-break:break-all;border:1px solid var(--border)" data-testid="bj-fair-seed">${j.server_seed}</div>
+      </div>
+      <div style="display:flex;gap:.5rem;margin:.4rem 0;flex-wrap:wrap">
+        <div style="flex:1;min-width:140px">
+          <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.2rem">Client seed</div>
+          <div style="font-family:ui-monospace,monospace;font-size:.74rem;background:var(--bg);padding:.5rem;border-radius:6px;word-break:break-all;border:1px solid var(--border)" data-testid="bj-fair-client">${j.client_seed}</div>
+        </div>
+        <div style="min-width:80px">
+          <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.2rem">Nonce</div>
+          <div style="font-family:ui-monospace,monospace;font-size:.74rem;background:var(--bg);padding:.5rem;border-radius:6px;border:1px solid var(--border)" data-testid="bj-fair-nonce">${j.nonce}</div>
+        </div>
+      </div>
+      <div style="margin:.4rem 0">
+        <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.2rem">SHA-256(server_seed) laskettu selaimessa</div>
+        <div style="font-family:ui-monospace,monospace;font-size:.74rem;background:var(--bg);padding:.5rem;border-radius:6px;word-break:break-all;border:1px solid var(--border)" data-testid="bj-fair-calc">${calc}</div>
+      </div>
+      ${okBadge}
+    `;
+    _openBjFairnessModal(html);
+  }catch(e){ alert('Virhe.'); }
 }
+
+function _openBjFairnessModal(innerHtml){
+  let modal = $('bj-fair-modal');
+  if(!modal){
+    modal = document.createElement('div');
+    modal.id = 'bj-fair-modal';
+    modal.setAttribute('data-testid','bj-fair-modal');
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(6px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem';
+    modal.innerHTML = `<div style="background:linear-gradient(180deg,#0a1f15,#06140d);border:1px solid rgba(201,168,76,.5);border-radius:14px;padding:1.2rem 1.3rem;max-width:560px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6)">
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem">
+        <div style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--gold)">🔒 Provably-Fair varmistus</div>
+        <div style="flex:1"></div>
+        <button onclick="this.closest('#bj-fair-modal').remove()" style="appearance:none;border:1px solid rgba(201,168,76,.4);background:rgba(13,31,23,.7);color:var(--cream);width:32px;height:32px;border-radius:8px;cursor:pointer" data-testid="bj-fair-close">✕</button>
+      </div>
+      <div id="bj-fair-body"></div>
+    </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e=>{ if(e.target === modal) modal.remove(); });
+  }
+  modal.querySelector('#bj-fair-body').innerHTML = innerHtml;
+}
+
+// declineInsurance() removed — handled via doBlackjackAction('decline_insurance').
 
 // ── Pikapokeri ────────────────────────────────────────────────────────────────
 let pikaGameId=null, pikaHeld=new Set();
@@ -3143,17 +3369,62 @@ const BJ3D = {
   },
   _addChipStack(){
     const grp = new THREE.Group();
-    const colors = [0xc0392b, 0x2c3e50, 0x27ae60, 0xc9a84c];
-    for(let i=0;i<5;i++){
-      const chip = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.28, 0.28, 0.08, 24),
-        new THREE.MeshStandardMaterial({color: colors[i%colors.length], roughness:0.45, metalness:0.25}),
-      );
-      chip.position.set(2.2, 0.04 + i*0.09, 1.9);
-      grp.add(chip);
-    }
+    // Place the chip stack to the right of the player's cards so it stays
+    // clearly visible alongside the hand (felt center is 0,0; player cards z=1.6).
+    grp.position.set(2.1, 0, 1.5);
     this.scene.scene.add(grp);
     this.chipStack = grp;
+    this._chipMeshes = [];
+    this._setChipCount(1, 25);
+  },
+  // Build a stack of `count` chips whose dominant color reflects the bet size.
+  _setChipCount(count, bet){
+    if(!this.chipStack) return;
+    // Tear down current chips
+    this._chipMeshes.forEach(m => { this.chipStack.remove(m); if(m.geometry) m.geometry.dispose(); if(m.material) m.material.dispose(); });
+    this._chipMeshes = [];
+    count = Math.max(1, Math.min(18, count|0));
+    // Color tiers (mimic real casino denominations)
+    function chipColor(idx, n){
+      // Cycle through denominations as the stack grows so it looks varied.
+      const palette = [
+        {top:0xfde6a8, mid:0xc9a84c, low:0x7c5e1f},   // gold
+        {top:0x9bd2e1, mid:0x1f6f87, low:0x0d3a48},   // blue
+        {top:0xff9da1, mid:0xa02132, low:0x52101a},   // red
+        {top:0x3a3a3a, mid:0x111,    low:0x000   },   // black (high)
+        {top:0xa3e2a3, mid:0x2f8c40, low:0x183f1f},   // green (very high)
+      ];
+      // Higher chips appear toward the top of the stack.
+      const tier = Math.min(palette.length-1, Math.floor(idx / Math.max(1, Math.ceil(n / palette.length))));
+      return palette[tier];
+    }
+    const geo = new THREE.CylinderGeometry(0.30, 0.30, 0.08, 28);
+    for(let i=0;i<count;i++){
+      const c = chipColor(i, count);
+      const mat = new THREE.MeshStandardMaterial({color: c.mid, roughness:0.55, metalness:0.18, emissive: c.low, emissiveIntensity:0.06});
+      const m = new THREE.Mesh(geo.clone(), mat);
+      m.position.set(0, 0.04 + i*0.085, 0);
+      // Tiny random rotation around Y for hand-stacked look
+      m.rotation.y = (Math.random()-0.5) * 0.6;
+      this.chipStack.add(m);
+      this._chipMeshes.push(m);
+    }
+    // Decorative top "marker" chip (slightly larger)
+    if(count > 1){
+      const c = chipColor(count-1, count);
+      const matTop = new THREE.MeshStandardMaterial({color: c.top, roughness:0.4, metalness:0.5});
+      const top = new THREE.Mesh(new THREE.CylinderGeometry(0.31, 0.31, 0.02, 28), matTop);
+      top.position.set(0, 0.04 + count*0.085 - 0.01, 0);
+      this.chipStack.add(top);
+      this._chipMeshes.push(top);
+    }
+  },
+  /** Update the visible chip stack to reflect the current bet amount. */
+  setBetVisual(bet){
+    if(!this.scene || !this.chipStack) return;
+    // Map bet (in points) to stack height: each chip ≈ 25 points, capped at 18 chips.
+    const count = Math.max(1, Math.min(18, Math.ceil((bet||0) / 25)));
+    this._setChipCount(count, bet);
   },
   reset(){
     if(!this.scene) return;
@@ -3418,27 +3689,9 @@ const BAC3D = {
 })();
 
 // ── Wrap existing functions to drive the 3D scenes ─────────────────────────
-// Blackjack: wrap bjReset to also reset 3D
-const _origBjReset = window.bjReset;
-window.bjReset = function(){
-  _origBjReset();
-  BJ3D.reset();
-  BJ3D.initStartScene();
-};
-
+// (Blackjack `bjReset` already drives BJ3D internally — no wrapper needed.)
 // Blackjack: wrap renderBjState to also sync 3D
-const _origRenderBjState = window.renderBjState;
-window.renderBjState = function(d, resultHtml=''){
-  // Capture previous state BEFORE the original mutates it
-  const prevPlayerCount = prevBjPlayerCount;
-  const prevActive = prevBjActive;
-  _origRenderBjState(d, resultHtml);
-  // Initialize 3D now that game area is visible
-  whenThreeReady(()=>{
-    BJ3D.init();
-    BJ3D.sync(d, prevPlayerCount, prevActive);
-  });
-};
+// (Removed legacy wrapper — renderBjState already syncs BJ3D directly.)
 
 // Baccarat: wrap doBaccarat to play the cards in 3D BEFORE showing the text result
 const _origDoBaccarat = window.doBaccarat;
