@@ -1961,7 +1961,28 @@ def game_baccarat(pid):
     db = get_db()
     bet, err = _get_bet(d, pid, db)
     if err: return err
+    # ── Optional side bets: Player Pair, Banker Pair, Either Pair ───────
+    def _sb(key):
+        try:
+            v = int(d.get(key) or 0)
+        except (TypeError, ValueError):
+            v = -1
+        return v
+    pp_bet = _sb('player_pair_pts')
+    bp_bet = _sb('banker_pair_pts')
+    ep_bet = _sb('either_pair_pts')
+    for label, v in (('Player Pair', pp_bet), ('Banker Pair', bp_bet), ('Either Pair', ep_bet)):
+        if v < 0:
+            return jsonify({'error': f'Virheellinen {label} -panos.'}), 400
+    total_side = pp_bet + bp_bet + ep_bet
+    bal_row = db.execute('SELECT points FROM players WHERE id=?', (pid,)).fetchone()
+    cur_pts = bal_row['points'] if bal_row else 0
+    if (bet + total_side) > cur_pts:
+        return jsonify({'error': 'Ei tarpeeksi pisteitä päapanokseen ja sivupanoksiin yhteensä.'}), 400
     _atomic_deduct_points(db, pid, bet, f'Baccarat panos ({side})')
+    if pp_bet > 0: _atomic_deduct_points(db, pid, pp_bet, 'Baccarat Player Pair sivupanos')
+    if bp_bet > 0: _atomic_deduct_points(db, pid, bp_bet, 'Baccarat Banker Pair sivupanos')
+    if ep_bet > 0: _atomic_deduct_points(db, pid, ep_bet, 'Baccarat Either Pair sivupanos')
     deck = new_deck()
     dealt = _baccarat_deal_result(deck)
     phand, bhand = dealt['player_hand'], dealt['banker_hand']
@@ -1989,15 +2010,49 @@ def game_baccarat(pid):
         outcome = 'push'
     else:
         outcome = 'loss'
+
+    # ── Resolve side bets (Player Pair / Banker Pair pay 11:1, Either 5:1)
+    side_bets_resolved = {}
+    player_pair = len(phand) >= 2 and phand[0]['rank'] == phand[1]['rank']
+    banker_pair = len(bhand) >= 2 and bhand[0]['rank'] == bhand[1]['rank']
+    if pp_bet > 0:
+        if player_pair:
+            sp = pp_bet * 12  # 11:1 (stake + 11× profit)
+            _add_points(db, pid, sp, 'Baccarat Player Pair voitto')
+            side_bets_resolved['player_pair'] = {'won': True, 'payout': sp, 'bet': pp_bet}
+        else:
+            side_bets_resolved['player_pair'] = {'won': False, 'payout': 0, 'bet': pp_bet}
+    if bp_bet > 0:
+        if banker_pair:
+            sp = bp_bet * 12
+            _add_points(db, pid, sp, 'Baccarat Banker Pair voitto')
+            side_bets_resolved['banker_pair'] = {'won': True, 'payout': sp, 'bet': bp_bet}
+        else:
+            side_bets_resolved['banker_pair'] = {'won': False, 'payout': 0, 'bet': bp_bet}
+    if ep_bet > 0:
+        if player_pair or banker_pair:
+            sp = ep_bet * 6  # 5:1
+            _add_points(db, pid, sp, 'Baccarat Either Pair voitto')
+            side_bets_resolved['either_pair'] = {'won': True, 'payout': sp, 'bet': ep_bet}
+        else:
+            side_bets_resolved['either_pair'] = {'won': False, 'payout': 0, 'bet': ep_bet}
+
     db.commit()
     bal = db.execute('SELECT points FROM players WHERE id=?', (pid,)).fetchone()['points'] or 0
+    # Aggregate net across main + side bets
+    side_payouts = sum(s['payout'] for s in side_bets_resolved.values())
+    side_total   = pp_bet + bp_bet + ep_bet
     return jsonify({
         'outcome': outcome, 'winner': winner, 'side': side,
         'player_hand': phand, 'banker_hand': bhand,
         'player_total': ptot, 'banker_total': btot,
         'bet': bet, 'payout': payout, 'net': payout - bet, 'points': bal,
         'natural': dealt['natural'], 'draw_events': dealt['draw_events'],
-        'rules': {'name': 'Punto Banco Baccarat', 'banker_commission': '5%', 'tie_pays': '8:1'},
+        'side_bets': side_bets_resolved,
+        'side_bets_net': side_payouts - side_total,
+        'total_net':    (payout - bet) + (side_payouts - side_total),
+        'rules': {'name': 'Punto Banco Baccarat', 'banker_commission': '5%', 'tie_pays': '8:1',
+                  'side_bets': {'player_pair': '11:1', 'banker_pair': '11:1', 'either_pair': '5:1'}},
     })
 
 # ── Blackjack (stateful) ──

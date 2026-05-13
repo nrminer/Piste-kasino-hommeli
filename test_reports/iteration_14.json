@@ -1,0 +1,64 @@
+{
+  "summary": "Iter14 verified: (1) Chips fully removed from 3D scene — casino_3d.js no longer contains makeChipMesh, chipsGroup or CylinderGeometry; setChipStack is a no-op; visual blackjack felt is chip-free. (2) Blackjack now has 'Käsien määrä' picker (1/2/3 hands) with required data-testids. (3) Both BJ side bets (Perfect Pairs, 21+3) and Baccarat side bets (Player Pair, Banker Pair, Either Pair) have visible inputs with the correct testids and odds labels. (4) Multi-hand 2-hand deal renders two distinct 2-card hands on the player side of the felt, dealer hole card stays face-down between hands, KÄSI 1/2 → KÄSI 2/2 pill transition observed after Stand. (5) Side-bet result rows render in #bjSideResults below the table (red 'Perfect Pairs −50 p' / '21+3 −50 p'). (6) Backend POST /api/points/1/baccarat now accepts player_pair_pts/banker_pair_pts/either_pair_pts and returns side_bets dict + side_bets_net + total_net with correct 12× / 12× / 6× payouts verified against actual dealt pairs across 12 randomised rounds. (7) BJ /sidebet endpoint unchanged and healthy. (8) Carry-over flows (root redirect, slots 5×3, coinflip) all green. 14/14 pytest cases pass.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Baccarat 'Pelaa' button automation",
+        "issue": "Test script could not locate the Baccarat play button via #bacPlay / [data-testid=cust-bac-play]; neither was found. Manually-driven UI looks correct in screenshots and backend endpoint is fully validated, so this is likely a missing testid or a non-standard id on the deal button rather than a functional bug. RECOMMEND adding data-testid='cust-bac-play' to the Pelaa button so the side-bet end-to-end UI flow is testable.",
+        "affected_selectors": ["#bacPlay", "[data-testid=\"cust-bac-play\"]"]
+      }
+    ],
+    "design_issues": [
+      {
+        "screen": "Blackjack multi-hand",
+        "issues": [
+          "In 2-hand mode, the two hands render as 4 cards in a single horizontal row (10♠ 9♥ | A♥ A♦) instead of two visually grouped pairs separated by a gap. Cards do not clip but the hand0/hand1 lanes are too close at startX=-1.95 / -0.55 (gap=1.4 vs spread=0.78 → only ~2 card widths between lanes), making it ambiguous which two cards belong to which hand. Suggest widening lane separation or adding a small visual divider/label per lane."
+        ]
+      },
+      {
+        "screen": "Blackjack outcome banner",
+        "issues": [
+          "After both stands the per-hand outcome banner (expected format '1:V +100 · 2:H -100 · net …') was not located via any of #bjResultBanner / .result-banner / #bjOutcome. Side-bet rows DO appear correctly, but the main multi-hand summary may either be hidden, mis-IDed, or rendered into a non-standard element. Please confirm the banner DOM target/testid."
+        ]
+      },
+      {
+        "screen": "Carry-over (iter12/13)",
+        "issues": [
+          "Result banner still overlaps the 3D cards in single-hand BJ/Pikapokeri/War (non-blocking cosmetic carry-over)."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter14_chips_sidebets_multihand.py",
+    "/app/test_reports/pytest/iter14_results.xml"
+  ],
+  "action_items": [
+    "Add data-testid='cust-bac-play' (and ideally 'cust-bj-deal') to the deal/play buttons so the full side-bet UI flow can be automated.",
+    "Confirm/expose the multi-hand outcome banner element (e.g. give #bjResultBanner a stable id+testid). Without it the '1:V +100 · 2:H -100' summary isn't programmatically observable.",
+    "Cosmetic: widen the spacing between hand0/hand1/hand2 lanes (current lane gap 1.40 vs card spread 0.78 → cards run together). Either bump gap to ≥2.0 or render a thin divider/label per lane.",
+    "(Carry-over) Move single-hand outcome banner above/below the felt so it stops overlapping 3D cards."
+  ],
+  "critical_code_review_comments": [
+    "app.py game_baccarat: balance check `bet + total_side > cur_pts` happens AFTER `_get_bet` already validated balance for the main bet alone — fine today, but if _get_bet ever changes to deduct on the spot the side-bet validator would race. Consider checking total upfront in one place.",
+    "app.py game_baccarat side-bet deductions are 4 separate _atomic_deduct_points calls — if the process crashes between deductions and the random deck draw, partial deductions remain. Wrap main + side deductions in a single transaction or one combined _atomic_deduct_points call with a composite reason.",
+    "casino_3d.js: showChips opt is now dead (no-op) but still accepted via `opts`. Recommend removing from public signature / docs so callers stop passing it.",
+    "customer.html (>1400 lines now with multi-hand + side-bet JS) — really should be chunked into /static/js/customer/{blackjack,baccarat,…}.js to keep the template legible.",
+    "Multi-hand BJ uses N parallel POST /blackjack/start calls from the FE. Each call independently re-shuffles its own deck, so the three player hands are NOT drawn from a single shared shoe. Functionally identical RTP, but if you ever expose a 'shoe view' to the player you'll need a real multi-hand start endpoint that deals from one deck."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter14_chips_sidebets_multihand.py"
+  ],
+  "success_rate": {
+    "backend": "100% (14/14)",
+    "frontend": "Core flow (multi-hand deal + side-bet placement + side-bet result rendering + no-chips visual) verified via screenshots; Baccarat end-to-end side-bet flow not automatable due to missing testid on Pelaa button."
+  },
+  "test_credentials": "Customer: Pelaaja / test123 (player_id=1, ~39 250 pts after this run). Operator: admin123.",
+  "seed_data_creation": "Autouse session fixture tops player 1 up to >=20 000 pts before tests (reason='TEST_iter14_topup').",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend tests at /app/backend/tests/test_iter14_chips_sidebets_multihand.py run in ~2.3s. Baccarat side-bet body keys are EXACTLY player_pair_pts, banker_pair_pts, either_pair_pts; response includes side_bets:{player_pair/banker_pair/either_pair → {won, payout, bet}}, side_bets_net, total_net. Pair payouts: 12× stake for player/banker pair, 6× for either. Blackjack /sidebet endpoint expects perfect_pairs_pts + twenty_one_plus_three_pts. Multi-hand BJ on the FE issues N parallel POST /blackjack/start calls — backend hands out unique game_ids (verified). The Pelaa button on Baccarat lacks a stable testid (missing data-testid='cust-bac-play'); back button for lobby also lacks one. The KÄSI N/M pill (id=bjActiveHandPill) DOES update correctly across Stand calls. Side-bet rows render into #bjSideResults / #bacSideResults via .sidebet-result.win / .sidebet-result.loss classes (loss shown as red).",
+  "rca of the issue": "No defects requiring fixes. All iter14 acceptance criteria for the chips-removal + side-bets + multi-hand BJ work pass at the backend and visually at the UI. Two test-script gaps remain: (a) Baccarat Pelaa button needs a data-testid and (b) the multi-hand outcome banner element should be exposed with a stable id so the per-hand summary string can be asserted programmatically."
+}

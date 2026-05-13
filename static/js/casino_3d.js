@@ -146,16 +146,6 @@ function makeCardMesh(rank, suit) {
   return mesh;
 }
 
-/* ─── Chip mesh (single chip) ─────────────────────────────────────────── */
-function makeChipMesh(color) {
-  const geom = new THREE.CylinderGeometry(0.18, 0.18, 0.04, 32);
-  const mat  = new THREE.MeshStandardMaterial({ color, roughness: .45, metalness: .15 });
-  const mesh = new THREE.Mesh(geom, mat);
-  mesh.rotation.x = Math.PI / 2;   // lay flat
-  mesh.castShadow = true;
-  return mesh;
-}
-
 /* ─── Tween helpers (no GSAP — small custom rAF tween) ────────────────── */
 function tween({ duration, from, to, onUpdate, onComplete, easing }) {
   const ease = easing || (t => 1 - Math.pow(1 - t, 3)); // easeOutCubic
@@ -193,12 +183,18 @@ function slotPosition(zone, index) {
   const spread = 0.78;
   // start x = -spread * (typicalCount - 1) / 2 so the row sits centred.
   const layout = {
-    dealer:    { startX: -spread, z: -1.1 },
-    player:    { startX: -spread, z:  1.1 },
-    banker:    { startX: -spread, z: -1.1 },
-    community: { startX: -spread * 2, z: 0.4 },
-    split0:    { startX: -spread, z: 1.1 },
-    split1:    { startX: -spread, z: 2.2 },
+    dealer:    { startX: -spread,     z: -1.1 },
+    player:    { startX: -spread,     z:  1.1 },
+    banker:    { startX: -spread,     z: -1.1 },
+    community: { startX: -spread * 2, z:  0.4 },
+    split0:    { startX: -spread,     z:  1.1 },
+    split1:    { startX: -spread,     z:  2.2 },
+    // Multi-hand blackjack lanes — 3 hands spread horizontally across the
+    // visible player side of the felt. Spread chosen so 2-card hands sit
+    // comfortably within the camera frustum (≈±2.0 at z=1.0).
+    hand0:     { startX: -1.95,               z: 1.0 },
+    hand1:     { startX: -0.55,               z: 1.0 },
+    hand2:     { startX:  0.85,               z: 1.0 },
   };
   const cfg = layout[zone] || layout.player;
   // y is just above the felt — cards lie flat. Stacked slightly to avoid
@@ -208,15 +204,17 @@ function slotPosition(zone, index) {
 
 /* ─── Main table scene ────────────────────────────────────────────────── */
 export function createTableScene(container, opts = {}) {
-  const showChips = opts.showChips !== false;
+  // (showChips option deprecated — chips removed from the 3D scene.)
+  void opts;
 
   const scene = new THREE.Scene();
 
   // Camera — angled down-and-toward, like a player seated at the south
   // edge of the table looking up at the dealer. With flat cards we want
-  // enough downward tilt to read the faces clearly.
+  // enough downward tilt to read the faces clearly, and a generous FOV so
+  // 3-hand layouts still fit comfortably without clipping.
   const aspect = container.clientWidth / Math.max(1, container.clientHeight);
-  const camera = new THREE.PerspectiveCamera(44, aspect, 0.1, 50);
+  const camera = new THREE.PerspectiveCamera(48, aspect, 0.1, 50);
   camera.position.set(0, 4.6, 4.4);
   camera.lookAt(0, 1.0, 0.2);
 
@@ -295,12 +293,7 @@ export function createTableScene(container, opts = {}) {
   }
   scene.add(deckGroup);
 
-  // Chip stack (left of player area). Hidden if showChips=false.
-  const chipsGroup = new THREE.Group();
-  // Place chips ON the felt but a bit further into the table so they don't
-  // sit underneath the camera and clip out of frame.
-  chipsGroup.position.set(-2.2, 1.02, 0.6);
-  scene.add(chipsGroup);
+  // (Chip stack removed — bet amount lives in the HUD pill instead.)
 
   // Resize observer
   const ro = new ResizeObserver(() => {
@@ -474,24 +467,8 @@ export function createTableScene(container, opts = {}) {
     await flipCard(zone, index);
   }
 
-  /** Set or clear the chip stack height — visually represents the bet. */
-  function setChipStack(amount) {
-    while (chipsGroup.children.length) {
-      const m = chipsGroup.children.pop();
-      m.geometry.dispose();
-      m.material.dispose();
-    }
-    if (!showChips || amount <= 0) return;
-    const primary = cssVar('--primary', '#c9a84c');
-    const accent  = cssVar('--accent', '#5fa86b');
-    const colors = [primary, accent, '#a83a3a', '#3a6aa8'];
-    const count = Math.min(20, Math.max(1, Math.round(Math.log10(amount + 1) * 6)));
-    for (let i = 0; i < count; i++) {
-      const c = makeChipMesh(colors[i % colors.length]);
-      c.position.set(0, 0.04 * i + 0.02, 0);
-      chipsGroup.add(c);
-    }
-  }
+  /** Chip stack removed — kept as a no-op so existing call sites still work. */
+  function setChipStack(_amount) { /* intentionally empty */ }
 
   /** Update felt color (after operator theme change). */
   function refreshTheme() {

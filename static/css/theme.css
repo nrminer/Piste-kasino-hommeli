@@ -799,6 +799,100 @@ input[type=color].swatch::-webkit-color-swatch { border: none; border-radius: va
 .win-list .win-row.jackpot .lbl,
 .win-list .win-row.jackpot .amt { color: var(--primary); }
 
+/* ─── Side-bet panel (shared between Blackjack + Baccarat) ────────────── */
+.sidebet-panel {
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+  padding: .8rem .9rem;
+  background: var(--surface-2);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-sm);
+}
+.sidebet-row {
+  display: grid;
+  grid-template-columns: 1fr 92px;
+  gap: .55rem;
+  align-items: center;
+}
+.sidebet-row .lbl {
+  display: flex;
+  flex-direction: column;
+  font-size: .78rem;
+  color: var(--text);
+  font-weight: 500;
+}
+.sidebet-row .lbl small {
+  color: var(--muted);
+  font-size: .68rem;
+  margin-top: .15rem;
+  font-weight: 400;
+}
+.sidebet-row .inp {
+  padding: .42rem .5rem;
+  font-family: var(--f-mono);
+  font-size: .9rem;
+  text-align: right;
+}
+.sidebet-result {
+  font-family: var(--f-mono);
+  font-size: .76rem;
+  padding: .35rem .55rem;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+  margin-top: .35rem;
+}
+.sidebet-result.win  { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); background: var(--accent-soft); }
+.sidebet-result.loss { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, transparent); background: var(--danger-soft); }
+
+/* ─── Multi-hand picker (Blackjack) ───────────────────────────────────── */
+.hands-picker {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: .4rem;
+}
+.hands-picker button {
+  appearance: none;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--muted);
+  padding: .55rem .35rem;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-family: var(--f-mono);
+  font-size: .82rem;
+  font-weight: 600;
+  transition: all var(--t-fast);
+}
+.hands-picker button:hover { border-color: var(--primary); color: var(--primary); }
+.hands-picker button.active {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* ── Active-hand indicator (BJ multi-hand) ───────────────────────────── */
+.active-hand-pill {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  transform: translateY(-50%);
+  padding: .35rem .65rem;
+  background: var(--primary-soft);
+  border: 1px solid var(--primary);
+  border-radius: 999px;
+  font-family: var(--f-mono);
+  font-size: .7rem;
+  color: var(--primary);
+  letter-spacing: .1em;
+  pointer-events: none;
+  z-index: 3;
+}
+
 /* ─── COINFLIP ───────────────────────────────────────────────────────── */
 .coin-stage {
   aspect-ratio: 5 / 4;
