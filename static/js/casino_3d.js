@@ -184,23 +184,26 @@ function slotPosition(zone, index) {
   // Baccarat, Video Poker and especially multi-hand Blackjack once hit cards
   // extended into neighbouring lanes.
   const layout = {
-    dealer:    { startX: -0.92, z: -1.25, spread: 0.92 },
-    banker:    { startX: -0.92, z: -1.25, spread: 0.92 },
-    player:    { startX: -1.38, z:  1.35, spread: 0.92 },
-    community: { startX: -1.84, z:  0.35, spread: 0.92 },
-    split0:    { startX: -1.38, z:  0.85, spread: 0.92 },
-    split1:    { startX: -1.38, z:  2.05, spread: 0.92 },
-    // Multi-hand blackjack rows are separated front-to-back instead of
-    // side-by-side. This prevents hand 1/2/3 hit cards from visually colliding
-    // while still keeping every card readable inside the camera frame.
-    hand0:     { startX: -1.85, z: 0.05, spread: 0.78 },
-    hand1:     { startX: -1.20, z: 1.15, spread: 0.78 },
-    hand2:     { startX: -0.55, z: 2.25, spread: 0.78 },
+    dealer:    { startX: -0.92, z: -1.25, spread: 0.92, rotZ: 0, scale: 1.02 },
+    banker:    { startX: -0.92, z: -1.25, spread: 0.92, rotZ: 0, scale: 1.02 },
+    player:    { startX: -1.38, z:  1.35, spread: 0.92, rotZ: 0, scale: 1.02 },
+    // Video-poker / community rows need to stay close and readable; the deck is
+    // far right, so the 5-card row can sit tighter and larger without collision.
+    community: { startX: -1.78, z:  1.15, spread: 0.89, rotZ: 0, scale: 1.34 },
+    split0:    { startX: -1.38, z:  0.85, spread: 0.92, rotZ: 0, scale: 1.0 },
+    split1:    { startX: -1.38, z:  2.05, spread: 0.92, rotZ: 0, scale: 1.0 },
+    // Multi-hand blackjack should feel like real table seats around the felt:
+    // left, centre and right player spots with slight card angles. Within a
+    // hand cards overlap only lightly like a real dealt stack, while hands
+    // remain distinct by seat and angle.
+    hand0:     { startX: -2.05, z: 1.00, spread: 0.44, rotZ: -0.20, scale: 1.03 },
+    hand1:     { startX: -0.70, z: 1.52, spread: 0.44, rotZ:  0.00, scale: 1.03 },
+    hand2:     { startX:  0.65, z: 1.00, spread: 0.44, rotZ:  0.20, scale: 1.03 },
   };
   const cfg = layout[zone] || layout.player;
   // y is just above the felt — cards lie flat. Stacked slightly to avoid
   // z-fighting with the felt plane.
-  return { x: cfg.startX + index * cfg.spread, y: 1.01, z: cfg.z };
+  return { x: cfg.startX + index * cfg.spread, y: 1.01, z: cfg.z, rotZ: cfg.rotZ || 0, scale: cfg.scale || 1 };
 }
 
 /* ─── Main table scene ────────────────────────────────────────────────── */
@@ -215,8 +218,8 @@ export function createTableScene(container, opts = {}) {
   // enough downward tilt to read the faces clearly, and a generous FOV so
   // 3-hand layouts still fit comfortably without clipping.
   const aspect = container.clientWidth / Math.max(1, container.clientHeight);
-  const camera = new THREE.PerspectiveCamera(54, aspect, 0.1, 50);
-  camera.position.set(0, 5.65, 4.05);
+  const camera = new THREE.PerspectiveCamera(52, aspect, 0.1, 50);
+  camera.position.set(0, 5.25, 4.45);
   camera.lookAt(0, 1.0, 0.55);
 
   // Renderer
@@ -338,6 +341,7 @@ export function createTableScene(container, opts = {}) {
       // Already lying flat face-down from makeCardMesh().
       scene.add(mesh);
       const dst = slotPosition(zone, index);
+      mesh.scale.setScalar(dst.scale);
       // Bezier control: gentle arc above the table so the card "slides" over
       // the felt rather than sailing high in the air.
       const ctrl = new THREE.Vector3(
@@ -353,11 +357,11 @@ export function createTableScene(container, opts = {}) {
           const p = bezier3(start, ctrl, dst, t);
           mesh.position.copy(p);
           // Tiny in-flight Z-axis wobble for flair; keep card mostly flat.
-          mesh.rotation.z = Math.sin(t * Math.PI) * 0.18;
+          mesh.rotation.z = dst.rotZ + Math.sin(t * Math.PI) * 0.18;
         },
         onComplete() {
           mesh.position.set(dst.x, dst.y, dst.z);
-          mesh.rotation.set(Math.PI / 2, 0, 0); // settle flat face-down
+          mesh.rotation.set(Math.PI / 2, 0, dst.rotZ); // settle flat face-down
           mesh.userData.isFlipped = false;
           (cards[zone] = cards[zone] || []).push(mesh);
           if (faceUp) {
@@ -444,6 +448,7 @@ export function createTableScene(container, opts = {}) {
     }
     const mesh = makeCardMesh(card.rank, card.suit);
     const dst = slotPosition(zone, index);
+    mesh.scale.setScalar(dst.scale);
     const deckTopY = deckPos.y + 14 * CARD_T;
     mesh.position.set(deckPos.x, deckTopY + 0.2, deckPos.z);
     scene.add(mesh);
@@ -457,11 +462,11 @@ export function createTableScene(container, opts = {}) {
       onUpdate({ t }) {
         const p = bezier3(start, ctrl, dst, t);
         mesh.position.copy(p);
-        mesh.rotation.z = Math.sin(t * Math.PI) * 0.18;
+        mesh.rotation.z = dst.rotZ + Math.sin(t * Math.PI) * 0.18;
       },
       onComplete() {
         mesh.position.set(dst.x, dst.y, dst.z);
-        mesh.rotation.set(Math.PI / 2, 0, 0);
+        mesh.rotation.set(Math.PI / 2, 0, dst.rotZ);
         r();
       },
     }));

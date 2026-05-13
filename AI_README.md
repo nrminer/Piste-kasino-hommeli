@@ -195,8 +195,8 @@ Important operator features:
 
 ### 3D card layout
 - Shared card placement lives in `/app/static/js/casino_3d.js`, function `slotPosition(zone, index)`.
-- Blackjack multi-hand uses `hand0`, `hand1`, `hand2` zones laid out as diagonal/front-back rows. Do not revert to same-row horizontal lanes; that caused visible overlap.
-- Pikapokeri uses `community` for all 5 cards. Keep the deck stack far enough right so the fifth card stays readable.
+- Blackjack multi-hand uses `hand0`, `hand1`, `hand2` zones laid out as left/center/right table-seat positions with small `rotZ` angles. Do not revert to one same-row horizontal lane; that caused visible overlap.
+- Pikapokeri uses `community` for all 5 cards. Keep this row large/near the player and keep the deck stack far enough right so the fifth card stays readable.
 
 ## Testing snippets
 
