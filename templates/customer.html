@@ -1098,12 +1098,26 @@ function bjActivePill(idx, total) {
   el.textContent = `KÄSI ${idx + 1} / ${total}`;
 }
 
+function bjStatusLabel(status) {
+  const map = {
+    active: 'Kesken',
+    done_win: 'Käsi valmis',
+    done_blackjack: 'Käsi valmis',
+    done_push: 'Käsi valmis',
+    done_loss: 'Käsi valmis',
+    done_bust: 'Käsi valmis',
+    done_surrender: 'Käsi valmis',
+    abandoned: 'Keskeytetty',
+  };
+  return map[status] || status || '—';
+}
+
 function bjUpdateForHand(h) {
   // HUD reflects the currently active hand.
   $('bjPlayerTotal').textContent = h.state.player_total + (h.state.player_soft ? ' (soft)' : '');
   $('bjDealerTotal').textContent = h.state.dealer_total != null ? h.state.dealer_total : '—';
   $('bjBetLabel').textContent = fmt(h.bet) + ' p';
-  $('bjStatus').textContent = h.state.status;
+  $('bjStatus').textContent = bjStatusLabel(h.state.status);
 }
 
 function bjApplyButtonsForHand(h) {
@@ -1234,7 +1248,6 @@ async function bjAction(action) {
     });
     updateBalance(s.points);
     h.state = s;
-    bjUpdateForHand(h);
     const newCount = s.player_cards.length;
     for (let i = before; i < newCount; i++) {
       await scenes.blackjack.dealCard(h.zone, i, true, s.player_cards[i]);
@@ -1249,9 +1262,12 @@ async function bjAction(action) {
         bjState.activeIdx = nextIdx;
         bjActivePill(nextIdx, total);
         bjUpdateForHand(bjState.hands[nextIdx]);
+      } else {
+        $('bjStatus').textContent = 'Ratkaistaan';
       }
       await bjAdvanceToPlayable();
     } else {
+      bjUpdateForHand(h);
       bjApplyButtonsForHand(h);
     }
   } catch (e) {
@@ -1278,6 +1294,7 @@ async function bjSettleRound() {
   // Aggregate per-hand banner. If single hand, use simple banner; otherwise
   // show summary like "Voitto 200 / Häviö 100 / Push 0 · Netto +100 p".
   bjActivePill(0, 1);  // hide pill
+  $('bjStatus').textContent = 'Valmis';
   const totalNet = bjState.hands.reduce((a, h) => a + (h.net || 0), 0);
   if (bjState.hands.length === 1) {
     bjShowOutcome(bjState.hands[0].outcome, totalNet);

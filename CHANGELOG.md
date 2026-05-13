@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-13 — Blackjack premature status fix
+- Replaced raw/final blackjack status text in the table corner with neutral progress labels while hands are still resolving.
+- Final win/loss result remains visible only in the center banner after the round is fully settled.
+
 ## 2026-05-13 — Blackjack hand explanations in Activity
 - Added `Näytä käsi` expandable details for each row in **Viimeisimmät blackjack-kierrokset**.
 - Activity API now includes player/dealer cards, calculated totals, and a human-readable reason for the outcome.
