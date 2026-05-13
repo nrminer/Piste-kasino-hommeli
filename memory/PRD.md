@@ -23,6 +23,8 @@
 
 **Session 11:** "Ensure all cards load well, and arent overlapping I see baccarat blackjack, pikapokeris cards are overlapping"
 
+**Session 12:** "the website isnt auto updating as i have to refresh as the customer to get the updated points"
+
 ## Architecture
 - **Stack preserved**: Flask + SQLite (`/app/backend/casino.db`). NO DB removal. NO FastAPI/Mongo swap.
 - **Backend modules** (`/app/`):
@@ -108,6 +110,11 @@
 - **Pikapokeri visibility fixed** — the 5-card row is larger and closer to the player, while the deck stack stays far enough right to avoid collision.
 - **Baccarat spacing widened** — player/banker rows now have clearer gaps for 2-card and 3-card outcomes.
 
+### Current update (customer live points sync)
+- **Customer points auto-update** — `/asiakas` now polls the player points endpoint every 2.5 seconds while the customer is logged in and the tab is visible.
+- **Focus/visibility sync** — returning to the tab immediately refreshes balance and lobby history.
+- **No refresh needed** — operator/admin point grants now appear in the customer topbar and lobby balance automatically.
+
 ## Files touched
 - `/app/app.py` — added theme dict + 2 endpoints (iter12); `/` route now redirects to `/operator` (iter13).
 - `/app/static/css/theme.css` — full design system + slots + coinflip styles.
@@ -132,6 +139,7 @@
 - **Blackjack hand explanations**: Self-test verified API returns losing hand #41 with player total 22 vs dealer 16; browser check opened `Näytä käsi` and displayed both hands plus the loss reason.
 - **Blackjack premature result HUD fix**: Browser test verified 2-hand blackjack no longer shows win/result text in the corner before completion; single-hand final still shows the center `Voitto +...` banner after settle.
 - **3D card spacing fix**: Testing agent confirmed Baccarat and Pikapokeri card visibility; reported Blackjack 3-hand needed more separation. Follow-up self-tests verified Pikapokeri close-up row and Blackjack left/center/right seated layout.
+- **Customer live points sync**: Browser self-test logged in as `Test Player`, granted +123 points via API without refreshing, and confirmed the customer topbar/lobby balance updated from 5,412 p to 5,535 p automatically after polling.
 
 ## Backlog / Next Tasks
 ### P1 (Non-blocking cosmetic carry-overs from testing agent)

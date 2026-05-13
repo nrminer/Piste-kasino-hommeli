@@ -799,6 +799,8 @@ let player = null;
 let history = [];
 let theme = {};
 let activeScreen = 'lobby';
+let customerSyncTimer = null;
+let customerSyncBusy = false;
 
 // Per-game scene instances (lazy created)
 const scenes = { blackjack: null, baccarat: null, pikapokeri: null, war: null };
@@ -926,6 +928,7 @@ async function loginCustomer() {
 window.loginCustomer = loginCustomer;
 
 function logoutCustomer() {
+  stopCustomerSync();
   localStorage.removeItem(SESSION_KEY);
   player = null;
   $('app').style.display = 'none';
@@ -939,6 +942,7 @@ function enterApp() {
   renderPlayerBar();
   showScreen('lobby');
   refreshHistory();
+  startCustomerSync();
   enhanceLobbyTiles();
 }
 
@@ -963,6 +967,39 @@ function renderPlayerBar() {
 function updateBalance(points) {
   if (player) player.points = points;
   renderPlayerBar();
+}
+
+async function syncCustomerPoints({withHistory=false, quiet=true} = {}) {
+  if (!player || document.hidden || customerSyncBusy) return;
+  customerSyncBusy = true;
+  try {
+    const previous = Number(player.points || 0);
+    const j = await api(`/api/players/${player.id}/points`);
+    updateBalance(j.points);
+    if (withHistory || activeScreen === 'lobby') {
+      history = j.history || [];
+      renderHistory();
+    }
+    const next = Number(j.points || 0);
+    if (!quiet && next !== previous) {
+      const diff = next - previous;
+      toast(`Pisteet päivitetty ${diff > 0 ? '+' : ''}${fmt(diff)} p`, diff >= 0 ? 'ok' : '');
+    }
+  } catch (e) {
+    console.warn('customer points sync failed', e);
+  } finally {
+    customerSyncBusy = false;
+  }
+}
+
+function startCustomerSync() {
+  stopCustomerSync();
+  customerSyncTimer = setInterval(() => syncCustomerPoints(), 2500);
+}
+
+function stopCustomerSync() {
+  if (customerSyncTimer) clearInterval(customerSyncTimer);
+  customerSyncTimer = null;
 }
 
 /* ─── Screen routing ──────────────────────────────────────────────────── */
@@ -1909,7 +1946,11 @@ document.addEventListener('keydown', e => {
   }
 });
 document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && player) syncCustomerPoints({withHistory:true, quiet:false});
   if (!document.hidden && activeScreen === 'poker' && txhState.token) txhPoll();
+});
+window.addEventListener('focus', () => {
+  if (player) syncCustomerPoints({withHistory:true, quiet:false});
 });
 </script>
 </body>

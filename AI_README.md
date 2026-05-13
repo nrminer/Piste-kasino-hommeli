@@ -134,6 +134,7 @@ Important customer JS/state:
 - `window.bjState` — exposed intentionally for debugging multi-hand Blackjack.
 - `ensureTableScene()` — lazy-loads `/static/js/casino_3d.js` only when a 3D game opens.
 - `bjStart()`, `bjAction()`, `bjAdvanceToPlayable()`, `bjSettleRound()` — blackjack flow.
+- `startCustomerSync()`, `syncCustomerPoints()` — live customer balance sync. Polls `/api/players/<id>/points` every 2.5 seconds while logged in/visible so operator point changes appear without page refresh.
 
 ### Operator panel — `/app/templates/operator.html`
 
