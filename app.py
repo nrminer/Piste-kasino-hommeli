@@ -338,7 +338,11 @@ SPIN_PRIZES = [
 
 @app.route('/')
 def index():
-    return render_template('index.html', local_ip=get_local_ip())
+    # Single canonical operator panel — the old / cashier UI was an alternate
+    # surface that's now unified into /operator (env-protected, theme-aware,
+    # matches the customer panel visually).
+    from flask import redirect
+    return redirect('/operator', code=302)
 
 @app.route('/poker/join')
 def poker_join_page():

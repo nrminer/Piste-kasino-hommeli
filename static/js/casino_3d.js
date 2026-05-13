@@ -131,7 +131,7 @@ function makeCardMesh(rank, suit) {
   if (!cachedBack) cachedBack = buildCardBackTexture();
   const faceTex = buildCardFaceTexture(rank, suit);
   // BoxGeometry face order: [+x, -x, +y, -y, +z, -z]
-  // +z is the "front" face we'll show after flipping; -z is the back.
+  // +z is the "front" face (face of card); -z is the back design.
   const matFront = new THREE.MeshStandardMaterial({ map: faceTex, roughness: .35, metalness: .05 });
   const matBack  = new THREE.MeshStandardMaterial({ map: cachedBack, roughness: .35, metalness: .05 });
   const edge     = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .8 });
@@ -139,9 +139,10 @@ function makeCardMesh(rank, suit) {
   const mesh = new THREE.Mesh(geom, [edge, edge, edge, edge, matFront, matBack]);
   mesh.castShadow = true;
   mesh.receiveShadow = false;
-  mesh.userData = { rank, suit, isFlipped: false };
-  // start face-down (back facing camera)
-  mesh.rotation.y = Math.PI;
+  mesh.userData = { rank, suit, isFlipped: false, faceTex, faceMatIndex: 4 };
+  // Lay flat on the felt, face DOWN (face touching felt, back visible from above).
+  // rotation.x = +PI/2 puts the +Z geometry face (the face of the card) toward -Y world.
+  mesh.rotation.set(Math.PI / 2, 0, 0);
   return mesh;
 }
 
@@ -200,7 +201,9 @@ function slotPosition(zone, index) {
     split1:    { startX: -spread, z: 2.2 },
   };
   const cfg = layout[zone] || layout.player;
-  return { x: cfg.startX + index * spread, y: 1.1, z: cfg.z };
+  // y is just above the felt — cards lie flat. Stacked slightly to avoid
+  // z-fighting with the felt plane.
+  return { x: cfg.startX + index * spread, y: 1.01, z: cfg.z };
 }
 
 /* ─── Main table scene ────────────────────────────────────────────────── */
@@ -209,11 +212,13 @@ export function createTableScene(container, opts = {}) {
 
   const scene = new THREE.Scene();
 
-  // Camera
+  // Camera — angled down-and-toward, like a player seated at the south
+  // edge of the table looking up at the dealer. With flat cards we want
+  // enough downward tilt to read the faces clearly.
   const aspect = container.clientWidth / Math.max(1, container.clientHeight);
-  const camera = new THREE.PerspectiveCamera(46, aspect, 0.1, 50);
-  camera.position.set(0, 5.0, 4.6);
-  camera.lookAt(0, 0.8, 0);
+  const camera = new THREE.PerspectiveCamera(44, aspect, 0.1, 50);
+  camera.position.set(0, 4.6, 4.4);
+  camera.lookAt(0, 1.0, 0.2);
 
   // Renderer
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -266,20 +271,24 @@ export function createTableScene(container, opts = {}) {
   border.position.y = 1.005;
   scene.add(border);
 
-  // Deck stack anchor (cards spawn here)
-  const deckPos = new THREE.Vector3(2.6, 1.05, 0.3);
+  // Deck stack anchor (cards spawn here). Cards lay FLAT on the felt; the
+  // stack is built by raising each new card slightly in world Y.
+  const deckPos = new THREE.Vector3(2.6, 1.01, 0.0);
 
-  // Build a small physical deck for visual reference
+  // Build a small physical deck for visual reference — a stack of face-down
+  // flat cards near the right side of the table.
   const deckGroup = new THREE.Group();
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 14; i++) {
+    if (!cachedBack) cachedBack = buildCardBackTexture();
+    // Use BoxGeometry with face textures so it visually matches dealt cards.
+    const edgeMat  = new THREE.MeshStandardMaterial({ color: 0xfafafa, roughness: .8 });
+    const backMat  = new THREE.MeshStandardMaterial({ map: cachedBack, roughness: .4 });
     const slab = new THREE.Mesh(
       new THREE.BoxGeometry(CARD_W, CARD_H, CARD_T),
-      new THREE.MeshStandardMaterial({
-        map: cachedBack || (cachedBack = buildCardBackTexture()),
-        roughness: .4,
-      })
+      [edgeMat, edgeMat, edgeMat, edgeMat, edgeMat, backMat],
     );
-    slab.rotation.y = Math.PI;
+    // Lay flat with the back design (BoxGeometry -Z face) pointing UP.
+    slab.rotation.set(Math.PI / 2, 0, 0);
     slab.position.set(deckPos.x, deckPos.y + i * CARD_T, deckPos.z);
     slab.castShadow = true;
     deckGroup.add(slab);
@@ -317,40 +326,42 @@ export function createTableScene(container, opts = {}) {
   const cards = {};
 
   /** Deal a card to a zone with animation. Returns a promise that resolves
-   *  after the deal animation completes (before flip). */
+   *  after the deal animation completes (then the optional flip). */
   function dealCard(zone, index, faceUp = false, card = null) {
     return new Promise((resolve) => {
-      // If card data is missing, use a back-only mesh
+      // For face-down cards (e.g. blackjack hole card) we don't yet know the
+      // real value; spawn a placeholder mesh — when the hole is revealed the
+      // caller swaps in real data via revealCard().
       const mesh = card
         ? makeCardMesh(card.rank, card.suit)
         : makeCardMesh('?', '♠');
-      // start at deck anchor, slight stack offset
-      const start = new THREE.Vector3(deckPos.x, deckPos.y + 0.5, deckPos.z);
+      // Spawn at the top of the visible deck stack.
+      const deckTopY = deckPos.y + 14 * CARD_T;
+      const start = new THREE.Vector3(deckPos.x, deckTopY + 0.2, deckPos.z);
       mesh.position.copy(start);
-      mesh.rotation.set(0, Math.PI, 0); // face-down
+      // Already lying flat face-down from makeCardMesh().
       scene.add(mesh);
       const dst = slotPosition(zone, index);
-      // Bezier control: high arc above the table
+      // Bezier control: gentle arc above the table so the card "slides" over
+      // the felt rather than sailing high in the air.
       const ctrl = new THREE.Vector3(
         (start.x + dst.x) / 2,
-        Math.max(start.y, dst.y) + 1.5,
+        Math.max(start.y, dst.y) + 0.6,
         (start.z + dst.z) / 2,
       );
-      const fromAngle = mesh.rotation.y;
-      const toAngle = fromAngle + Math.PI * 0.5; // slight rotation in flight
       tween({
-        duration: 480,
+        duration: 420,
         from: { t: 0 },
         to:   { t: 1 },
         onUpdate({ t }) {
           const p = bezier3(start, ctrl, dst, t);
           mesh.position.copy(p);
-          mesh.rotation.y = fromAngle + (toAngle - fromAngle) * t;
-          mesh.rotation.z = Math.sin(t * Math.PI) * 0.4;
+          // Tiny in-flight Z-axis wobble for flair; keep card mostly flat.
+          mesh.rotation.z = Math.sin(t * Math.PI) * 0.18;
         },
         onComplete() {
-          mesh.position.set(dst.x, dst.y + 0.005, dst.z);
-          mesh.rotation.set(0, Math.PI, 0);
+          mesh.position.set(dst.x, dst.y, dst.z);
+          mesh.rotation.set(Math.PI / 2, 0, 0); // settle flat face-down
           mesh.userData.isFlipped = false;
           (cards[zone] = cards[zone] || []).push(mesh);
           if (faceUp) {
@@ -363,31 +374,52 @@ export function createTableScene(container, opts = {}) {
     });
   }
 
-  /** Flip a card from face-down to face-up (or vice versa). */
+  /** Flip a card by rotating around the world X axis 180° while lifting the
+   *  card off the felt at the apex — the natural casino "turn-over" motion. */
   function flipCard(zone, index) {
     return new Promise((resolve) => {
       const mesh = (cards[zone] || [])[index];
       if (!mesh) return resolve();
-      const from = mesh.rotation.y;
-      const to = mesh.userData.isFlipped ? Math.PI : 0;
+      const from = mesh.rotation.x;
+      const to   = mesh.userData.isFlipped ? Math.PI / 2 : -Math.PI / 2;
+      const baseY = mesh.position.y;
       tween({
-        duration: 340,
-        from: { y: from },
-        to:   { y: to },
-        onUpdate({ y }) {
-          mesh.rotation.y = y;
-          // small lift during flip
-          const t = Math.abs((to - from) === 0 ? 0 : (y - from) / (to - from));
-          mesh.position.y = 1.105 + Math.sin(t * Math.PI) * 0.18;
+        duration: 360,
+        from: { t: 0 },
+        to:   { t: 1 },
+        onUpdate({ t }) {
+          mesh.rotation.x = from + (to - from) * t;
+          // Lift then settle — peaks at t=0.5
+          mesh.position.y = baseY + Math.sin(t * Math.PI) * 0.22;
         },
         onComplete() {
-          mesh.rotation.y = to;
-          mesh.position.y = 1.105;
+          mesh.rotation.x = to;
+          mesh.position.y = baseY;
           mesh.userData.isFlipped = !mesh.userData.isFlipped;
           resolve();
         },
       });
     });
+  }
+
+  /** Swap a face-down card's face texture to the REAL card data, then flip
+   *  it. Used for the blackjack dealer hole card — we don't know the value
+   *  at deal time, but reveal it once the round resolves. */
+  async function revealCard(zone, index, card) {
+    const mesh = (cards[zone] || [])[index];
+    if (!mesh || !card) return;
+    // Build a new face texture and swap into the front material.
+    const newFaceTex = buildCardFaceTexture(card.rank, card.suit);
+    const mats = mesh.material;
+    if (Array.isArray(mats) && mats[mesh.userData.faceMatIndex]) {
+      const m = mats[mesh.userData.faceMatIndex];
+      if (m.map) m.map.dispose();
+      m.map = newFaceTex;
+      m.needsUpdate = true;
+    }
+    mesh.userData.rank = card.rank;
+    mesh.userData.suit = card.suit;
+    await flipCard(zone, index);
   }
 
   /** Remove all cards from the table. */
@@ -402,34 +434,35 @@ export function createTableScene(container, opts = {}) {
     }
   }
 
-  /** Replace cards in a zone (used for video poker where we want to swap a
-   *  specific card after the player draws). */
+  /** Replace a card in a zone (used for video poker draw — discard the old
+   *  card, deal a new one face-down at that slot, then flip face-up). */
   async function replaceCard(zone, index, card) {
     const old = (cards[zone] || [])[index];
     if (old) {
       scene.remove(old);
       old.geometry.dispose();
+      if (Array.isArray(old.material)) old.material.forEach(m => m.map && m.map.dispose());
     }
     const mesh = makeCardMesh(card.rank, card.suit);
     const dst = slotPosition(zone, index);
-    mesh.position.set(deckPos.x, deckPos.y + 0.5, deckPos.z);
-    mesh.rotation.set(0, Math.PI, 0);
+    const deckTopY = deckPos.y + 14 * CARD_T;
+    mesh.position.set(deckPos.x, deckTopY + 0.2, deckPos.z);
     scene.add(mesh);
     (cards[zone] = cards[zone] || []);
     cards[zone][index] = mesh;
     const start = mesh.position.clone();
-    const ctrl = new THREE.Vector3((start.x + dst.x) / 2, start.y + 1.5, (start.z + dst.z) / 2);
+    const ctrl = new THREE.Vector3((start.x + dst.x) / 2, start.y + 0.6, (start.z + dst.z) / 2);
     await new Promise(r => tween({
       duration: 380,
       from: { t: 0 }, to: { t: 1 },
       onUpdate({ t }) {
         const p = bezier3(start, ctrl, dst, t);
         mesh.position.copy(p);
-        mesh.rotation.z = Math.sin(t * Math.PI) * 0.3;
+        mesh.rotation.z = Math.sin(t * Math.PI) * 0.18;
       },
       onComplete() {
-        mesh.position.set(dst.x, dst.y + 0.005, dst.z);
-        mesh.rotation.z = 0;
+        mesh.position.set(dst.x, dst.y, dst.z);
+        mesh.rotation.set(Math.PI / 2, 0, 0);
         r();
       },
     }));
@@ -484,6 +517,7 @@ export function createTableScene(container, opts = {}) {
     dealCard,
     flipCard,
     replaceCard,
+    revealCard,
     clearTable,
     setChipStack,
     refreshTheme,

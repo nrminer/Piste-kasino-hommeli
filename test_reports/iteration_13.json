@@ -1,0 +1,38 @@
+{
+  "summary": "Iter13 verified: GET / now 302→/operator; /asiakas lobby shows all 6 tiles (BJ, Baccarat, Pikapokeri, War, Slots, Coinflip); 3D blackjack cards lie FLAT on the felt and dealer hole card reveals as REAL rank/suit (verified via screenshot — '3♠' not '?'); Slots 5×3 grid populates correctly with theme switch; Coinflip POST body uses {bet, choice} not {side}; result banner shows 'Kruuna — Voitto +100 p'. 16/16 backend pytest cases pass; zero JS pageerrors during the full UI smoke.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Blackjack 3D table", "issues": ["Result banner 'Voitto +100 p' overlaps the dealt cards (carry-over cosmetic issue first flagged in iter12)."]},
+      {"screen": "Blackjack 3D table", "issues": ["A small stray blue-tinted rectangular sprite is visible at bottom-left of the felt (~discard-pile or chip placeholder remnant). Cosmetic, non-blocking."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter13_slots_coinflip_redirect.py",
+    "/app/test_reports/pytest/iter13_results.xml"
+  ],
+  "action_items": [
+    "(Non-blocking, carry-over) Move outcome banner above/below the table felt so it stops overlapping the 3D cards in Blackjack/Pikapokeri/War.",
+    "(Non-blocking) Investigate the small blue rectangular sprite at the bottom-left of the blackjack felt — may be an un-disposed mesh from a previous round or a leftover chip placeholder.",
+    "(Non-blocking, carry-over) customer.html is ~1300 lines now (slots+coinflip JS appended) — consider chunking per-game JS into /static/js/customer/*.js."
+  ],
+  "critical_code_review_comments": [
+    "Blackjack action route is /api/points/blackjack/<gid>/action (no pid in path) while every OTHER blackjack sub-route uses /api/points/<pid>/blackjack/<gid>/... — inconsistent URL shape, risk of confusion for FE clients and future tests. Consider normalising to /api/points/<pid>/blackjack/<gid>/action.",
+    "POST /api/points/<pid>/slots: when streak='win' it force-paints the middle row with the first symbol id (sym = theme['symbols'][0]['id']) — this works for 'fruits' but in 'space' / 'egypt' it may create non-winning lines if symbols[0] isn't on the payline of the eval logic; double-check payouts table matches forced symbol.",
+    "GET /api/slots/jackpot does a write (re-seeding pool to JACKPOT_INITIAL when below) inside a GET handler — surprising side-effect for a GET request; move re-seed into a background job or migration.",
+    "casino_3d.js revealCard() relies on caller passing real card object; if called twice (network retry) it will re-flip the already-revealed card and visually invert it. Guard with an `if (mesh.userData.revealed) return;` check.",
+    "templates/customer.html: cfFlip()/slotsSpin() POST body is built with literals — good — but there is no anti-double-click guard; button should be disabled while a coinflip/spin is in flight to prevent racing the deduct."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter13_slots_coinflip_redirect.py"
+  ],
+  "success_rate": { "backend": "100% (16/16)", "frontend": "100% on the 6 critical flows; 2 carry-over cosmetic notes" },
+  "test_credentials": "Customer: Pelaaja / test123 (player_id=1, ~10 750 pts after this run). Operator: admin123 from /app/.env.",
+  "seed_data_creation": "Autouse session fixture tops up player 1 to >=5000 pts before tests (reason='TEST_iter13_topup').",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend tests at /app/backend/tests/test_iter13_slots_coinflip_redirect.py run in ~2s. Coinflip API STRICTLY requires {bet, choice} with choice in {heads,tails}; legacy 'side' key returns 400. Slots returns {grid:5x3, wins, scatter_positions, jackpot_pool, payout, net, bet, points,...}. Blackjack action endpoint URL is /api/points/blackjack/<gid>/action (no pid). Front-end at /asiakas: lobby uses cust-tile-* testids; slots uses cust-slots-theme-{fruits,egypt,space}, cust-slots-spin, cust-slots-jackpot; coinflip uses cust-cf-pick-{heads,tails}, cust-cf-flip, #coinResult.show. Three.js cards now have rotation.set(PI/2,0,0) = flat face-down. revealCard(zone, idx, card) swaps the canvas texture to the real rank/suit and re-flips.",
+  "rca of the issue": "No new defects. All iter13 acceptance criteria verified: redirect, 6-tile lobby, flat 3D cards, real hole-card reveal, slots integration with 5x3 grid + theme picker, coinflip with correct {bet,choice} body. The two cosmetic items (banner overlap + small sprite at bottom-left of blackjack felt) carry over from iter12 styling and are non-blocking."
+}

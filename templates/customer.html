@@ -311,6 +311,22 @@
             <p>Yksi kortti vs jakaja · <em>tasapelissä sota</em></p>
           </div>
         </div>
+        <div class="lobby-tile" onclick="openGame('slots')" data-testid="cust-tile-slots">
+          <div class="art" style="background: linear-gradient(135deg, #2a2a1a, #0a0d12)"></div>
+          <div class="scrim"></div>
+          <div class="info">
+            <h3>Hedelmäpeli</h3>
+            <p>5×3 ruudukko · <em>jättipotti · ilmaiskierroksia</em></p>
+          </div>
+        </div>
+        <div class="lobby-tile" onclick="openGame('coinflip')" data-testid="cust-tile-coinflip">
+          <div class="art" style="background: linear-gradient(135deg, #1a2a2a, #0a0d12)"></div>
+          <div class="scrim"></div>
+          <div class="info">
+            <h3>Kolikonheitto</h3>
+            <p>Kruuna vai klaava · <em>nopea ratkaisu</em></p>
+          </div>
+        </div>
       </div>
 
       <div class="card pop-in" style="margin-top: 1.4rem">
@@ -517,6 +533,95 @@
         </aside>
       </div>
     </section>
+
+    <!-- SLOTS (5×3 reel grid) -->
+    <section class="screen" id="screen-slots" data-testid="cust-screen-slots">
+      <div class="back-row">
+        <button class="btn btn-ghost btn-square" onclick="closeGame()" data-testid="cust-slots-back-btn">← Aulaan</button>
+        <h1>Hedelmäpeli</h1>
+        <span class="pill" id="slotsTheme">Hedelmät</span>
+      </div>
+      <div class="split">
+        <div>
+          <div class="slots-frame">
+            <div class="jackpot-banner">
+              <div class="l">Jättipotti</div>
+              <div class="v mono" id="slotsJackpot" data-testid="cust-slots-jackpot">— p</div>
+            </div>
+            <div class="theme-picker" id="slotsThemes">
+              <button data-theme="fruits" class="active" onclick="slotsSetTheme('fruits')" data-testid="cust-slots-theme-fruits">Hedelmät</button>
+              <button data-theme="egypt"  onclick="slotsSetTheme('egypt')"  data-testid="cust-slots-theme-egypt">Egypti</button>
+              <button data-theme="space"  onclick="slotsSetTheme('space')"  data-testid="cust-slots-theme-space">Avaruus</button>
+            </div>
+            <div class="slots-grid" id="slotsGrid"></div>
+            <div class="win-list" id="slotsWinList"></div>
+          </div>
+        </div>
+        <aside>
+          <div class="betpad">
+            <span class="uppercase-label">Panos</span>
+            <div class="chip-row">
+              <button class="chip-btn" onclick="betAdd('slotsBet', 25)">+25</button>
+              <button class="chip-btn" onclick="betAdd('slotsBet', 100)">+100</button>
+              <button class="chip-btn" onclick="betAdd('slotsBet', 500)">+500</button>
+              <button class="chip-btn clear" onclick="betClear('slotsBet')">Tyhjennä</button>
+            </div>
+            <div class="bet-input-row">
+              <input class="inp mono" id="slotsBet" type="number" min="25" step="25" value="100">
+            </div>
+            <input type="range" class="bet-slider" id="slotsBet-slider" min="25" max="2000" step="25" value="100">
+            <button class="btn btn-primary" onclick="slotsSpin()" id="slotsSpinBtn" data-testid="cust-slots-spin">Pyöräytä</button>
+          </div>
+          <div class="card" style="margin-top: 1rem; margin-bottom: 0">
+            <h2 style="font-size: 1rem; margin-bottom: .5rem">Tietoa</h2>
+            <p style="font-size: .82rem; color: var(--muted); line-height: 1.55">
+              5×3 ruudukko · 20 voittolinjaa · 💰 scatter laukaisee ilmaiskierrokset · 💎 viisi suoraan riviin = jättipotti.
+            </p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- COINFLIP -->
+    <section class="screen" id="screen-coinflip" data-testid="cust-screen-coinflip">
+      <div class="back-row">
+        <button class="btn btn-ghost btn-square" onclick="closeGame()" data-testid="cust-cf-back-btn">← Aulaan</button>
+        <h1>Kolikonheitto</h1>
+        <span class="pill">1:1</span>
+      </div>
+      <div class="split">
+        <div>
+          <div class="coin-stage">
+            <div class="coin idle-h" id="coinEl">
+              <div class="face heads">K</div>
+              <div class="face tails">L</div>
+            </div>
+            <div class="coin-result" id="coinResult"></div>
+          </div>
+        </div>
+        <aside>
+          <div class="betpad">
+            <span class="uppercase-label">Valitse</span>
+            <div class="side-picker-coin">
+              <button class="side-pick active" id="cfPickH" onclick="cfPick('heads')" data-testid="cust-cf-pick-heads">Kruuna (K)</button>
+              <button class="side-pick"        id="cfPickT" onclick="cfPick('tails')" data-testid="cust-cf-pick-tails">Klaava (L)</button>
+            </div>
+            <span class="uppercase-label">Panos</span>
+            <div class="chip-row">
+              <button class="chip-btn" onclick="betAdd('cfBet', 25)">+25</button>
+              <button class="chip-btn" onclick="betAdd('cfBet', 100)">+100</button>
+              <button class="chip-btn" onclick="betAdd('cfBet', 500)">+500</button>
+              <button class="chip-btn clear" onclick="betClear('cfBet')">Tyhjennä</button>
+            </div>
+            <div class="bet-input-row">
+              <input class="inp mono" id="cfBet" type="number" min="25" step="25" value="100">
+            </div>
+            <input type="range" class="bet-slider" id="cfBet-slider" min="25" max="5000" step="25" value="100">
+            <button class="btn btn-primary" onclick="cfFlip()" id="cfFlipBtn" data-testid="cust-cf-flip">Heitä</button>
+          </div>
+        </aside>
+      </div>
+    </section>
   </div>
 </div>
 
@@ -675,6 +780,11 @@ function showScreen(name) {
   if (name === 'war' && !scenes.war) {
     scenes.war = createTableScene($('warScene'), { layout: 'dealer_player' });
   }
+  // Slots & coinflip don't use the 3D card scene — initialize their UI once
+  if (name === 'slots') {
+    slotsLoadJackpot();
+    slotsRenderGrid(slotsPlaceholderGrid());
+  }
 }
 function openGame(name) { showScreen(name); }
 function closeGame() { showScreen('lobby'); refreshHistory(); }
@@ -788,11 +898,16 @@ async function bjStart() {
     await scenes.blackjack.dealCard('player', 1, true, s.player_cards[1]);
     await scenes.blackjack.dealCard('dealer', 1, false, null); // hole card stays face down
     if (s.outcome) {
-      // Natural blackjack / push / loss settled immediately
-      if (s.dealer_has_bj || s.outcome === 'blackjack' || s.outcome === 'push' || s.outcome === 'loss') {
-        // Reveal the hole card
-        await delay(280);
-        await scenes.blackjack.flipCard('dealer', 1);
+      // Round resolved on deal (blackjack / dealer-BJ / push / loss).
+      // dealer_cards now contains the REAL hole card — reveal it.
+      await delay(280);
+      if (s.dealer_cards.length >= 2 && s.dealer_cards[1] && s.dealer_cards[1].rank !== '?') {
+        await scenes.blackjack.revealCard('dealer', 1, s.dealer_cards[1]);
+      }
+      // Any additional draws the dealer made before stopping.
+      const dealerOnTable = scenes.blackjack.getCardCount('dealer');
+      for (let i = dealerOnTable; i < s.dealer_cards.length; i++) {
+        await scenes.blackjack.dealCard('dealer', i, true, s.dealer_cards[i]);
       }
       bjShowOutcome(s.outcome, s.net);
       $('bjStartBtn').disabled = false;
@@ -819,22 +934,18 @@ async function bjAction(action) {
     });
     updateBalance(s.points);
     bjUpdate(s);
-    // Animate new cards
+    // Animate new player cards (if any drawn)
     const newPlayer = s.player_cards.length;
     for (let i = before; i < newPlayer; i++) {
       await scenes.blackjack.dealCard('player', i, true, s.player_cards[i]);
     }
-    // Dealer cards revealed (if game done)
     if (s.outcome) {
-      // Flip hole card
-      if (!scenes.blackjack.getCardCount('dealer')) {} // nothing
-      // dealer_cards array length may exceed our placed cards
+      // Reveal the hole card with its real face, then deal any extra dealer
+      // cards the API drew during settlement.
       const dealerOnTable = scenes.blackjack.getCardCount('dealer');
-      // Reveal hole card if still face down
-      if (dealerOnTable >= 2) {
-        await scenes.blackjack.flipCard('dealer', 1);
+      if (dealerOnTable >= 2 && s.dealer_cards.length >= 2 && s.dealer_cards[1] && s.dealer_cards[1].rank !== '?') {
+        await scenes.blackjack.revealCard('dealer', 1, s.dealer_cards[1]);
       }
-      // Deal any additional dealer cards
       for (let i = dealerOnTable; i < s.dealer_cards.length; i++) {
         await scenes.blackjack.dealCard('dealer', i, true, s.dealer_cards[i]);
       }
@@ -1075,6 +1186,193 @@ async function warDeal() {
   finally { $('warDealBtn').disabled = false; }
 }
 window.warDeal = warDeal;
+
+/* ============================================================================
+   GAME · SLOTS (5×3 reels)
+   ========================================================================== */
+const SLOT_GLYPH = {
+  // Fruits theme
+  cherry: '🍒', lemon: '🍋', orange: '🍊', grape: '🍇',
+  bell: '🔔',   star: '⭐',   jackpot: '7⃣', diamond: '💎',
+  wild: '🃏',   scatter: '💰',
+  // Egypt theme
+  scarab: '🪲', eye: '𓂀', jar: '🏺', eagle: '🦅',
+  cat: '🐈',    pharaoh: '👑', book: '📖',
+  // Space theme
+  planet: '🪐', comet: '☄️', alien: '👽', rocket: '🚀',
+  stars: '✨',  moon: '🌙', gem: '💠',
+};
+const SLOT_THEME_LABEL = { fruits: 'Hedelmät', egypt: 'Egypti', space: 'Avaruus' };
+const slotsState = { theme: 'fruits', spinning: false, jackpot: 0 };
+
+function slotsSetTheme(t) {
+  if (slotsState.spinning) return;
+  slotsState.theme = t;
+  document.querySelectorAll('#slotsThemes button').forEach(b => {
+    b.classList.toggle('active', b.dataset.theme === t);
+  });
+  $('slotsTheme').textContent = SLOT_THEME_LABEL[t] || t;
+  slotsRenderGrid(slotsPlaceholderGrid());
+  $('slotsWinList').innerHTML = '';
+}
+window.slotsSetTheme = slotsSetTheme;
+
+function slotsPlaceholderGrid() {
+  const themes = {
+    fruits: ['cherry','lemon','orange','grape','bell','star','wild','scatter'],
+    egypt:  ['scarab','eye','jar','eagle','cat','pharaoh','wild','scatter'],
+    space:  ['planet','comet','alien','rocket','stars','moon','wild','scatter'],
+  };
+  const pool = themes[slotsState.theme] || themes.fruits;
+  const g = [];
+  for (let c = 0; c < 5; c++) {
+    g.push([pool[(c*7) % pool.length], pool[(c*7+1) % pool.length], pool[(c*7+2) % pool.length]]);
+  }
+  return g;
+}
+
+function slotsRenderGrid(grid, opts = {}) {
+  const winCells = new Set();
+  const scatterCells = new Set();
+  const jackpotCells = new Set();
+  (opts.wins || []).forEach(w => (w.positions || []).forEach(([c,r]) => winCells.add(`${c},${r}`)));
+  (opts.scatter_positions || []).forEach(([c,r]) => scatterCells.add(`${c},${r}`));
+  if (opts.jackpot) {
+    for (let c = 0; c < 5; c++) jackpotCells.add(`${c},1`);
+  }
+  const html = grid.map((col, ci) => `
+    <div class="slot-reel">
+      ${col.map((sym, ri) => {
+        const cls = [
+          'slot-cell',
+          opts.spinning ? 'spinning' : '',
+          winCells.has(`${ci},${ri}`) ? 'win' : '',
+          scatterCells.has(`${ci},${ri}`) ? 'scatter' : '',
+          jackpotCells.has(`${ci},${ri}`) ? 'jackpot-cell' : '',
+        ].join(' ');
+        return `<div class="${cls}">${SLOT_GLYPH[sym] || '·'}</div>`;
+      }).join('')}
+    </div>
+  `).join('');
+  $('slotsGrid').innerHTML = html;
+}
+
+async function slotsLoadJackpot() {
+  try {
+    const j = await api('/api/slots/jackpot');
+    slotsState.jackpot = j.pool || 0;
+    $('slotsJackpot').textContent = fmt(slotsState.jackpot) + ' p';
+  } catch (e) { /* silent */ }
+}
+
+async function slotsSpin() {
+  if (slotsState.spinning) return;
+  const bet = getBet('slotsBet');
+  if (!bet) return;
+  slotsState.spinning = true;
+  $('slotsSpinBtn').disabled = true;
+  $('slotsWinList').innerHTML = '';
+  // Animate spin first with placeholder grid
+  slotsRenderGrid(slotsPlaceholderGrid(), { spinning: true });
+  await delay(420);
+  try {
+    const s = await api(`/api/points/${player.id}/slots`, {
+      method:'POST', body: JSON.stringify({bet, theme: slotsState.theme})
+    });
+    updateBalance(s.points);
+    slotsState.jackpot = s.jackpot_pool || slotsState.jackpot;
+    $('slotsJackpot').textContent = fmt(slotsState.jackpot) + ' p';
+    slotsRenderGrid(s.grid, {
+      wins: s.wins,
+      scatter_positions: s.scatter_positions,
+      jackpot: s.jackpot_won,
+    });
+    slotsRenderWins(s);
+  } catch (e) {
+    toast(e.message, 'err');
+  } finally {
+    slotsState.spinning = false;
+    $('slotsSpinBtn').disabled = false;
+  }
+}
+window.slotsSpin = slotsSpin;
+
+function slotsRenderWins(s) {
+  const rows = [];
+  if (s.jackpot_won) {
+    rows.push(`<div class="win-row jackpot"><span class="lbl">JÄTTIPOTTI 💎</span><span class="amt">+${fmt(s.jackpot_payout)} p</span></div>`);
+  }
+  if (s.payout > 0) {
+    rows.push(`<div class="win-row"><span class="lbl">Voittolinjat × ${s.wins.length}</span><span class="amt">+${fmt(s.payout)} p</span></div>`);
+  }
+  if (s.free_spins_triggered) {
+    rows.push(`<div class="win-row"><span class="lbl">Ilmaiskierrokset × ${s.free_spin_count}</span><span class="amt">+${fmt(s.bonus_payout || 0)} p</span></div>`);
+  }
+  if (rows.length === 0) {
+    rows.push(`<div class="win-row"><span class="lbl">Ei voittoa</span><span class="amt" style="color:var(--danger)">${fmt(s.net)} p</span></div>`);
+  } else {
+    const sign = s.net >= 0 ? '+' : '';
+    rows.push(`<div class="win-row"><span class="lbl">Netto</span><span class="amt">${sign}${fmt(s.net)} p</span></div>`);
+  }
+  $('slotsWinList').innerHTML = rows.join('');
+}
+
+/* ============================================================================
+   GAME · COINFLIP
+   ========================================================================== */
+const cfState = { pick: 'heads', busy: false };
+
+function cfPick(side) {
+  if (cfState.busy) return;
+  cfState.pick = side;
+  $('cfPickH').classList.toggle('active', side === 'heads');
+  $('cfPickT').classList.toggle('active', side === 'tails');
+}
+window.cfPick = cfPick;
+
+function cfResult(text, cls) {
+  const r = $('coinResult');
+  r.textContent = text;
+  r.className = 'coin-result show ' + (cls || '');
+  clearTimeout(cfResult._t);
+  cfResult._t = setTimeout(() => r.classList.remove('show'), 3000);
+}
+
+async function cfFlip() {
+  if (cfState.busy) return;
+  const bet = getBet('cfBet');
+  if (!bet) return;
+  cfState.busy = true;
+  $('cfFlipBtn').disabled = true;
+  $('coinResult').classList.remove('show');
+  const coin = $('coinEl');
+  coin.classList.remove('idle-h', 'idle-t', 'spin-h', 'spin-t');
+  // force reflow so the transition restarts
+  void coin.offsetWidth;
+  try {
+    const s = await api(`/api/points/${player.id}/coinflip`, {
+      method:'POST', body: JSON.stringify({bet, choice: cfState.pick})
+    });
+    // Animate the result side
+    coin.classList.add(s.result === 'heads' ? 'spin-h' : 'spin-t');
+    await delay(1700);
+    coin.classList.remove('spin-h', 'spin-t');
+    coin.classList.add(s.result === 'heads' ? 'idle-h' : 'idle-t');
+    updateBalance(s.points);
+    const sideName = s.result === 'heads' ? 'Kruuna' : 'Klaava';
+    if (s.outcome === 'win') {
+      cfResult(`${sideName} — Voitto +${fmt(s.net)} p`, 'win');
+    } else {
+      cfResult(`${sideName} — Häviö ${fmt(s.net)} p`, 'loss');
+    }
+  } catch (e) {
+    toast(e.message, 'err');
+  } finally {
+    cfState.busy = false;
+    $('cfFlipBtn').disabled = false;
+  }
+}
+window.cfFlip = cfFlip;
 
 /* ─── Boot ────────────────────────────────────────────────────────────── */
 (async function boot() {
