@@ -446,15 +446,15 @@ input[type=color].swatch::-webkit-color-swatch { border: none; border-radius: va
 .scene-3d .corner-br { bottom: .8rem; right: .8rem; }
 .scene-3d .center-banner {
   position: absolute;
-  top: 50%;
+  top: 22%;
   left: 50%;
   transform: translate(-50%, -50%) scale(.96);
-  padding: 1.2rem 2rem;
+  padding: 1rem 1.8rem;
   background: color-mix(in srgb, var(--bg) 95%, transparent);
   border: 1px solid var(--primary);
   border-radius: var(--r-md);
   font-family: var(--f-display);
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   letter-spacing: .04em;
   color: var(--primary);
   opacity: 0;
@@ -462,6 +462,7 @@ input[type=color].swatch::-webkit-color-swatch { border: none; border-radius: va
   transition: opacity var(--t-mid), transform var(--t-mid) var(--easing);
   z-index: 5;
   box-shadow: 0 12px 32px rgba(0,0,0,.6);
+  white-space: nowrap;
 }
 .scene-3d .center-banner.show {
   opacity: 1;

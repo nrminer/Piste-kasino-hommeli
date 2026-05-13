@@ -1,78 +1,72 @@
 # Auditor's Ledger Casino — Game Spec Pack
 
-## Original Problem Statement (latest session, 2026-05)
-"Redo the 3d blackjack, baccarat, pikapokeri, war. Make it 3D and redo the frontend. Also match the customers theme with operators theme"
+## Original Problem Statement (history)
+**Session 1 (iter 12):** "Redo the 3d blackjack, baccarat, pikapokeri, war. Make it 3D and redo the frontend. Also match the customers theme with operators theme."
 
-User choices (verbatim from `ask_human`):
-- Build the new frontend on the existing codebase (don't replace the DB).
-- Pikapokeri = Finnish-style Video Poker (Jacks or Better).
-- 3D engine: Three.js (via CDN ESM, no React).
-- Currency: internal points system — operators credit player accounts.
-- Theme matching: customer game UI and operator panel share the SAME theme.
+**Session 2 (iter 13):** "The CARDS are straight up and the blackjacks 'mystery' card is ? card why? its supposed to be realistic, also integrate slots, and coin flip thats already been added. theres now 2 different customer panels integrate everything to one of your choosings."
 
 ## Architecture
 - **Stack preserved**: Flask + SQLite (`/app/backend/casino.db`). NO DB removal. NO FastAPI/Mongo swap.
-- **Backend modules** (existing):
-  - `/app/app.py` — main Flask app (~3.2k lines) — game endpoints, points, players, audit.
-  - `/app/blackjack3d.py` — Blueprint with 6-deck Shoe class + admin endpoints.
-  - `/app/operator_auth.py` — operator login + `@op_required` (PyJWT HS256).
-  - `/app/backend/server.py` — FastAPI/WSGIMiddleware wrapper for Emergent supervisor.
-- **NEW theme system (this session)**:
-  - `THEME_DEFAULTS` dict + `_load_theme()` in `app.py`.
-  - `GET  /api/theme` (public) → returns full theme dict.
-  - `PUT  /api/operator/theme` (op-protected) → persists `theme_*` keys to `system_settings`.
+- **Backend modules** (`/app/`):
+  - `app.py` — main Flask app (~3.3k lines). Now: `/` is a 302 redirect to `/operator` (was the legacy index.html cashier UI — retired); all `/api/...` game endpoints live here.
+  - `blackjack3d.py` — 6-deck Shoe Blueprint.
+  - `operator_auth.py` — `op_required` JWT decorator.
+  - `backend/server.py` — FastAPI/WSGIMiddleware wrapper.
+- **NEW operator-configurable theme system (iter12)**:
+  - `THEME_DEFAULTS` dict + `_load_theme()` helper.
+  - `GET /api/theme` (public) — returns full theme dict.
+  - `PUT /api/operator/theme` (op-protected) — persists `theme_*` keys.
   - 12 overridable keys: brand_name, tagline, logo_text, logo_url, primary, accent, bg, surface, text, muted, danger, felt.
-- **Frontend (completely rewritten this session)**:
-  - `/app/static/css/theme.css` — shared CSS variables + base components (Cormorant Garamond display, Outfit body, JetBrains Mono).
-  - `/app/static/js/casino_3d.js` — Three.js scene module: `createTableScene(container, opts)` returns `{ dealCard, flipCard, replaceCard, setChipStack, clearTable, refreshTheme, dispose, getCardCount }`. Cards are BoxGeometry with CanvasTexture faces; chips are stacked Cylinders; cinematic key/rim/ambient lighting with PCF soft shadows; cards deal via quadratic Bezier with easeOutCubic; flip via Y-axis rotation.
-  - `/app/templates/customer.html` — new SPA (~1100 lines): splash → lobby with 4 bento tiles → in-game screens for Blackjack / Baccarat / Pikapokeri / War, each with its own 3D scene, HUD overlays, shared chip bet pad, and result banner. ESM script that imports `/static/js/casino_3d.js`.
-  - `/app/templates/operator.html` — new operator panel (~600 lines): splash → sidebar nav (Yleiskuva / Asiakkaat / Brändäys / Aktiviteetti / Pakat) → theme editor with live preview + color pickers, customer CRUD + points +/− modal, audit/activity log, shoe management.
-- **Theme bridge**: both templates fetch `/api/theme` on boot and write to `document.documentElement.style.--xxx`. The 3D scene reads the live CSS values (`getComputedStyle`) so changing the operator theme repaints felt color, chip stripes, and frame highlights everywhere.
+- **Frontend (completely rewritten this session series)**:
+  - `/app/static/css/theme.css` — shared CSS variables, base components + slots + coinflip styles.
+  - `/app/static/js/casino_3d.js` — Three.js scene module: `createTableScene(container, opts)` returns `{ dealCard, flipCard, replaceCard, revealCard, setChipStack, clearTable, refreshTheme, dispose, getCardCount }`. Cards are BoxGeometry with CanvasTexture faces; lie FLAT on felt with rotation `(±π/2, 0, 0)`. `revealCard` swaps the front-material texture to the real rank/suit before flipping — used for blackjack hole-card reveal. `flipCard` rotates around X-axis with a lift-and-settle arc.
+  - `/app/templates/customer.html` — single SPA at `/asiakas`: splash → lobby (6 tiles in 3-col grid) → in-game screens for Blackjack / Baccarat / Pikapokeri / Casino War / Hedelmäpeli (slots) / Kolikonheitto (coinflip). ESM script imports `casino_3d.js`.
+  - `/app/templates/operator.html` — operator SPA at `/operator`: splash → sidebar nav (Yleiskuva / Asiakkaat / Brändäys / Aktiviteetti / Pakat) → theme editor with live preview + color pickers, customer CRUD + points +/− modal, audit/activity log, shoe management.
+- **Theme bridge**: both surfaces fetch `/api/theme` on boot and write to `document.documentElement.style.--xxx`. The 3D scene reads `getComputedStyle()` so theme changes immediately repaint felt/border colors.
 
 ## User Personas
-- **Customer**: logs in at `/asiakas` with name + password (created by an operator). Sees lobby with 4 game tiles, balance pill, and recent-rounds log. Plays Blackjack / Baccarat / Pikapokeri / War with full 3D card animations.
-- **Operator**: logs in at `/operator` with the env-var password. Manages customers (CRUD + grant/deduct points), edits the platform theme (immediately reflected on customer UI), browses BJ rounds and audit events, resets blackjack shoes.
-
-## Core Requirements (this session)
-- Three.js 3D rendering for all four games (cards dealt with Bezier arc + flip; felt + chip stack)
-- Full customer SPA rewrite with shared design tokens
-- Operator panel redesigned to MATCH the customer aesthetic exactly
-- Operator-configurable shared theme (12 keys, persisted in SQLite)
+- **Customer**: `/asiakas` — name + password (created by operator). 6 games (4 in 3D + slots + coinflip), balance pill, recent-rounds log.
+- **Operator**: `/operator` — env-var password. Manages customers (CRUD + grant/deduct points), edits the platform theme, browses BJ rounds + audit, resets shoes.
 
 ## Implemented this session (2026-05)
-- **Backend additions** (`app.py`):
-  - `THEME_DEFAULTS` dict (12 keys).
-  - `_load_theme(db)` helper.
-  - `GET /api/theme` (public).
-  - `PUT /api/operator/theme` (manual op-required validation; whitelists keys; trims to 200 chars).
-- **NEW frontend** (replaces 3.8k-line `customer.html` and 367-line `operator.html`):
-  - `/app/static/css/theme.css` (560 lines)
-  - `/app/static/js/casino_3d.js` (495 lines)
-  - `/app/templates/customer.html` (1107 lines)
-  - `/app/templates/operator.html` (586 lines)
-- **`.env`** created with `OPERATOR_PASSWORD=admin123`, `OPERATOR_TOKEN_SECRET=...`, `OPERATOR_TOKEN_TTL_MIN=120`.
-- **Test coverage** via testing agent iter12: 15/15 pytest backend pass, Playwright frontend 4/4 games dealt 3D, operator 5 tabs validated.
+### Iter 12 (3D rebuild + theme matching)
+- 3D Blackjack, Baccarat, Pikapokeri, Casino War with Three.js
+- `customer.html` + `operator.html` rewritten (3.8k+367 lines → 1.3k+586 lines)
+- Shared `theme.css` + `casino_3d.js`
+- Operator-configurable theme with 12 keys (`GET /api/theme`, `PUT /api/operator/theme`)
 
-## Files (touched this session)
-- NEW `/app/static/css/theme.css`
-- NEW `/app/static/js/casino_3d.js`
-- REWROTE `/app/templates/customer.html`
-- REWROTE `/app/templates/operator.html`
-- UPDATED `/app/app.py` (added theme dict + 2 endpoints)
-- NEW `/app/.env`
-- NEW `/app/backend/tests/test_theme_and_3d_games.py`
-- UPDATED `/app/memory/test_credentials.md`
+### Iter 13 (realism + integration + consolidation)
+- **Cards lie FLAT on felt** — `makeCardMesh` initial rotation `(π/2, 0, 0)`; flip rotates around X-axis to `-π/2` for face-up, with a vertical lift apex. Realistic top-down card view from the dealing perspective.
+- **Real hole-card reveal** — added `revealCard(zone, index, card)` which swaps the front material's CanvasTexture to the actual card before flipping. `bjStart` and `bjAction` now call `revealCard('dealer', 1, s.dealer_cards[1])` instead of `flipCard` on the placeholder.
+- **Slots integrated** — new `Hedelmäpeli` screen with 5×3 emoji grid, theme picker (Hedelmät/Egypti/Avaruus), jackpot pill loading from `GET /api/slots/jackpot`, scatter+jackpot cell highlighting, win list. Wires to existing `POST /api/points/:pid/slots`.
+- **Coinflip integrated** — new `Kolikonheitto` screen with CSS-3D rotating gold coin (perspective + `transform: rotateY(1800deg)`), heads/tails picker, result banner. Wires to existing `POST /api/points/:pid/coinflip` with correct `{bet, choice}` body.
+- **Consolidated panels** — `/` now `302 → /operator`; the legacy `templates/index.html` cashier UI is retired (still on disk, just not routed). `/operator` is the single canonical operator surface.
+
+## Files touched
+- `/app/app.py` — added theme dict + 2 endpoints (iter12); `/` route now redirects to `/operator` (iter13).
+- `/app/static/css/theme.css` — full design system + slots + coinflip styles.
+- `/app/static/js/casino_3d.js` — flat-card orientation, `revealCard`, idempotent reveal guard.
+- `/app/templates/customer.html` — full SPA with 6 games.
+- `/app/templates/operator.html` — full operator console.
+- `/app/.env` — `OPERATOR_PASSWORD=admin123`, secret, TTL.
+- `/app/backend/tests/test_theme_and_3d_games.py` (iter12), `/app/backend/tests/test_iter13_slots_coinflip_redirect.py` (iter13).
+- `/app/memory/PRD.md`, `/app/memory/test_credentials.md`.
+
+## Test status
+- **Iter12**: 15/15 backend pytest pass; 100 % frontend on 4 game flows.
+- **Iter13**: 16/16 backend pytest pass; 100 % frontend on the 6-tile lobby, flat cards, hole-card reveal, slots spin, coinflip, theme matching, `/` redirect.
 
 ## Backlog / Next Tasks
-### P1
-- Move the result banner OUT of the `.scene-3d` wrapper so it sits above the table instead of overlapping cards (minor cosmetic, banner is still readable thanks to z-index 5).
-- Add scene `.dispose()` on screen-leave to free WebGL contexts (current code reuses scenes, fine for now).
-- Operator theme: add a "Preview as customer" link that opens `/asiakas` in a new tab with the live theme.
-- Add caching headers + ETag to `GET /api/theme`.
+### P1 (Non-blocking cosmetic carry-overs from testing agent)
+- Banner: result banner now sits at 22% from top (above cards) — verify with screenshot it no longer overlaps player cards on tall scenes.
+- Investigate possible un-disposed mesh / chip placeholder remnant at bottom-left of BJ felt (chip stack repositioned in iter13 to `(-2.2, 1.02, 0.6)` — verify).
+- Anti-double-click guard on `cfFlip` and `slotsSpin` (button is currently disabled-while-busy via local state; harden with a debounce flag).
+
 ### P2
-- Split `/app/app.py` (3.3k lines) into a `games` blueprint.
-- Add a "Quick deal" mode (skip animation) for impatient players.
-- Theme presets dropdown ("Minimal-Luxe", "Vegas Red", "Cyber Neon") for one-click operator branding.
+- Normalise blackjack action route: `/api/points/blackjack/<gid>/action` is the odd one out — every other BJ subroute is `/api/points/<pid>/blackjack/<gid>/...`. Refactor for consistency.
+- Move `slotsLoadJackpot` re-seed side-effect OUT of the GET handler.
+- Split `customer.html` per-game JS into `/static/js/customer/{blackjack,baccarat,pikapokeri,war,slots,coinflip}.js` to keep the template lean.
+- Add scene `.dispose()` on screen-leave to free WebGL contexts.
 
 ## Smart enhancement (next worth doing)
-**Operator-defined per-VIP theme overlays** — let the operator pick a slightly different primary color for Whale/Gold customers (e.g., Whale = purple accent). On `/api/customer/login` we already return `vip_level`; the customer SPA could apply `--primary` per VIP. This costs the operator nothing extra, makes high-rollers feel special, and gives the operator a soft retention/upsell lever ("upgrade your tier to unlock a custom table look").
+**Per-VIP theme overlays** — the operator panel already tracks each player's VIP tier (Standard / Silver / Gold / Whale). With ~30 lines we could let the operator pick a slightly different accent color or felt color per tier (e.g., Whale = violet trim + sapphire felt), applied via an extra `<style>` block in `customer.html` keyed on `player.vip_level`. Instant retention/upsell lever: "Reach Whale to unlock your personalised table look."

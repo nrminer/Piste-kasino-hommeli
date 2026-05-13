@@ -297,7 +297,9 @@ export function createTableScene(container, opts = {}) {
 
   // Chip stack (left of player area). Hidden if showChips=false.
   const chipsGroup = new THREE.Group();
-  chipsGroup.position.set(-1.6, 1.02, 1.6);
+  // Place chips ON the felt but a bit further into the table so they don't
+  // sit underneath the camera and clip out of frame.
+  chipsGroup.position.set(-2.2, 1.02, 0.6);
   scene.add(chipsGroup);
 
   // Resize observer
@@ -404,10 +406,12 @@ export function createTableScene(container, opts = {}) {
 
   /** Swap a face-down card's face texture to the REAL card data, then flip
    *  it. Used for the blackjack dealer hole card — we don't know the value
-   *  at deal time, but reveal it once the round resolves. */
+   *  at deal time, but reveal it once the round resolves. Idempotent — a
+   *  second call with the same card is a no-op so retries don't double-flip. */
   async function revealCard(zone, index, card) {
     const mesh = (cards[zone] || [])[index];
     if (!mesh || !card) return;
+    if (mesh.userData.revealed) return;
     // Build a new face texture and swap into the front material.
     const newFaceTex = buildCardFaceTexture(card.rank, card.suit);
     const mats = mesh.material;
@@ -419,6 +423,7 @@ export function createTableScene(container, opts = {}) {
     }
     mesh.userData.rank = card.rank;
     mesh.userData.suit = card.suit;
+    mesh.userData.revealed = true;
     await flipCard(zone, index);
   }
 
