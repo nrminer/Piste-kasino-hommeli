@@ -1036,7 +1036,11 @@ def poker_deal():
     if not seats:
         return jsonify({'error': 'Ei pelaajia pöydässä.'}), 400
 
-    used = {(c['rank'], c['suit']) for cards in presets.values() for c in cards if isinstance(cards, list)}
+    used = {
+        (c['rank'], c['suit'])
+        for cards in presets.values() if isinstance(cards, list)
+        for c in cards if isinstance(c, dict) and c.get('rank') and c.get('suit')
+    }
     deck = [c for c in deck if (c['rank'], c['suit']) not in used]
     if len(deck) < len(seats) * 2 + 5:
         full = new_deck()

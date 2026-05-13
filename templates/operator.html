@@ -164,6 +164,29 @@
 .op-result-row, .op-hand-row { display:flex; justify-content:space-between; gap:.8rem; padding:.65rem 0; border-bottom:1px solid var(--border); }
 .op-result-row:last-child, .op-hand-row:last-child { border-bottom:0; }
 .op-hand-list { max-height:360px; overflow:auto; }
+.op-preset-layout { display:grid; grid-template-columns: 1fr; gap: 1rem; }
+.op-preset-section { border:1px solid var(--border); border-radius:var(--r-md); padding:1rem; background:var(--surface-2); }
+.op-preset-community { display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-end; }
+.op-preset-group-label { font-size:.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:.12em; margin-bottom:.45rem; }
+.op-preset-slots { display:flex; gap:.35rem; flex-wrap:wrap; }
+.op-preset-seat { display:flex; align-items:center; justify-content:space-between; gap:.8rem; padding:.75rem 0; border-bottom:1px solid var(--border); }
+.op-preset-seat:last-child { border-bottom:0; }
+.op-preset-seat-name { flex:1; min-width:150px; cursor:pointer; font-weight:600; }
+.op-preset-seat-name.active { color:var(--primary); }
+.op-preset-slot { position:relative; cursor:pointer; border-radius:9px; }
+.op-preset-slot.active .op-playing-card.empty { border-color:var(--primary); background:var(--primary-soft); }
+.op-preset-clear {
+  position:absolute; top:-7px; right:-7px; width:20px; height:20px; border-radius:50%; border:0;
+  background:var(--danger); color:white; font-size:.7rem; display:grid; place-items:center; padding:0;
+}
+.op-card-picker { display:grid; grid-template-columns:repeat(auto-fill,minmax(42px,1fr)); gap:.35rem; max-height:260px; overflow:auto; padding-right:.25rem; }
+.op-picker-card {
+  min-height:52px; border:1px solid var(--border-strong); border-radius:9px; background:#f7efe1; color:#111;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:var(--f-display); font-weight:800; cursor:pointer;
+}
+.op-picker-card.red { color:#b63d35; }
+.op-picker-card.used { opacity:.28; cursor:not-allowed; filter:grayscale(.65); }
+.op-preset-active { color:var(--primary); font-size:.88rem; margin:.65rem 0; min-height:1.3rem; }
 </style>
 </head>
 <body>
@@ -419,6 +442,49 @@
   </div>
 </div>
 
+<!-- ── Texas Hold'em preset cards modal ───────────────────────────────── -->
+<div class="modal" id="pokerPresetModal" data-testid="op-poker-preset-modal">
+  <div class="modal-card" style="width:min(900px,96vw);max-height:92vh;overflow:auto">
+    <h3>Aseta seuraava Texas Hold'em -käsi</h3>
+    <p style="color:var(--muted);font-size:.88rem;line-height:1.55;margin:.4rem 0 1rem">
+      Valitse pelaajien taskukortit ja/tai yhteiskortit seuraavaa jakoa varten. Tyhjiksi jätetyt kortit arvotaan normaalisti.
+    </p>
+    <div class="op-preset-layout">
+      <div class="op-preset-section">
+        <div class="uppercase-label" style="margin-bottom:.75rem">Yhteiskortit seuraavalle jaolle</div>
+        <div class="op-preset-community">
+          <div>
+            <div class="op-preset-group-label">Flop</div>
+            <div class="op-preset-slots" id="opPresetFlop" data-testid="op-preset-flop-slots"></div>
+          </div>
+          <div>
+            <div class="op-preset-group-label">Turn</div>
+            <div class="op-preset-slots" id="opPresetTurn" data-testid="op-preset-turn-slot"></div>
+          </div>
+          <div>
+            <div class="op-preset-group-label">River</div>
+            <div class="op-preset-slots" id="opPresetRiver" data-testid="op-preset-river-slot"></div>
+          </div>
+        </div>
+      </div>
+      <div class="op-preset-section">
+        <div class="uppercase-label" style="margin-bottom:.35rem">Pelaajien taskukortit</div>
+        <div id="opPresetSeats" data-testid="op-preset-seats"></div>
+      </div>
+      <div class="op-preset-section">
+        <div class="uppercase-label">Korttipakka</div>
+        <div id="opPresetActive" class="op-preset-active" data-testid="op-preset-active-label">Valitse ensin pelaaja tai yhteiskorttipaikka.</div>
+        <div class="op-card-picker" id="opPresetCardPicker" data-testid="op-preset-card-picker"></div>
+      </div>
+    </div>
+    <div class="card-row" style="justify-content:flex-end;gap:.5rem;margin-top:1rem">
+      <button class="btn btn-ghost" onclick="closePokerPresetModal()" data-testid="op-preset-cancel">Peruuta</button>
+      <button class="btn btn-danger" onclick="clearPokerPresets()" data-testid="op-preset-clear-all">Tyhjennä kaikki</button>
+      <button class="btn btn-primary" onclick="savePokerPresets()" data-testid="op-preset-save">Tallenna seuraava käsi</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast" class="toast" data-testid="op-toast"></div>
 
 <script>
@@ -431,6 +497,10 @@ let customers = [];
 let theme = {};
 let pokerState = null;
 let pokerTimer = null;
+let pokerPresets = { community: [null, null, null, null, null] };
+let pokerActivePick = null;
+const OP_ALL_CARDS = [];
+['♠','♥','♦','♣'].forEach(suit => ['2','3','4','5','6','7','8','9','10','J','Q','K','A'].forEach(rank => OP_ALL_CARDS.push({rank, suit})));
 
 const THEME_FIELDS = [
   { key: 'theme_brand_name', label: 'Brändin nimi',       type: 'text'   },
@@ -926,6 +996,7 @@ function renderPoker(d) {
   if (status === 'none') controls.push('<button class="btn btn-primary" onclick="pokerNew()" data-testid="op-poker-new">Uusi peli</button>');
   if (status === 'waiting') {
     controls.push('<button class="btn btn-primary" onclick="pokerDeal()" data-testid="op-poker-deal">Jaa kortit</button>');
+    controls.push('<button class="btn btn-ghost" onclick="openPokerPresetModal()" data-testid="op-poker-set-next-hand">Set next hand</button>');
     controls.push('<button class="btn btn-ghost" onclick="pokerNew()" data-testid="op-poker-new-reset">Uusi istunto</button>');
   }
   if (status === 'active' && ['preflop','flop','turn','river'].includes(stage)) {
@@ -968,6 +1039,120 @@ async function refreshPokerHands(){ try { const d = await api('/api/poker/hands?
 function copyPokerJoinUrl(){ navigator.clipboard.writeText(opPokerJoinUrl()).then(() => toast('Linkki kopioitu', 'ok')).catch(() => toast('Kopiointi ei onnistunut', 'err')); }
 window.pokerNew = pokerNew; window.pokerDeal = pokerDeal; window.pokerAdvance = pokerAdvance; window.pokerVoid = pokerVoid;
 window.pokerFold = pokerFold; window.pokerRemove = pokerRemove; window.evaluatePokerHands = evaluatePokerHands; window.copyPokerJoinUrl = copyPokerJoinUrl;
+
+/* ─── Texas Hold'em preset cards ──────────────────────────────────────── */
+function clonePresets(src) {
+  const p = JSON.parse(JSON.stringify(src || {}));
+  if (!Array.isArray(p.community)) p.community = [null, null, null, null, null];
+  while (p.community.length < 5) p.community.push(null);
+  return p;
+}
+function presetCardKey(card) { return card && card.rank && card.suit ? `${card.rank}|${card.suit}` : ''; }
+function presetSuitId(suit) { return {'♠':'spades','♥':'hearts','♦':'diamonds','♣':'clubs'}[suit] || String(suit); }
+function presetUsedKeys() {
+  const keys = new Set();
+  Object.entries(pokerPresets).forEach(([slot, cards]) => {
+    if (slot === 'community') (cards || []).filter(Boolean).forEach(c => keys.add(presetCardKey(c)));
+    else if (Array.isArray(cards)) cards.filter(Boolean).forEach(c => keys.add(presetCardKey(c)));
+  });
+  return keys;
+}
+function openPokerPresetModal() {
+  if (!pokerState || !pokerState.status || pokerState.status === 'none') {
+    toast('Luo Texas Hold’em -peli ensin.', 'err');
+    return;
+  }
+  pokerPresets = clonePresets(pokerState.preset_hands || {});
+  pokerActivePick = null;
+  renderPokerPresetModal();
+  $('pokerPresetModal').classList.add('show');
+}
+function closePokerPresetModal() { $('pokerPresetModal').classList.remove('show'); }
+function presetSlotCard(card, onSelect, onClear, active=false, testId='op-preset-slot') {
+  const html = card ? opCard(card) : '<div class="op-playing-card empty"></div>';
+  const clearBtn = card ? `<button class="op-preset-clear" onclick="${onClear}" data-testid="${testId}-clear">×</button>` : '';
+  return `<div class="op-preset-slot ${active?'active':''}" onclick="${onSelect}" data-testid="${testId}">${html}${clearBtn}</div>`;
+}
+function renderCommunityPresetSlot(idx) {
+  const card = (pokerPresets.community || [])[idx];
+  const active = pokerActivePick === `c${idx}`;
+  return presetSlotCard(card, `selectCommunityPreset(${idx})`, `event.stopPropagation(); clearCommunityPreset(${idx})`, active, `op-preset-community-${idx}`);
+}
+function renderPokerPresetModal() {
+  $('opPresetFlop').innerHTML = [0, 1, 2].map(renderCommunityPresetSlot).join('');
+  $('opPresetTurn').innerHTML = renderCommunityPresetSlot(3);
+  $('opPresetRiver').innerHTML = renderCommunityPresetSlot(4);
+  const seats = (pokerState?.seats || []).filter(s => s.active);
+  $('opPresetSeats').innerHTML = seats.length ? seats.map(seat => {
+    const cards = pokerPresets[String(seat.id)] || [];
+    const active = pokerActivePick === seat.id;
+    return `<div class="op-preset-seat" data-testid="op-preset-seat-${seat.id}">
+      <div class="op-preset-seat-name ${active?'active':''}" onclick="selectSeatPreset(${seat.id})" data-testid="op-preset-select-seat-${seat.id}" data-seat-number="${seat.seat_number}">${active?'▶ ':''}Paikka ${seat.seat_number}: ${escapeHtml(seat.player_name)}</div>
+      <div class="op-card-row">${cards[0] ? opCard(cards[0]) : '<div class="op-playing-card empty"></div>'}${cards[1] ? opCard(cards[1]) : '<div class="op-playing-card empty"></div>'}</div>
+      ${cards.length ? `<button class="btn btn-ghost btn-square" onclick="clearSeatPreset(${seat.id})" data-testid="op-preset-clear-seat-${seat.id}">Tyhjennä</button>` : ''}
+    </div>`;
+  }).join('') : '<div class="empty">Ei pelaajia pöydässä. Asiakkaan pitää liittyä ennen taskukorttien asetusta.</div>';
+  const used = presetUsedKeys();
+  $('opPresetCardPicker').innerHTML = OP_ALL_CARDS.map(card => {
+    const key = presetCardKey(card);
+    const isUsed = used.has(key);
+    const red = card.suit === '♥' || card.suit === '♦';
+    return `<button class="op-picker-card ${red?'red':'black'} ${isUsed?'used':''}" onclick="pickPresetCard('${card.rank}','${card.suit}')" ${isUsed?'disabled':''} data-testid="op-preset-card-${card.rank}-${presetSuitId(card.suit)}"><span>${card.rank}</span><strong>${card.suit}</strong></button>`;
+  }).join('');
+  let label = 'Valitse ensin pelaaja tai yhteiskorttipaikka.';
+  if (typeof pokerActivePick === 'number') {
+    const seat = seats.find(s => s.id === pokerActivePick);
+    label = seat ? `Valittu: Paikka ${seat.seat_number} · ${seat.player_name}` : 'Valittu pelaajapaikka.';
+  } else if (typeof pokerActivePick === 'string' && pokerActivePick.startsWith('c')) {
+    const labels = ['Flop 1', 'Flop 2', 'Flop 3', 'Turn', 'River'];
+    label = `Valittu yhteiskortti: ${labels[Number(pokerActivePick.slice(1))]}`;
+  }
+  $('opPresetActive').textContent = label;
+}
+function selectCommunityPreset(idx) { pokerActivePick = `c${idx}`; renderPokerPresetModal(); }
+function clearCommunityPreset(idx) { pokerPresets.community[idx] = null; if (pokerActivePick === `c${idx}`) pokerActivePick = null; renderPokerPresetModal(); }
+function selectSeatPreset(id) { pokerActivePick = id; renderPokerPresetModal(); }
+function clearSeatPreset(id) { delete pokerPresets[String(id)]; if (pokerActivePick === id) pokerActivePick = null; renderPokerPresetModal(); }
+function pickPresetCard(rank, suit) {
+  if (pokerActivePick === null || pokerActivePick === undefined) { toast('Valitse ensin pelaaja tai yhteiskortti.', 'err'); return; }
+  const card = {rank, suit};
+  if (presetUsedKeys().has(presetCardKey(card))) { toast('Kortti on jo valittu.', 'err'); return; }
+  if (typeof pokerActivePick === 'string' && pokerActivePick.startsWith('c')) {
+    const idx = Number(pokerActivePick.slice(1));
+    pokerPresets.community[idx] = card;
+    const next = [0,1,2,3,4].find(i => i > idx && !pokerPresets.community[i]);
+    pokerActivePick = next == null ? null : `c${next}`;
+  } else {
+    const key = String(pokerActivePick);
+    const existing = pokerPresets[key] || [];
+    if (existing.length >= 2) { toast('Paikalla on jo kaksi korttia. Tyhjennä ensin.', 'err'); return; }
+    pokerPresets[key] = existing.concat(card);
+    if (pokerPresets[key].length >= 2) pokerActivePick = null;
+  }
+  renderPokerPresetModal();
+}
+function clearPokerPresets() { pokerPresets = { community: [null, null, null, null, null] }; pokerActivePick = null; renderPokerPresetModal(); }
+async function savePokerPresets() {
+  const payload = {};
+  Object.entries(pokerPresets).forEach(([slot, cards]) => {
+    if (slot === 'community') {
+      const comm = (cards || []).slice(0, 5);
+      if (comm.some(Boolean)) payload.community = comm;
+    } else if (Array.isArray(cards) && cards.length === 2) {
+      payload[slot] = cards;
+    }
+  });
+  try {
+    await api('/api/poker/preset', {method:'POST', body: JSON.stringify(payload)});
+    closePokerPresetModal();
+    toast('Seuraavan käden kortit tallennettu', 'ok');
+    refreshPoker();
+  } catch (e) { toast(e.message, 'err'); }
+}
+window.openPokerPresetModal = openPokerPresetModal; window.closePokerPresetModal = closePokerPresetModal;
+window.selectCommunityPreset = selectCommunityPreset; window.clearCommunityPreset = clearCommunityPreset;
+window.selectSeatPreset = selectSeatPreset; window.clearSeatPreset = clearSeatPreset; window.pickPresetCard = pickPresetCard;
+window.clearPokerPresets = clearPokerPresets; window.savePokerPresets = savePokerPresets;
 
 /* ─── Boot ────────────────────────────────────────────────────────────── */
 (async function boot() {

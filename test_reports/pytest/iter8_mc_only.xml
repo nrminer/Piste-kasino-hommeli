@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.101" timestamp="2026-05-07T18:40:38.637356+00:00" hostname="agent-env-d287dca1-88cb-41bf-8dac-d938fbf2ec55"><testcase classname="backend.tests.test_iter8_card_games.TestMonteCarloArtifact" name="test_report_exists_and_rtp_in_band" time="0.001"><failure message="AssertionError: RTP 0.0 outside [0.945, 0.955] band&#10;assert 0.945 &lt;= 0.0">backend/tests/test_iter8_card_games.py:465: in test_report_exists_and_rtp_in_band
-    assert 0.945 &lt;= rtp &lt;= 0.955, f"RTP {rtp} outside [0.945, 0.955] band"
-E   AssertionError: RTP 0.0 outside [0.945, 0.955] band
-E   assert 0.945 &lt;= 0.0</failure></testcase></testsuite></testsuites>
