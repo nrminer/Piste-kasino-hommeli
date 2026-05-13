@@ -13,6 +13,8 @@
 
 **Session 6:** "make everything phone/tablet friend"
 
+**Session 7:** "audit lokit or viimeisimmät blackjack kierrokset isnt working"
+
 ## Architecture
 - **Stack preserved**: Flask + SQLite (`/app/backend/casino.db`). NO DB removal. NO FastAPI/Mongo swap.
 - **Backend modules** (`/app/`):
@@ -78,6 +80,11 @@
 - **Operator mobile/tablet** — sidebar becomes a horizontal scroll tab bar, active tab scrolls into view, tables use local horizontal scrollers, poker join URL wraps, poker controls fit into a grid, and preset modal behaves like a mobile bottom sheet.
 - **Navigation polish** — changing customer game or operator tab scrolls back to the top so phone users land at the relevant header.
 
+### Current update (operator activity fix)
+- **Fixed Viimeisimmät blackjack-kierrokset** — the Activity endpoint now includes the live customer blackjack table (`blackjack_games`) in addition to the newer `blackjack3d_games` table. This restored visibility for the actual rounds currently being played.
+- **Fixed Audit-loki rendering** — frontend now accepts the current `/api/audit` response shape (array) as well as `{events: [...]}`.
+- **Polished activity labels** — blackjack status values now render as readable Finnish labels and both tables have stable test IDs.
+
 ## Files touched
 - `/app/app.py` — added theme dict + 2 endpoints (iter12); `/` route now redirects to `/operator` (iter13).
 - `/app/static/css/theme.css` — full design system + slots + coinflip styles.
@@ -97,6 +104,7 @@
 - **Current update**: Testing agent validated the full Set next hand flow with real APIs: operator modal save → deal → flop advance. Manual curl also verified `/poker/join` redirects to `/asiakas` and `/operator` + `/asiakas` return 200.
 - **Frontend smoothness pass**: Testing agent validated customer/operator login, 7 accessible lobby tiles, lazy Three.js behavior, Blackjack 3D render, operator poker join URL `/asiakas`, toast aria-live, and no blocking regressions. Follow-up console smoke after theme retry patch showed no `/api/theme` warning.
 - **Phone/tablet responsive pass**: Testing agent validated customer/operator mobile 390×844, tablet 820×1180, and desktop routes. Customer lobby/Blackjack/Slots/Texas Hold'em and operator Customers/Texas Hold'em screens passed with no page-level horizontal overflow. Only non-blocking WebGL performance warnings observed in Blackjack.
+- **Operator activity fix**: Self-test verified `/api/operator/blackjack/recent_rounds` returns 45 rounds and `/api/audit` returns 5 events; browser check verified Activity tab renders 45 blackjack rows and 5 audit rows.
 
 ## Backlog / Next Tasks
 ### P1 (Non-blocking cosmetic carry-overs from testing agent)

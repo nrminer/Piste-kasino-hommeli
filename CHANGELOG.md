@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-05-13 — Operator Activity tab fix
+- Fixed **Viimeisimmät blackjack-kierrokset** by including customer blackjack rounds from `blackjack_games`, not only the empty `blackjack3d_games` table.
+- Fixed **Audit-loki** rendering by accepting `/api/audit`'s array response shape.
+- Added readable Finnish status labels and stable table test IDs for Activity tables.
+
 ## 2026-05-13 — Phone/tablet responsive pass
 - Made customer screens mobile-first: wrapping topbar, responsive lobby, stacked game layouts, sticky mobile back rows, larger touch targets, and sticky mobile bet pads.
 - Added mobile/tablet fit rules for Blackjack 3D, Texas Hold'em, slots, coinflip, Baccarat side choices, and video-poker hold controls.

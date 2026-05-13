@@ -911,26 +911,32 @@ async function refreshActivity() {
 function renderRounds(s) {
   const rows = s.rounds || [];
   if (rows.length === 0) { $('roundsTableWrap').innerHTML = '<div class="empty">Ei vielä kierroksia.</div>'; return; }
-  $('roundsTableWrap').innerHTML = `<table class="tbl">
+  const statusLabel = status => ({
+    active: 'Kesken', settled: 'Ratkaistu', done_win: 'Voitto', done_loss: 'Häviö',
+    done_bust: 'Yli 21', done_push: 'Tasapeli', done_blackjack: 'Blackjack',
+    done_surrender: 'Luovutus', abandoned: 'Keskeytetty'
+  }[status] || status || '—');
+  $('roundsTableWrap').innerHTML = `<table class="tbl" data-testid="op-rounds-table">
     <thead><tr><th>#</th><th>Pelaaja</th><th>Säännöt</th><th>Panos</th><th>Tila</th><th>Netto</th><th>Aika</th></tr></thead>
     <tbody>${rows.map(r => {
       const net = r.outcome && r.outcome.net != null ? r.outcome.net : null;
       const netCls = net > 0 ? 'green' : net < 0 ? 'danger' : '';
+      const statusCls = ['settled','done_win','done_blackjack','done_push'].includes(r.status) ? 'green' : ['done_loss','done_bust','done_surrender'].includes(r.status) ? 'danger' : '';
       return `<tr>
         <td class="mono">#${r.id}</td>
         <td>${escapeHtml(r.name||'—')}</td>
         <td><span class="pill">${escapeHtml(r.preset||'—')}</span></td>
         <td class="mono">${fmt(r.bet)} p</td>
-        <td><span class="pill ${r.status==='settled'?'green':''}">${escapeHtml(r.status)}</span></td>
+        <td><span class="pill ${statusCls}">${escapeHtml(statusLabel(r.status))}</span></td>
         <td class="mono"><span class="pill ${netCls}">${net == null ? '—' : (net > 0 ? '+' : '') + fmt(net)}</span></td>
         <td class="mono" style="font-size:.78rem">${escapeHtml(r.ended_at || r.created_at || '')}</td>
       </tr>`;
     }).join('')}</tbody></table>`;
 }
 function renderAudit(s) {
-  const rows = (s.events || []).slice(0, 40);
+  const rows = (Array.isArray(s) ? s : (s.events || [])).slice(0, 40);
   if (rows.length === 0) { $('auditTableWrap').innerHTML = '<div class="empty">Ei audit-tapahtumia.</div>'; return; }
-  $('auditTableWrap').innerHTML = `<table class="tbl">
+  $('auditTableWrap').innerHTML = `<table class="tbl" data-testid="op-audit-table">
     <thead><tr><th>Aika</th><th>Tapahtuma</th><th>Pelaaja</th><th>Tiedot</th></tr></thead>
     <tbody>${rows.map(r => `
       <tr>

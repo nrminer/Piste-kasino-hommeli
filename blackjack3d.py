@@ -1023,21 +1023,75 @@ def op_recent_rounds():
     from app import get_db
 
     db = get_db()
-    rows = db.execute(
+    rows_3d = db.execute(
         """SELECT g.id, g.player_id, p.name, g.preset, g.bet, g.status,
                   g.created_at, g.ended_at, g.outcome_json
            FROM blackjack3d_games g LEFT JOIN players p ON p.id = g.player_id
            ORDER BY g.id DESC LIMIT 50"""
     ).fetchall()
     out = []
-    for r in rows:
+    for r in rows_3d:
         d = dict(r)
+        d["source"] = "3d"
         try:
             d["outcome"] = json.loads(d.pop("outcome_json") or "null")
         except Exception:
             d["outcome"] = None
         out.append(d)
-    return jsonify({"rounds": out})
+
+    # The current customer Blackjack screen still writes to the legacy
+    # blackjack_games table. Include those rounds so the operator Activity tab
+    # reflects the real games customers are playing right now.
+    rows_legacy = db.execute(
+        """SELECT g.id, g.player_id, p.name, g.bet, g.status, g.created_at,
+                  g.result_json, g.surrender_amount
+           FROM blackjack_games g LEFT JOIN players p ON p.id = g.player_id
+           ORDER BY g.id DESC LIMIT 50"""
+    ).fetchall()
+    for r in rows_legacy:
+        d = dict(r)
+        result_json = d.pop("result_json", "") or ""
+        outcome = None
+        if result_json:
+            try:
+                outcome = json.loads(result_json)
+            except Exception:
+                outcome = None
+        if not isinstance(outcome, dict):
+            status = d.get("status") or ""
+            bet = int(d.get("bet") or 0)
+            if status in ("done_win", "done_blackjack", "done_push", "done_loss", "done_bust"):
+                if status == "done_blackjack":
+                    net = int(bet * 1.5)
+                    label = "blackjack"
+                elif status == "done_win":
+                    net = bet
+                    label = "win"
+                elif status == "done_push":
+                    net = 0
+                    label = "push"
+                else:
+                    net = -bet
+                    label = "loss" if status == "done_loss" else "bust"
+                outcome = {"net": net, "label": label}
+            elif status == "done_surrender":
+                surrender = int(d.get("surrender_amount") or max(1, bet // 2))
+                outcome = {"net": -surrender, "label": "surrender"}
+        out.append({
+            "id": d["id"],
+            "player_id": d.get("player_id"),
+            "name": d.get("name"),
+            "preset": "Blackjack",
+            "bet": d.get("bet") or 0,
+            "status": d.get("status"),
+            "created_at": d.get("created_at"),
+            "ended_at": None if d.get("status") == "active" else d.get("created_at"),
+            "outcome": outcome,
+            "source": "legacy",
+        })
+
+    out.sort(key=lambda r: (r.get("ended_at") or r.get("created_at") or "", r.get("id") or 0), reverse=True)
+    return jsonify({"rounds": out[:50]})
 
 
 @bp.route("/api/operator/blackjack/stats", methods=["GET"])
