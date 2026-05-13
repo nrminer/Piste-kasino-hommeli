@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-05-13 — Phone/tablet responsive pass
+- Made customer screens mobile-first: wrapping topbar, responsive lobby, stacked game layouts, sticky mobile back rows, larger touch targets, and sticky mobile bet pads.
+- Added mobile/tablet fit rules for Blackjack 3D, Texas Hold'em, slots, coinflip, Baccarat side choices, and video-poker hold controls.
+- Made operator panel phone/tablet friendly with horizontal tab navigation, local table scrollers, wrapping poker URL, mobile poker controls, and bottom-sheet-style modals.
+- Added scroll-to-top behavior when switching customer games/operator tabs and active-tab scroll into view.
+- Validated on mobile 390×844, tablet 820×1180, and desktop with no page-level horizontal overflow in tested flows.
+
 ## 2026-05-13 — Frontend smoothness and accessibility pass
 - Lazy-loaded Three.js/casino table code so the customer lobby no longer downloads `/static/js/casino_3d.js` until a 3D game is opened.
 - Upgraded typography and loading hints with Playfair Display, Manrope, Google Fonts preconnects, and page meta descriptions.

@@ -11,6 +11,8 @@
 
 **Session 5:** Autonomous frontend smoothness pass. User clarified: no security focus; improve frontend UX/accessibility/performance/smoothness, keep behavior working, remove safe unused/generated artifacts.
 
+**Session 6:** "make everything phone/tablet friend"
+
 ## Architecture
 - **Stack preserved**: Flask + SQLite (`/app/backend/casino.db`). NO DB removal. NO FastAPI/Mongo swap.
 - **Backend modules** (`/app/`):
@@ -70,6 +72,12 @@
 - **Runtime polish** — customer/operator theme fetch retries reduce first-load flakes; customer/operator poker polling pauses while browser tab is hidden; operator poker shows a `Preset armed` badge.
 - **Measured current response timings** — `/asiakas` 0.248s, `/operator` 0.133s, `/api/theme` 0.105s, `/api/poker/state` 0.136s total curl time from the workspace.
 
+### Current update (phone/tablet responsive pass)
+- **Customer mobile/tablet** — topbar wraps cleanly, lobby cards resize, game screens stack, back rows stick below the mobile topbar, 3D scenes fit, action buttons become touch-sized, and bet pads sit below content as sticky mobile cards.
+- **Game-specific mobile fixes** — slots grid, coinflip, Texas Hold'em cards, Baccarat side choices, and video-poker hold controls now scale down without page-level horizontal overflow.
+- **Operator mobile/tablet** — sidebar becomes a horizontal scroll tab bar, active tab scrolls into view, tables use local horizontal scrollers, poker join URL wraps, poker controls fit into a grid, and preset modal behaves like a mobile bottom sheet.
+- **Navigation polish** — changing customer game or operator tab scrolls back to the top so phone users land at the relevant header.
+
 ## Files touched
 - `/app/app.py` — added theme dict + 2 endpoints (iter12); `/` route now redirects to `/operator` (iter13).
 - `/app/static/css/theme.css` — full design system + slots + coinflip styles.
@@ -88,6 +96,7 @@
 - **Iter15**: 6/6 backend regression tests passed. Frontend poker/operator/customer integrations passed. Follow-up self-test confirms blackjack 2-hand indicator transitions from `KÄSI 1 / 2` to `KÄSI 2 / 2` after first Stand.
 - **Current update**: Testing agent validated the full Set next hand flow with real APIs: operator modal save → deal → flop advance. Manual curl also verified `/poker/join` redirects to `/asiakas` and `/operator` + `/asiakas` return 200.
 - **Frontend smoothness pass**: Testing agent validated customer/operator login, 7 accessible lobby tiles, lazy Three.js behavior, Blackjack 3D render, operator poker join URL `/asiakas`, toast aria-live, and no blocking regressions. Follow-up console smoke after theme retry patch showed no `/api/theme` warning.
+- **Phone/tablet responsive pass**: Testing agent validated customer/operator mobile 390×844, tablet 820×1180, and desktop routes. Customer lobby/Blackjack/Slots/Texas Hold'em and operator Customers/Texas Hold'em screens passed with no page-level horizontal overflow. Only non-blocking WebGL performance warnings observed in Blackjack.
 
 ## Backlog / Next Tasks
 ### P1 (Non-blocking cosmetic carry-overs from testing agent)
@@ -96,6 +105,7 @@
 - Anti-double-click guard on `cfFlip` and `slotsSpin` (button is currently disabled-while-busy via local state; harden with a debounce flag).
 - Split very large `customer.html`, `operator.html`, and `app.py` into per-game/modules to reduce future blackjack/poker regression risk.
 - Dispose 3D scenes on route leave after adding a tested scene cache/restore path.
+- Optional mobile performance: investigate Three.js/WebGL `ReadPixels` warnings on low-end devices.
 
 ### P2
 - Normalise blackjack action route: `/api/points/blackjack/<gid>/action` is the odd one out — every other BJ subroute is `/api/points/<pid>/blackjack/<gid>/...`. Refactor for consistency.
