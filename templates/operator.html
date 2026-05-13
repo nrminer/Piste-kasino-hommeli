@@ -167,6 +167,17 @@
 .op-result-row, .op-hand-row { display:flex; justify-content:space-between; gap:.8rem; padding:.65rem 0; border-bottom:1px solid var(--border); }
 .op-result-row:last-child, .op-hand-row:last-child { border-bottom:0; }
 .op-hand-list { max-height:360px; overflow:auto; }
+.op-round-detail {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .8rem;
+  padding: .9rem;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.op-round-cardline { display:flex; gap:.35rem; flex-wrap:wrap; margin-top:.45rem; }
+.op-round-reason { color: var(--text); line-height:1.45; }
 .op-preset-layout { display:grid; grid-template-columns: 1fr; gap: 1rem; }
 .op-preset-section { border:1px solid var(--border); border-radius:var(--r-md); padding:1rem; background:var(--surface-2); }
 .op-preset-community { display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-end; }
@@ -202,6 +213,7 @@
   .op-playing-card { width: 39px; height: 56px; border-radius: 7px; font-size: .84rem; }
   .op-seat-grid { grid-template-columns: 1fr; }
   .op-seat-actions .btn { flex: 1 1 auto; }
+  .op-round-detail { grid-template-columns: 1fr; }
   .op-preset-seat { align-items: stretch; flex-direction: column; }
   .op-preset-seat-name { min-width: 0; }
   .op-preset-community { gap: .7rem; }
@@ -916,13 +928,20 @@ function renderRounds(s) {
     done_bust: 'Yli 21', done_push: 'Tasapeli', done_blackjack: 'Blackjack',
     done_surrender: 'Luovutus', abandoned: 'Keskeytetty'
   }[status] || status || '—');
+  const roundCard = card => {
+    if (!card || !card.rank) return '<span class="pill">—</span>';
+    const red = card.suit === '♥' || card.suit === '♦';
+    return `<span class="op-playing-card ${red?'red':'black'}" style="width:38px;height:52px;font-size:.78rem"><span>${escapeHtml(card.rank)}</span><strong>${escapeHtml(card.suit || '')}</strong></span>`;
+  };
+  const cardLine = cards => (cards || []).length ? (cards || []).map(roundCard).join('') : '<span class="pill">Ei kortteja</span>';
   $('roundsTableWrap').innerHTML = `<table class="tbl" data-testid="op-rounds-table">
-    <thead><tr><th>#</th><th>Pelaaja</th><th>Säännöt</th><th>Panos</th><th>Tila</th><th>Netto</th><th>Aika</th></tr></thead>
+    <thead><tr><th>#</th><th>Pelaaja</th><th>Säännöt</th><th>Panos</th><th>Tila</th><th>Netto</th><th>Aika</th><th>Käsi</th></tr></thead>
     <tbody>${rows.map(r => {
       const net = r.outcome && r.outcome.net != null ? r.outcome.net : null;
       const netCls = net > 0 ? 'green' : net < 0 ? 'danger' : '';
       const statusCls = ['settled','done_win','done_blackjack','done_push'].includes(r.status) ? 'green' : ['done_loss','done_bust','done_surrender'].includes(r.status) ? 'danger' : '';
-      return `<tr>
+      const detailId = `round-detail-${r.source || 'round'}-${r.id}`;
+      return `<tr data-testid="op-round-row-${r.id}">
         <td class="mono">#${r.id}</td>
         <td>${escapeHtml(r.name||'—')}</td>
         <td><span class="pill">${escapeHtml(r.preset||'—')}</span></td>
@@ -930,9 +949,34 @@ function renderRounds(s) {
         <td><span class="pill ${statusCls}">${escapeHtml(statusLabel(r.status))}</span></td>
         <td class="mono"><span class="pill ${netCls}">${net == null ? '—' : (net > 0 ? '+' : '') + fmt(net)}</span></td>
         <td class="mono" style="font-size:.78rem">${escapeHtml(r.ended_at || r.created_at || '')}</td>
+        <td><button class="btn btn-ghost btn-square" onclick="toggleRoundDetails('${detailId}')" data-testid="op-round-show-hand-${r.id}">Näytä käsi</button></td>
+      </tr>
+      <tr id="${detailId}" style="display:none" data-testid="op-round-detail-${r.id}">
+        <td colspan="8">
+          <div class="op-round-detail">
+            <div>
+              <span class="uppercase-label">Pelaaja · ${r.player_total == null ? '—' : fmt(r.player_total)}</span>
+              <div class="op-round-cardline">${cardLine(r.player_cards)}</div>
+            </div>
+            <div>
+              <span class="uppercase-label">Jakaja · ${r.dealer_total == null ? '—' : fmt(r.dealer_total)}</span>
+              <div class="op-round-cardline">${cardLine(r.dealer_cards)}</div>
+            </div>
+            <div class="op-round-reason">
+              <span class="uppercase-label">Miksi tulos tuli?</span>
+              <p style="margin:.45rem 0 0">${escapeHtml(r.reason || 'Korttitietoja ei ole saatavilla tälle kierrokselle.')}</p>
+            </div>
+          </div>
+        </td>
       </tr>`;
     }).join('')}</tbody></table>`;
 }
+function toggleRoundDetails(id) {
+  const row = $(id);
+  if (!row) return;
+  row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+}
+window.toggleRoundDetails = toggleRoundDetails;
 function renderAudit(s) {
   const rows = (Array.isArray(s) ? s : (s.events || [])).slice(0, 40);
   if (rows.length === 0) { $('auditTableWrap').innerHTML = '<div class="empty">Ei audit-tapahtumia.</div>'; return; }

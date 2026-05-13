@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-05-13 — Blackjack hand explanations in Activity
+- Added `Näytä käsi` expandable details for each row in **Viimeisimmät blackjack-kierrokset**.
+- Activity API now includes player/dealer cards, calculated totals, and a human-readable reason for the outcome.
+- Verified with a losing hand: player total 22 vs dealer total 16 displayed with reason `Pelaaja meni yli 21 pisteen (22)`.
+
 ## 2026-05-13 — Operator Activity tab fix
 - Fixed **Viimeisimmät blackjack-kierrokset** by including customer blackjack rounds from `blackjack_games`, not only the empty `blackjack3d_games` table.
 - Fixed **Audit-loki** rendering by accepting `/api/audit`'s array response shape.

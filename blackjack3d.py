@@ -36,6 +36,66 @@ bp = Blueprint("blackjack3d", __name__)
 SUITS = ["♠", "♥", "♦", "♣"]
 RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]
 
+
+def _safe_cards(raw: Any) -> list[dict[str, str]]:
+    """Parse stored card JSON for operator activity details."""
+    if not raw:
+        return []
+    try:
+        cards = json.loads(raw) if isinstance(raw, str) else raw
+    except Exception:
+        return []
+    if not isinstance(cards, list):
+        return []
+    cleaned: list[dict[str, str]] = []
+    for card in cards:
+        if isinstance(card, dict) and card.get("rank"):
+            cleaned.append({"rank": str(card.get("rank", "")), "suit": str(card.get("suit", ""))})
+    return cleaned
+
+
+def _hand_total(cards: list[dict[str, str]]) -> int:
+    total = 0
+    aces = 0
+    for card in cards:
+        rank = card.get("rank")
+        if rank == "A":
+            total += 11
+            aces += 1
+        elif rank in ("K", "Q", "J"):
+            total += 10
+        else:
+            try:
+                total += int(rank or 0)
+            except Exception:
+                total += 0
+    while total > 21 and aces:
+        total -= 10
+        aces -= 1
+    return total
+
+
+def _round_reason(status: str, player_total: int | None, dealer_total: int | None) -> str:
+    pt = player_total if player_total is not None else "—"
+    dt = dealer_total if dealer_total is not None else "—"
+    if status == "active":
+        return f"Kierros kesken: pelaaja {pt}, jakaja {dt}."
+    if status == "done_bust":
+        return f"Pelaaja meni yli 21 pisteen ({pt})."
+    if status == "done_loss":
+        return f"Jakajan käsi ({dt}) voitti pelaajan käden ({pt})."
+    if status == "done_win":
+        return f"Pelaajan käsi ({pt}) voitti jakajan käden ({dt})."
+    if status == "done_push":
+        return f"Tasapeli: pelaaja {pt}, jakaja {dt}."
+    if status == "done_blackjack":
+        return "Pelaajalla oli blackjack ensimmäisillä kahdella kortilla."
+    if status == "done_surrender":
+        return "Pelaaja luovutti käden ja hävisi puolet panoksesta."
+    if status == "abandoned":
+        return "Kierros keskeytettiin ennen ratkaisua."
+    return f"Pelaaja {pt}, jakaja {dt}."
+
 PRESETS: dict[str, dict[str, Any]] = {
     "vegas_strip": {
         "id": "vegas_strip",
@@ -1044,12 +1104,17 @@ def op_recent_rounds():
     # reflects the real games customers are playing right now.
     rows_legacy = db.execute(
         """SELECT g.id, g.player_id, p.name, g.bet, g.status, g.created_at,
-                  g.result_json, g.surrender_amount
+                  g.result_json, g.surrender_amount,
+                  g.player_cards_json, g.dealer_cards_json
            FROM blackjack_games g LEFT JOIN players p ON p.id = g.player_id
            ORDER BY g.id DESC LIMIT 50"""
     ).fetchall()
     for r in rows_legacy:
         d = dict(r)
+        player_cards = _safe_cards(d.pop("player_cards_json", ""))
+        dealer_cards = _safe_cards(d.pop("dealer_cards_json", ""))
+        player_total = _hand_total(player_cards) if player_cards else None
+        dealer_total = _hand_total(dealer_cards) if dealer_cards else None
         result_json = d.pop("result_json", "") or ""
         outcome = None
         if result_json:
@@ -1087,6 +1152,11 @@ def op_recent_rounds():
             "created_at": d.get("created_at"),
             "ended_at": None if d.get("status") == "active" else d.get("created_at"),
             "outcome": outcome,
+            "player_cards": player_cards,
+            "dealer_cards": dealer_cards,
+            "player_total": player_total,
+            "dealer_total": dealer_total,
+            "reason": _round_reason(d.get("status") or "", player_total, dealer_total),
             "source": "legacy",
         })
 

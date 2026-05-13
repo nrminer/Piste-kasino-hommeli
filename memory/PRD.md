@@ -15,6 +15,8 @@
 
 **Session 7:** "audit lokit or viimeisimmät blackjack kierrokset isnt working"
 
+**Session 8:** "i want to see the hand why the user lost"
+
 ## Architecture
 - **Stack preserved**: Flask + SQLite (`/app/backend/casino.db`). NO DB removal. NO FastAPI/Mongo swap.
 - **Backend modules** (`/app/`):
@@ -85,6 +87,11 @@
 - **Fixed Audit-loki rendering** — frontend now accepts the current `/api/audit` response shape (array) as well as `{events: [...]}`.
 - **Polished activity labels** — blackjack status values now render as readable Finnish labels and both tables have stable test IDs.
 
+### Current update (blackjack hand explanations)
+- **Added expandable hand details** to Operator → Aktiviteetti → Viimeisimmät blackjack-kierrokset. Each row now has `Näytä käsi`.
+- **Shows why the user lost/won** — details include player cards, dealer cards, calculated totals, and a short Finnish reason such as `Pelaaja meni yli 21 pisteen (22)` or dealer/player comparison.
+- **Backend now returns card context** from `blackjack_games`: `player_cards`, `dealer_cards`, `player_total`, `dealer_total`, and `reason`.
+
 ## Files touched
 - `/app/app.py` — added theme dict + 2 endpoints (iter12); `/` route now redirects to `/operator` (iter13).
 - `/app/static/css/theme.css` — full design system + slots + coinflip styles.
@@ -105,6 +112,7 @@
 - **Frontend smoothness pass**: Testing agent validated customer/operator login, 7 accessible lobby tiles, lazy Three.js behavior, Blackjack 3D render, operator poker join URL `/asiakas`, toast aria-live, and no blocking regressions. Follow-up console smoke after theme retry patch showed no `/api/theme` warning.
 - **Phone/tablet responsive pass**: Testing agent validated customer/operator mobile 390×844, tablet 820×1180, and desktop routes. Customer lobby/Blackjack/Slots/Texas Hold'em and operator Customers/Texas Hold'em screens passed with no page-level horizontal overflow. Only non-blocking WebGL performance warnings observed in Blackjack.
 - **Operator activity fix**: Self-test verified `/api/operator/blackjack/recent_rounds` returns 45 rounds and `/api/audit` returns 5 events; browser check verified Activity tab renders 45 blackjack rows and 5 audit rows.
+- **Blackjack hand explanations**: Self-test verified API returns losing hand #41 with player total 22 vs dealer 16; browser check opened `Näytä käsi` and displayed both hands plus the loss reason.
 
 ## Backlog / Next Tasks
 ### P1 (Non-blocking cosmetic carry-overs from testing agent)
