@@ -4,11 +4,11 @@
 | Field        | Value          |
 | ------------ | -------------- |
 | Player ID    | 1              |
-| Name         | Pelaaja        |
+| Name         | Test Player    |
 | Password     | test123        |
-| Email        | test@test.fi   |
-| VIP Level    | Gold           |
-| Balance      | ~9,900 points (top up via operator panel or `/api/players/1/points/grant`)  |
+| Email        | —              |
+| VIP Level    | Standard       |
+| Balance      | Variable; top up via operator panel or `/api/players/1/points/grant` |
 
 The customer page is at `/asiakas`. Login via name + password fields (data-testids `cust-login-name`, `cust-login-pw`, `cust-login-btn`).
 Session is stored in `localStorage` key `cust_session`.
@@ -24,7 +24,7 @@ curl -X POST http://localhost:8001/api/players/1/points/grant \
 ```bash
 curl -X POST http://localhost:8001/api/players \
   -H "Content-Type: application/json" \
-  -d '{"name":"Pelaaja","email":"test@test.fi","password":"test123","vip_level":"Gold"}'
+  -d '{"name":"Test Player","password":"test123","vip_level":"Standard"}'
 curl -X POST http://localhost:8001/api/players/1/points/grant \
   -H "Content-Type: application/json" \
   -d '{"count":10000,"reason":"Top-up"}'
@@ -36,8 +36,8 @@ curl -X POST http://localhost:8001/api/players/1/points/grant \
 | Field        | Value      | Source         |
 | ------------ | ---------- | -------------- |
 | URL          | `/operator` | Flask template |
-| Password     | `admin123` | `/app/.env` → `OPERATOR_PASSWORD` |
-| Token TTL    | 120 min    | `/app/.env` → `OPERATOR_TOKEN_TTL_MIN` |
+| Password     | `operator123` | `/app/.env` → `OPERATOR_PASSWORD` |
+| Token TTL    | 240 min    | `/app/.env` → `OPERATOR_TOKEN_TTL_MIN` |
 | Token secret | (32+ chars) | `/app/.env` → `OPERATOR_TOKEN_SECRET` |
 
 The page issues a PyJWT (HS256) Bearer token after a successful POST to `/api/operator/login`. Token stored client-side in `localStorage` under `operator_token`. All `/api/operator/*` endpoints require an `Authorization: Bearer <token>` header.
@@ -46,7 +46,7 @@ The page issues a PyJWT (HS256) Bearer token after a successful POST to `/api/op
 ```bash
 TOK=$(curl -s -X POST http://localhost:8001/api/operator/login \
        -H "Content-Type: application/json" \
-       -d '{"password":"admin123"}' | python3 -c "import sys,json;print(json.load(sys.stdin)['access_token'])")
+       -d '{"password":"operator123"}' | python3 -c "import sys,json;print(json.load(sys.stdin)['access_token'])")
 curl -s http://localhost:8001/api/operator/blackjack/stats -H "Authorization: Bearer $TOK"
 ```
 

@@ -5,6 +5,8 @@
 
 **Session 2 (iter 13):** "The CARDS are straight up and the blackjacks 'mystery' card is ? card why? its supposed to be realistic, also integrate slots, and coin flip thats already been added. theres now 2 different customer panels integrate everything to one of your choosings."
 
+**Session 3 (iter 15):** "Fix the multihand system in the blackjack, and integrate the poker system into the main customers panel, and why is the texas hold em management panel seperate from the operators panel, fix everything"
+
 ## Architecture
 - **Stack preserved**: Flask + SQLite (`/app/backend/casino.db`). NO DB removal. NO FastAPI/Mongo swap.
 - **Backend modules** (`/app/`):
@@ -20,8 +22,8 @@
 - **Frontend (completely rewritten this session series)**:
   - `/app/static/css/theme.css` — shared CSS variables, base components + slots + coinflip styles.
   - `/app/static/js/casino_3d.js` — Three.js scene module: `createTableScene(container, opts)` returns `{ dealCard, flipCard, replaceCard, revealCard, setChipStack, clearTable, refreshTheme, dispose, getCardCount }`. Cards are BoxGeometry with CanvasTexture faces; lie FLAT on felt with rotation `(±π/2, 0, 0)`. `revealCard` swaps the front-material texture to the real rank/suit before flipping — used for blackjack hole-card reveal. `flipCard` rotates around X-axis with a lift-and-settle arc.
-  - `/app/templates/customer.html` — single SPA at `/asiakas`: splash → lobby (6 tiles in 3-col grid) → in-game screens for Blackjack / Baccarat / Pikapokeri / Casino War / Hedelmäpeli (slots) / Kolikonheitto (coinflip). ESM script imports `casino_3d.js`.
-  - `/app/templates/operator.html` — operator SPA at `/operator`: splash → sidebar nav (Yleiskuva / Asiakkaat / Brändäys / Aktiviteetti / Pakat) → theme editor with live preview + color pickers, customer CRUD + points +/− modal, audit/activity log, shoe management.
+  - `/app/templates/customer.html` — single SPA at `/asiakas`: splash → lobby → in-game screens for Blackjack / Texas Hold'em / Baccarat / Pikapokeri / Casino War / Hedelmäpeli (slots) / Kolikonheitto (coinflip). ESM script imports `casino_3d.js`.
+  - `/app/templates/operator.html` — operator SPA at `/operator`: splash → sidebar nav (Yleiskuva / Asiakkaat / Brändäys / Aktiviteetti / Texas Hold'em / Pakat) → theme editor, customer CRUD + points +/− modal, audit/activity log, poker management, shoe management.
 - **Theme bridge**: both surfaces fetch `/api/theme` on boot and write to `document.documentElement.style.--xxx`. The 3D scene reads `getComputedStyle()` so theme changes immediately repaint felt/border colors.
 
 ## User Personas
@@ -42,30 +44,40 @@
 - **Coinflip integrated** — new `Kolikonheitto` screen with CSS-3D rotating gold coin (perspective + `transform: rotateY(1800deg)`), heads/tails picker, result banner. Wires to existing `POST /api/points/:pid/coinflip` with correct `{bet, choice}` body.
 - **Consolidated panels** — `/` now `302 → /operator`; the legacy `templates/index.html` cashier UI is retired (still on disk, just not routed). `/operator` is the single canonical operator surface.
 
+### Iter 15 (blackjack multi-hand + Texas Hold'em unification)
+- **Blackjack multi-hand fixed** — `/api/points/<pid>/blackjack/start` now accepts `keep_active` so opening 2–3 hands no longer abandons earlier hands. Customer UI starts hands sequentially and keeps all hand game IDs playable.
+- **Blackjack stuck-hand fix** — blackjack `hit` that reaches exactly 21 now settles automatically instead of leaving an active hand with disabled controls.
+- **Multi-hand UI progression fixed** — active-hand pill updates immediately (`KÄSI 1 / 2` → `KÄSI 2 / 2`) after resolving a hand; exposed `window.bjState` for easier UI regression checks.
+- **Customer Texas Hold'em integrated** — customer lobby has a Texas Hold'em tile and embedded panel. Customers can join the existing poker table from `/asiakas`, view community/hole cards, toggle show-cards, and refresh table state.
+- **Operator Texas Hold'em merged** — `/operator` includes a Texas Hold'em tab with join link, new/deal/advance/evaluate/void controls, seat management, community cards, results, and hand history.
+- **Operator demo credentials restored locally** — `/app/.env` now provides `OPERATOR_PASSWORD=operator123`, token secret, and 240-minute TTL for local testing.
+
 ## Files touched
 - `/app/app.py` — added theme dict + 2 endpoints (iter12); `/` route now redirects to `/operator` (iter13).
 - `/app/static/css/theme.css` — full design system + slots + coinflip styles.
 - `/app/static/js/casino_3d.js` — flat-card orientation, `revealCard`, idempotent reveal guard.
 - `/app/templates/customer.html` — full SPA with 6 games.
 - `/app/templates/operator.html` — full operator console.
-- `/app/.env` — `OPERATOR_PASSWORD=admin123`, secret, TTL.
+- `/app/.env` — `OPERATOR_PASSWORD=operator123`, secret, TTL.
 - `/app/backend/tests/test_theme_and_3d_games.py` (iter12), `/app/backend/tests/test_iter13_slots_coinflip_redirect.py` (iter13).
 - `/app/memory/PRD.md`, `/app/memory/test_credentials.md`.
 
 ## Test status
 - **Iter12**: 15/15 backend pytest pass; 100 % frontend on 4 game flows.
 - **Iter13**: 16/16 backend pytest pass; 100 % frontend on the 6-tile lobby, flat cards, hole-card reveal, slots spin, coinflip, theme matching, `/` redirect.
+- **Iter15**: 6/6 backend regression tests passed. Frontend poker/operator/customer integrations passed. Follow-up self-test confirms blackjack 2-hand indicator transitions from `KÄSI 1 / 2` to `KÄSI 2 / 2` after first Stand.
 
 ## Backlog / Next Tasks
 ### P1 (Non-blocking cosmetic carry-overs from testing agent)
 - Banner: result banner now sits at 22% from top (above cards) — verify with screenshot it no longer overlaps player cards on tall scenes.
 - Investigate possible un-disposed mesh / chip placeholder remnant at bottom-left of BJ felt (chip stack repositioned in iter13 to `(-2.2, 1.02, 0.6)` — verify).
 - Anti-double-click guard on `cfFlip` and `slotsSpin` (button is currently disabled-while-busy via local state; harden with a debounce flag).
+- Split very large `customer.html` into per-game modules to reduce future blackjack/poker regression risk.
 
 ### P2
 - Normalise blackjack action route: `/api/points/blackjack/<gid>/action` is the odd one out — every other BJ subroute is `/api/points/<pid>/blackjack/<gid>/...`. Refactor for consistency.
 - Move `slotsLoadJackpot` re-seed side-effect OUT of the GET handler.
-- Split `customer.html` per-game JS into `/static/js/customer/{blackjack,baccarat,pikapokeri,war,slots,coinflip}.js` to keep the template lean.
+- Add Texas Hold'em preset-hand controls into the new `/operator` poker tab if operators still need the old separate panel's manual card-setting workflow.
 - Add scene `.dispose()` on screen-leave to free WebGL contexts.
 
 ## Smart enhancement (next worth doing)

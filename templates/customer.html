@@ -786,6 +786,7 @@ const scenes = { blackjack: null, baccarat: null, pikapokeri: null, war: null };
 
 // Per-game state
 const bjState  = { hands: [], handsCount: 1, activeIdx: 0, busy: false };
+window.bjState = bjState;
 const ppState  = { gameId: null, hand: [], hold: [false,false,false,false,false], phase: 'idle' };
 const bacState = { side: 'player' };
 
@@ -1040,7 +1041,7 @@ function bjBanner(text, cls) {
 }
 function bjActivePill(idx, total) {
   const el = $('bjActiveHandPill');
-  if (total <= 1) { el.style.display = 'none'; return; }
+  if (total <= 1) { el.style.display = 'none'; el.textContent = ''; return; }
   el.style.display = 'block';
   el.textContent = `KÄSI ${idx + 1} / ${total}`;
 }
@@ -1085,6 +1086,7 @@ async function bjStart() {
     scenes.blackjack.clearTable();
     bjState.hands = [];
     bjState.activeIdx = 0;
+    bjActivePill(0, total);
 
     // Start hands sequentially and keep earlier hands active for 2–3 hand play.
     const starts = [];
@@ -1189,6 +1191,12 @@ async function bjAction(action) {
       h.outcome = s.outcome;
       h.net = s.net;
       bjState.activeIdx++;
+      const nextIdx = bjState.hands.findIndex((hand, idx) => idx >= bjState.activeIdx && !hand.done && !hand.state.outcome);
+      if (nextIdx >= 0) {
+        bjState.activeIdx = nextIdx;
+        bjActivePill(nextIdx, total);
+        bjUpdateForHand(bjState.hands[nextIdx]);
+      }
       await bjAdvanceToPlayable();
     } else {
       bjApplyButtonsForHand(h);
