@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-05-13 — 3D card spacing fix
+- Reduced 3D card mesh size slightly and moved the deck stack farther right so Pikapokeri’s fifth card no longer collides visually with the deck.
+- Reworked shared card slot spacing with per-zone layouts for Baccarat, Pikapokeri, and Blackjack.
+- Changed Blackjack multi-hand from overlapping horizontal lanes to separated diagonal/front-back rows; verified 3-hand deal and hit-card scenarios visually.
+
 ## 2026-05-13 — AI handoff README
 - Added `/app/AI_README.md` with the app map for future AI agents: routes, major files, database tables, APIs, testing commands, credentials pointer, fragile blackjack/poker areas, and recommended refactor path.
 

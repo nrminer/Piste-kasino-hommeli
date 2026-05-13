@@ -193,9 +193,9 @@ function slotPosition(zone, index) {
     // Multi-hand blackjack rows are separated front-to-back instead of
     // side-by-side. This prevents hand 1/2/3 hit cards from visually colliding
     // while still keeping every card readable inside the camera frame.
-    hand0:     { startX: -1.38, z: 0.15, spread: 0.92 },
-    hand1:     { startX: -1.38, z: 1.05, spread: 0.92 },
-    hand2:     { startX: -1.38, z: 1.95, spread: 0.92 },
+    hand0:     { startX: -1.85, z: 0.05, spread: 0.78 },
+    hand1:     { startX: -1.20, z: 1.15, spread: 0.78 },
+    hand2:     { startX: -0.55, z: 2.25, spread: 0.78 },
   };
   const cfg = layout[zone] || layout.player;
   // y is just above the felt — cards lie flat. Stacked slightly to avoid
@@ -215,9 +215,9 @@ export function createTableScene(container, opts = {}) {
   // enough downward tilt to read the faces clearly, and a generous FOV so
   // 3-hand layouts still fit comfortably without clipping.
   const aspect = container.clientWidth / Math.max(1, container.clientHeight);
-  const camera = new THREE.PerspectiveCamera(52, aspect, 0.1, 50);
-  camera.position.set(0, 4.8, 4.65);
-  camera.lookAt(0, 1.0, 0.35);
+  const camera = new THREE.PerspectiveCamera(54, aspect, 0.1, 50);
+  camera.position.set(0, 5.65, 4.05);
+  camera.lookAt(0, 1.0, 0.55);
 
   // Renderer
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -272,7 +272,7 @@ export function createTableScene(container, opts = {}) {
 
   // Deck stack anchor (cards spawn here). Cards lay FLAT on the felt; the
   // stack is built by raising each new card slightly in world Y.
-  const deckPos = new THREE.Vector3(3.05, 1.01, 0.0);
+  const deckPos = new THREE.Vector3(3.35, 1.01, 0.0);
 
   // Build a small physical deck for visual reference — a stack of face-down
   // flat cards near the right side of the table.

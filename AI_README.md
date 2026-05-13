@@ -193,6 +193,11 @@ Important operator features:
 - Operator tables should scroll inside local wrappers, not cause whole-page horizontal overflow.
 - Customer game screens stack on phone/tablet with sticky mobile back rows and touch-friendly controls.
 
+### 3D card layout
+- Shared card placement lives in `/app/static/js/casino_3d.js`, function `slotPosition(zone, index)`.
+- Blackjack multi-hand uses `hand0`, `hand1`, `hand2` zones laid out as diagonal/front-back rows. Do not revert to same-row horizontal lanes; that caused visible overlap.
+- Pikapokeri uses `community` for all 5 cards. Keep the deck stack far enough right so the fifth card stays readable.
+
 ## Testing snippets
 
 Use the external backend URL:

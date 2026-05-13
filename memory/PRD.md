@@ -21,6 +21,8 @@
 
 **Session 10:** "write an readme MD for other AIs to instruct where everythings located"
 
+**Session 11:** "Ensure all cards load well, and arent overlapping I see baccarat blackjack, pikapokeris cards are overlapping"
+
 ## Architecture
 - **Stack preserved**: Flask + SQLite (`/app/backend/casino.db`). NO DB removal. NO FastAPI/Mongo swap.
 - **Backend modules** (`/app/`):
@@ -100,6 +102,12 @@
 - **Fixed premature result text** in the blackjack table corner. The status HUD now shows neutral labels (`Kesken`, `Käsi valmis`, `Ratkaistaan`, `Valmis`) instead of showing win/loss-style final status while other hands/dealer resolution are still pending.
 - **Preserved final result banner** — `Voitto/Häviö/Bust` still appears in the center only after the whole round has settled.
 
+### Current update (3D card spacing fix)
+- **Shared 3D layout improved** — card mesh size was reduced slightly and `slotPosition()` now uses per-zone spacing instead of one tight global spread.
+- **Blackjack multi-hand separated** — 2–3 hands are now laid out as diagonal/front-back rows instead of horizontal lanes, preventing hands and hit cards from colliding visually.
+- **Pikapokeri deck collision fixed** — deck stack moved farther right so all 5 video-poker cards remain visible.
+- **Baccarat spacing widened** — player/banker rows now have clearer gaps for 2-card and 3-card outcomes.
+
 ## Files touched
 - `/app/app.py` — added theme dict + 2 endpoints (iter12); `/` route now redirects to `/operator` (iter13).
 - `/app/static/css/theme.css` — full design system + slots + coinflip styles.
@@ -123,6 +131,7 @@
 - **Operator activity fix**: Self-test verified `/api/operator/blackjack/recent_rounds` returns 45 rounds and `/api/audit` returns 5 events; browser check verified Activity tab renders 45 blackjack rows and 5 audit rows.
 - **Blackjack hand explanations**: Self-test verified API returns losing hand #41 with player total 22 vs dealer 16; browser check opened `Näytä käsi` and displayed both hands plus the loss reason.
 - **Blackjack premature result HUD fix**: Browser test verified 2-hand blackjack no longer shows win/result text in the corner before completion; single-hand final still shows the center `Voitto +...` banner after settle.
+- **3D card spacing fix**: Testing agent confirmed Baccarat and Pikapokeri card visibility; reported Blackjack 3-hand needed more separation. Follow-up self-tests verified the new diagonal Blackjack 3-hand layout plus hit-card scenario with no visible collision.
 
 ## Backlog / Next Tasks
 ### P1 (Non-blocking cosmetic carry-overs from testing agent)
