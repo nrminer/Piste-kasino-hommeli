@@ -122,8 +122,8 @@ function buildCardBackTexture() {
 }
 
 /* ─── Card mesh ───────────────────────────────────────────────────────── */
-const CARD_W = 0.7;
-const CARD_H = 0.98;
+const CARD_W = 0.64;
+const CARD_H = 0.9;
 const CARD_T = 0.012;
 let cachedBack = null;
 
@@ -180,26 +180,27 @@ function bezier3(p0, p1, p2, t) {
  * cards). Z separates dealer (back) from player (front).
  */
 function slotPosition(zone, index) {
-  const spread = 0.78;
-  // start x = -spread * (typicalCount - 1) / 2 so the row sits centred.
+  // Each zone owns its spacing. A single global spread caused overlap in
+  // Baccarat, Video Poker and especially multi-hand Blackjack once hit cards
+  // extended into neighbouring lanes.
   const layout = {
-    dealer:    { startX: -spread,     z: -1.1 },
-    player:    { startX: -spread,     z:  1.1 },
-    banker:    { startX: -spread,     z: -1.1 },
-    community: { startX: -spread * 2, z:  0.4 },
-    split0:    { startX: -spread,     z:  1.1 },
-    split1:    { startX: -spread,     z:  2.2 },
-    // Multi-hand blackjack lanes — 3 hands spread horizontally across the
-    // visible player side of the felt. Spread chosen so 2-card hands sit
-    // comfortably within the camera frustum (≈±2.0 at z=1.0).
-    hand0:     { startX: -1.95,               z: 1.0 },
-    hand1:     { startX: -0.55,               z: 1.0 },
-    hand2:     { startX:  0.85,               z: 1.0 },
+    dealer:    { startX: -0.92, z: -1.25, spread: 0.92 },
+    banker:    { startX: -0.92, z: -1.25, spread: 0.92 },
+    player:    { startX: -1.38, z:  1.35, spread: 0.92 },
+    community: { startX: -1.84, z:  0.35, spread: 0.92 },
+    split0:    { startX: -1.38, z:  0.85, spread: 0.92 },
+    split1:    { startX: -1.38, z:  2.05, spread: 0.92 },
+    // Multi-hand blackjack rows are separated front-to-back instead of
+    // side-by-side. This prevents hand 1/2/3 hit cards from visually colliding
+    // while still keeping every card readable inside the camera frame.
+    hand0:     { startX: -1.38, z: 0.15, spread: 0.92 },
+    hand1:     { startX: -1.38, z: 1.05, spread: 0.92 },
+    hand2:     { startX: -1.38, z: 1.95, spread: 0.92 },
   };
   const cfg = layout[zone] || layout.player;
   // y is just above the felt — cards lie flat. Stacked slightly to avoid
   // z-fighting with the felt plane.
-  return { x: cfg.startX + index * spread, y: 1.01, z: cfg.z };
+  return { x: cfg.startX + index * cfg.spread, y: 1.01, z: cfg.z };
 }
 
 /* ─── Main table scene ────────────────────────────────────────────────── */
@@ -214,9 +215,9 @@ export function createTableScene(container, opts = {}) {
   // enough downward tilt to read the faces clearly, and a generous FOV so
   // 3-hand layouts still fit comfortably without clipping.
   const aspect = container.clientWidth / Math.max(1, container.clientHeight);
-  const camera = new THREE.PerspectiveCamera(48, aspect, 0.1, 50);
-  camera.position.set(0, 4.6, 4.4);
-  camera.lookAt(0, 1.0, 0.2);
+  const camera = new THREE.PerspectiveCamera(52, aspect, 0.1, 50);
+  camera.position.set(0, 4.8, 4.65);
+  camera.lookAt(0, 1.0, 0.35);
 
   // Renderer
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -271,7 +272,7 @@ export function createTableScene(container, opts = {}) {
 
   // Deck stack anchor (cards spawn here). Cards lay FLAT on the felt; the
   // stack is built by raising each new card slightly in world Y.
-  const deckPos = new THREE.Vector3(2.6, 1.01, 0.0);
+  const deckPos = new THREE.Vector3(3.05, 1.01, 0.0);
 
   // Build a small physical deck for visual reference — a stack of face-down
   // flat cards near the right side of the table.
