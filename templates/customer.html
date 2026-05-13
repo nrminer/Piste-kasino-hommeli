@@ -271,6 +271,24 @@
   border: 2px solid var(--primary);
 }
 .txh-card-empty { background: transparent; border: 1px dashed var(--border-strong); box-shadow: none; }
+
+@media (max-width: 760px) {
+  #splash { padding: 1rem; }
+  .splash-card { padding: 1.35rem 1.1rem; }
+  .splash-hero { font-size: 2.25rem; }
+  .side-row { grid-template-columns: 1fr; }
+  .txh-table { min-height: 150px; }
+  .txh-hole-wrap { align-items: stretch; }
+  .txh-hole-wrap > * { width: 100%; }
+  .txh-card { width: 48px; height: 68px; border-radius: 8px; }
+  .txh-card.lg { width: 64px; height: 90px; }
+}
+
+@media (max-width: 420px) {
+  .txh-card-row { gap: .35rem; }
+  .txh-card { width: 43px; height: 61px; font-size: .86rem; }
+  .txh-card.lg { width: 58px; height: 82px; }
+}
 </style>
 </head>
 <body>
@@ -950,6 +968,7 @@ function updateBalance(points) {
 /* ─── Screen routing ──────────────────────────────────────────────────── */
 async function showScreen(name) {
   activeScreen = name;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + name));
   // Lazy-load Three.js only when a 3D game is opened, making login/lobby faster.
   if (['blackjack','baccarat','pikapokeri','war'].includes(name)) await ensureTableScene(name);

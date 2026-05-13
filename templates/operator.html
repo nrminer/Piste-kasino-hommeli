@@ -190,6 +190,33 @@
 .op-picker-card.red { color:#b63d35; }
 .op-picker-card.used { opacity:.28; cursor:not-allowed; filter:grayscale(.65); }
 .op-preset-active { color:var(--primary); font-size:.88rem; margin:.65rem 0; min-height:1.3rem; }
+
+@media (max-width: 760px) {
+  #splash { padding: 1rem; }
+  .splash-card { padding: 1.35rem 1.1rem; }
+  .op-poker-link { align-items: stretch; }
+  .op-poker-link .mono { flex-basis: 100%; font-size: .78rem; overflow-wrap: anywhere; word-break: break-word; }
+  #opPokerControls { display:grid !important; grid-template-columns: repeat(2, minmax(0,1fr)); }
+  #opPokerControls > * { min-width:0; width:100%; }
+  .op-poker-table { min-height: 145px; padding: .8rem; }
+  .op-playing-card { width: 39px; height: 56px; border-radius: 7px; font-size: .84rem; }
+  .op-seat-grid { grid-template-columns: 1fr; }
+  .op-seat-actions .btn { flex: 1 1 auto; }
+  .op-preset-seat { align-items: stretch; flex-direction: column; }
+  .op-preset-seat-name { min-width: 0; }
+  .op-preset-community { gap: .7rem; }
+  .op-card-picker { grid-template-columns: repeat(4, minmax(0,1fr)); max-height: 280px; }
+  .op-picker-card { min-height: 48px; }
+  .modal { align-items: flex-end; padding: .6rem; }
+  .modal-card { max-height: 92dvh; overflow: auto; border-radius: var(--r-lg) var(--r-lg) 0 0; padding: 1.2rem; }
+}
+
+@media (max-width: 420px) {
+  .op-card-picker { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .op-stage-row { overflow-x: auto; flex-wrap: nowrap; padding-bottom: .25rem; }
+  .op-stage-pill { flex: 0 0 auto; }
+  #opPokerControls { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
@@ -229,7 +256,7 @@
       </div>
     </div>
     <div class="spacer"></div>
-    <a class="btn btn-ghost btn-square" href="/asiakas">Asiakasnäkymä</a>
+    <a class="btn btn-ghost btn-square" href="/asiakas" data-testid="op-customer-view-link">Asiakasnäkymä</a>
     <button class="btn btn-ghost btn-square" onclick="opLogout()" data-testid="op-logout-btn">Kirjaudu ulos</button>
   </header>
 
@@ -682,8 +709,11 @@ window.opLogout = opLogout;
 
 /* ─── Tabs ────────────────────────────────────────────────────────────── */
 function showTab(name) {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
   document.querySelectorAll('.section').forEach(s => s.classList.toggle('active', s.id === 'tab-' + name));
   document.querySelectorAll('.sidebar a').forEach(a => a.classList.toggle('active', a.dataset.tab === name));
+  const activeLink = document.querySelector(`.sidebar a[data-tab="${name}"]`);
+  activeLink?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
   if (name === 'customers') refreshCustomers();
   if (name === 'activity')  refreshActivity();
   if (name === 'poker')     { refreshPoker(); pokerTimer = pokerTimer || setInterval(refreshPoker, 3500); }
