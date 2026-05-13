@@ -1,0 +1,23 @@
+# Changelog
+
+## 2026-05-13 — Frontend smoothness and accessibility pass
+- Lazy-loaded Three.js/casino table code so the customer lobby no longer downloads `/static/js/casino_3d.js` until a 3D game is opened.
+- Upgraded typography and loading hints with Playfair Display, Manrope, Google Fonts preconnects, and page meta descriptions.
+- Improved the customer lobby layout with a responsive asymmetric grid, better hover/focus states, keyboard-operable game tiles, and reduced-motion support.
+- Added `role="status" aria-live="polite"` to customer/operator toasts and global `:focus-visible` styling.
+- Added retry logic for `/api/theme` on customer/operator boot to reduce intermittent first-load theme warnings.
+- Paused customer/operator poker polling while the browser tab is hidden and added an operator `Preset armed` badge.
+- Verified with self-tests and testing-agent validation: customer/operator login, accessible lobby tiles, lazy Three.js load, Blackjack 3D render, operator poker URL, and backend smoke checks.
+
+### Rollback notes
+- Revert changes in `/app/templates/customer.html`, `/app/templates/operator.html`, and `/app/static/css/theme.css` to restore the previous eager-load UI behavior.
+- If lazy loading causes issues, restore the static import `import { createTableScene, cardLabel } from '/static/js/casino_3d.js';` at the top of the customer module and remove `getTableSceneModule()/ensureTableScene()` calls.
+
+## 2026-05-13 — Operator Hold'em preset cards restored
+- Added **Set next hand** inside Operator → Texas Hold'em for player hole cards and community cards.
+- Hardened `/api/poker/deal` to ignore null placeholder cards in presets.
+- Redirected `/poker/join` to `/asiakas` and removed the obsolete separate poker player template.
+
+## 2026-05-13 — Blackjack multi-hand and poker panel unification
+- Fixed blackjack multi-hand so earlier hands are not abandoned when 2–3 hands are opened.
+- Added Texas Hold'em to the customer panel and merged poker management into the operator panel.

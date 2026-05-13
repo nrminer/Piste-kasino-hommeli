@@ -9,6 +9,8 @@
 
 **Session 4:** "Wheres the \"set cards and community cards for next round\" option for operator? it existed before. Also polish the code remove all unneeded code/test images/etc."
 
+**Session 5:** Autonomous frontend smoothness pass. User clarified: no security focus; improve frontend UX/accessibility/performance/smoothness, keep behavior working, remove safe unused/generated artifacts.
+
 ## Architecture
 - **Stack preserved**: Flask + SQLite (`/app/backend/casino.db`). NO DB removal. NO FastAPI/Mongo swap.
 - **Backend modules** (`/app/`):
@@ -24,7 +26,7 @@
 - **Frontend (completely rewritten this session series)**:
   - `/app/static/css/theme.css` — shared CSS variables, base components + slots + coinflip styles.
   - `/app/static/js/casino_3d.js` — Three.js scene module: `createTableScene(container, opts)` returns `{ dealCard, flipCard, replaceCard, revealCard, setChipStack, clearTable, refreshTheme, dispose, getCardCount }`. Cards are BoxGeometry with CanvasTexture faces; lie FLAT on felt with rotation `(±π/2, 0, 0)`. `revealCard` swaps the front-material texture to the real rank/suit before flipping — used for blackjack hole-card reveal. `flipCard` rotates around X-axis with a lift-and-settle arc.
-  - `/app/templates/customer.html` — single SPA at `/asiakas`: splash → lobby → in-game screens for Blackjack / Texas Hold'em / Baccarat / Pikapokeri / Casino War / Hedelmäpeli (slots) / Kolikonheitto (coinflip). ESM script imports `casino_3d.js`.
+  - `/app/templates/customer.html` — single SPA at `/asiakas`: splash → lobby → in-game screens for Blackjack / Texas Hold'em / Baccarat / Pikapokeri / Casino War / Hedelmäpeli (slots) / Kolikonheitto (coinflip). Three.js table module is lazy-loaded only when a 3D game is opened.
   - `/app/templates/operator.html` — operator SPA at `/operator`: splash → sidebar nav (Yleiskuva / Asiakkaat / Brändäys / Aktiviteetti / Texas Hold'em / Pakat) → theme editor, customer CRUD + points +/− modal, audit/activity log, poker management, shoe management.
 - **Theme bridge**: both surfaces fetch `/api/theme` on boot and write to `document.documentElement.style.--xxx`. The 3D scene reads `getComputedStyle()` so theme changes immediately repaint felt/border colors.
 
@@ -61,6 +63,13 @@
 - **Removed obsolete separate poker page** — deleted `templates/poker_player.html` after rerouting references.
 - **Cleaned generated artifacts** — removed temporary test reports, pytest cache, pycache folders, generated iteration tests, and screenshot artifacts.
 
+### Current update (frontend smoothness + accessibility)
+- **Faster lobby boot** — removed eager `casino_3d.js` import from customer boot; Three.js is dynamically imported on first Blackjack/Baccarat/Pikapokeri/War open.
+- **Smoother premium lobby** — responsive asymmetric lobby grid, improved hover/focus motion, Playfair Display + Manrope font system, font preconnects, meta descriptions, mobile background behavior.
+- **Accessibility pass** — all 7 lobby tiles are keyboard-focusable `role="button"` elements with aria labels; visible focus states added globally; toasts now use `role="status" aria-live="polite"`; reduced-motion users get near-zero transitions.
+- **Runtime polish** — customer/operator theme fetch retries reduce first-load flakes; customer/operator poker polling pauses while browser tab is hidden; operator poker shows a `Preset armed` badge.
+- **Measured current response timings** — `/asiakas` 0.248s, `/operator` 0.133s, `/api/theme` 0.105s, `/api/poker/state` 0.136s total curl time from the workspace.
+
 ## Files touched
 - `/app/app.py` — added theme dict + 2 endpoints (iter12); `/` route now redirects to `/operator` (iter13).
 - `/app/static/css/theme.css` — full design system + slots + coinflip styles.
@@ -71,12 +80,14 @@
 - `/app/.env` — `OPERATOR_PASSWORD=operator123`, secret, TTL.
 - `/app/backend/tests/test_theme_and_3d_games.py` (iter12), `/app/backend/tests/test_iter13_slots_coinflip_redirect.py` (iter13).
 - `/app/memory/PRD.md`, `/app/memory/test_credentials.md`.
+- `/app/CHANGELOG.md` — change history and rollback notes.
 
 ## Test status
 - **Iter12**: 15/15 backend pytest pass; 100 % frontend on 4 game flows.
 - **Iter13**: 16/16 backend pytest pass; 100 % frontend on the 6-tile lobby, flat cards, hole-card reveal, slots spin, coinflip, theme matching, `/` redirect.
 - **Iter15**: 6/6 backend regression tests passed. Frontend poker/operator/customer integrations passed. Follow-up self-test confirms blackjack 2-hand indicator transitions from `KÄSI 1 / 2` to `KÄSI 2 / 2` after first Stand.
 - **Current update**: Testing agent validated the full Set next hand flow with real APIs: operator modal save → deal → flop advance. Manual curl also verified `/poker/join` redirects to `/asiakas` and `/operator` + `/asiakas` return 200.
+- **Frontend smoothness pass**: Testing agent validated customer/operator login, 7 accessible lobby tiles, lazy Three.js behavior, Blackjack 3D render, operator poker join URL `/asiakas`, toast aria-live, and no blocking regressions. Follow-up console smoke after theme retry patch showed no `/api/theme` warning.
 
 ## Backlog / Next Tasks
 ### P1 (Non-blocking cosmetic carry-overs from testing agent)
@@ -84,6 +95,7 @@
 - Investigate possible un-disposed mesh / chip placeholder remnant at bottom-left of BJ felt (chip stack repositioned in iter13 to `(-2.2, 1.02, 0.6)` — verify).
 - Anti-double-click guard on `cfFlip` and `slotsSpin` (button is currently disabled-while-busy via local state; harden with a debounce flag).
 - Split very large `customer.html`, `operator.html`, and `app.py` into per-game/modules to reduce future blackjack/poker regression risk.
+- Dispose 3D scenes on route leave after adding a tested scene cache/restore path.
 
 ### P2
 - Normalise blackjack action route: `/api/points/blackjack/<gid>/action` is the odd one out — every other BJ subroute is `/api/points/<pid>/blackjack/<gid>/...`. Refactor for consistency.

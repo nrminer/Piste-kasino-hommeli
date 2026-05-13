@@ -837,11 +837,19 @@ async function api(path, opts={}) {
 
 /* ─── Theme load + apply ──────────────────────────────────────────────── */
 async function loadTheme() {
-  try {
-    theme = await api('/api/theme');
-    applyTheme(theme);
-    renderBrand();
-  } catch (e) { console.warn('theme load failed', e); }
+  let lastError = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      theme = await api('/api/theme');
+      applyTheme(theme);
+      renderBrand();
+      return;
+    } catch (e) {
+      lastError = e;
+      await delay(180 * (attempt + 1));
+    }
+  }
+  console.warn('theme load failed after retries', lastError);
 }
 function applyTheme(t) {
   const root = document.documentElement.style;
