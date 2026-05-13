@@ -131,6 +131,39 @@
   margin-bottom: 1rem;
   color: var(--primary);
 }
+.op-poker-link {
+  display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+  padding: .85rem 1rem; border: 1px solid var(--border); border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+.op-poker-link .mono { color: var(--primary); word-break: break-all; flex: 1; min-width: 180px; }
+.op-stage-row { display:flex; gap:.5rem; flex-wrap:wrap; }
+.op-stage-pill { padding:.35rem .75rem; border-radius:999px; border:1px solid var(--border-strong); color:var(--muted); font-size:.75rem; }
+.op-stage-pill.active { color:#0b0d11; background:var(--primary); border-color:var(--primary); font-weight:700; }
+.op-poker-table {
+  min-height: 180px; border-radius: var(--r-lg); border: 1px solid var(--border-strong);
+  background: radial-gradient(ellipse at center, var(--felt), var(--bg) 78%);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1rem; padding:1rem;
+}
+.op-card-row { display:flex; gap:.45rem; flex-wrap:wrap; align-items:center; justify-content:center; }
+.op-playing-card {
+  width: 46px; height: 66px; border-radius: 8px; background:#f7efe1; color:#111;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:var(--f-display); font-weight:700;
+  box-shadow: 0 10px 24px rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.7); line-height:1;
+}
+.op-playing-card.red { color:#b63d35; }.op-playing-card.black { color:#111; }
+.op-playing-card.back { background:repeating-linear-gradient(45deg,#151923 0 7px,var(--primary) 7px 9px,#151923 9px 16px); border:2px solid var(--primary); }
+.op-playing-card.empty { background:transparent; border:1px dashed var(--border-strong); box-shadow:none; }
+.op-seat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:.8rem; }
+.op-seat-card { border:1px solid var(--border); border-radius:var(--r-md); padding:1rem; background:var(--surface-2); }
+.op-seat-card.folded { opacity:.55; }
+.op-seat-top { display:flex; align-items:center; gap:.6rem; margin-bottom:.7rem; }
+.op-seat-num { width:30px; height:30px; border-radius:10px; background:var(--primary-soft); color:var(--primary); display:grid; place-items:center; font-family:var(--f-mono); }
+.op-seat-name { flex:1; font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.op-seat-actions { display:flex; gap:.45rem; flex-wrap:wrap; margin-top:.75rem; }
+.op-result-row, .op-hand-row { display:flex; justify-content:space-between; gap:.8rem; padding:.65rem 0; border-bottom:1px solid var(--border); }
+.op-result-row:last-child, .op-hand-row:last-child { border-bottom:0; }
+.op-hand-list { max-height:360px; overflow:auto; }
 </style>
 </head>
 <body>
@@ -183,6 +216,7 @@
         <a href="#"             data-tab="customers" onclick="showTab('customers');return false" data-testid="op-tab-customers">Asiakkaat</a>
         <a href="#"             data-tab="theme"     onclick="showTab('theme');return false"     data-testid="op-tab-theme">Brändäys</a>
         <a href="#"             data-tab="activity"  onclick="showTab('activity');return false"  data-testid="op-tab-activity">Aktiviteetti</a>
+        <a href="#"             data-tab="poker"     onclick="showTab('poker');return false"     data-testid="op-tab-poker">Texas Hold'em</a>
         <a href="#"             data-tab="shoes"     onclick="showTab('shoes');return false"     data-testid="op-tab-shoes">Pakat (BJ)</a>
       </nav>
 
@@ -202,6 +236,7 @@
             <h2>Pikatoiminnot</h2>
             <div class="card-row">
               <button class="btn btn-primary" onclick="showTab('customers')" data-testid="op-quick-customers">Hallitse asiakkaita</button>
+              <button class="btn" onclick="showTab('poker')" data-testid="op-quick-poker">Texas Hold'em</button>
               <button class="btn" onclick="showTab('theme')" data-testid="op-quick-theme">Muokkaa brändiä</button>
               <button class="btn" onclick="showTab('activity')" data-testid="op-quick-activity">Selaa kierroksia</button>
             </div>
@@ -253,6 +288,54 @@
           <div class="card pop-in">
             <h2>Audit-loki</h2>
             <div id="auditTableWrap"></div>
+          </div>
+        </section>
+
+        <!-- TEXAS HOLD'EM -->
+        <section class="section" id="tab-poker">
+          <div class="card pop-in">
+            <div class="card-row between" style="margin-bottom: 1rem; gap: .8rem; align-items:flex-start">
+              <div>
+                <h2>Texas Hold'em -pöytä</h2>
+                <p style="color:var(--muted);font-size:.88rem;margin-top:.25rem">Sama pokerijärjestelmä on nyt osa operaattoripaneelia. Asiakkaat liittyvät omasta asiakasnäkymästään.</p>
+              </div>
+              <button class="btn btn-ghost btn-square" onclick="refreshPoker()" data-testid="op-poker-refresh">↻ Päivitä</button>
+            </div>
+            <div class="op-poker-link">
+              <span class="uppercase-label">Pelaajien linkki</span>
+              <span id="opPokerJoinUrl" class="mono" data-testid="op-poker-join-url"></span>
+              <button class="btn btn-ghost btn-square" onclick="copyPokerJoinUrl()" data-testid="op-poker-copy-link">Kopioi</button>
+            </div>
+            <div class="card-row" id="opPokerControls" style="margin: 1rem 0" data-testid="op-poker-controls"></div>
+            <div class="op-stage-row" id="opPokerStages" data-testid="op-poker-stages"></div>
+          </div>
+
+          <div class="card pop-in">
+            <div class="op-poker-table">
+              <div class="uppercase-label">Yhteiskortit</div>
+              <div class="op-card-row" id="opPokerCommunity" data-testid="op-poker-community"></div>
+            </div>
+          </div>
+
+          <div class="card pop-in">
+            <div class="card-row between" style="margin-bottom:.8rem">
+              <h2>Istuimet</h2>
+              <span class="pill" id="opPokerSeatCount" data-testid="op-poker-seat-count">0 pelaajaa</span>
+            </div>
+            <div id="opPokerSeats" class="op-seat-grid" data-testid="op-poker-seats"></div>
+          </div>
+
+          <div class="card pop-in" id="opPokerResultsCard" style="display:none">
+            <h2>Käsien tulokset</h2>
+            <div id="opPokerResults" data-testid="op-poker-results"></div>
+          </div>
+
+          <div class="card pop-in">
+            <div class="card-row between" style="margin-bottom:.8rem">
+              <h2>Käsihistoria</h2>
+              <a class="btn btn-ghost btn-square" href="/api/poker/hands.csv?session_id=all" data-testid="op-poker-download-csv">CSV</a>
+            </div>
+            <div id="opPokerHands" class="op-hand-list" data-testid="op-poker-hand-log"></div>
           </div>
         </section>
 
@@ -346,6 +429,8 @@ const TOKEN_KEY = 'operator_token';
 let token = localStorage.getItem(TOKEN_KEY) || '';
 let customers = [];
 let theme = {};
+let pokerState = null;
+let pokerTimer = null;
 
 const THEME_FIELDS = [
   { key: 'theme_brand_name', label: 'Brändin nimi',       type: 'text'   },
@@ -519,6 +604,8 @@ function showTab(name) {
   document.querySelectorAll('.sidebar a').forEach(a => a.classList.toggle('active', a.dataset.tab === name));
   if (name === 'customers') refreshCustomers();
   if (name === 'activity')  refreshActivity();
+  if (name === 'poker')     { refreshPoker(); pokerTimer = pokerTimer || setInterval(refreshPoker, 3500); }
+  else if (pokerTimer)      { clearInterval(pokerTimer); pokerTimer = null; }
   if (name === 'shoes')     refreshShoes();
   if (name === 'theme')     renderThemeForm();
 }
@@ -808,6 +895,79 @@ async function resetAllShoes() {
   } catch (e) { toast(e.message, 'err'); }
 }
 window.resetAllShoes = resetAllShoes;
+
+/* ─── Texas Hold'em tab ───────────────────────────────────────────────── */
+const OP_STAGES = ['waiting','preflop','flop','turn','river','showdown'];
+const OP_STAGE_FI = {waiting:'Odottaa',preflop:'Preflop',flop:'Flop',turn:'Turn',river:'River',showdown:'Showdown'};
+function opPokerJoinUrl() { return window.location.origin + '/poker/join'; }
+function opCard(card) {
+  if (!card || !card.rank) return '<div class="op-playing-card empty"></div>';
+  const red = card.suit === '♥' || card.suit === '♦';
+  return `<div class="op-playing-card ${red?'red':'black'}"><span>${escapeHtml(card.rank)}</span><strong>${escapeHtml(card.suit)}</strong></div>`;
+}
+function opBackCard() { return '<div class="op-playing-card back"></div>'; }
+function renderPokerStages(stage) {
+  $('opPokerStages').innerHTML = OP_STAGES.map(s => `<span class="op-stage-pill ${s===stage?'active':''}">${OP_STAGE_FI[s]}</span>`).join('');
+}
+async function refreshPoker() {
+  try {
+    $('opPokerJoinUrl').textContent = opPokerJoinUrl();
+    pokerState = await api('/api/poker/state');
+    renderPoker(pokerState);
+    refreshPokerHands();
+  } catch (e) { toast(e.message, 'err'); }
+}
+window.refreshPoker = refreshPoker;
+function renderPoker(d) {
+  const status = d.status || 'none';
+  const stage = d.stage || 'waiting';
+  renderPokerStages(stage);
+  const controls = [];
+  if (status === 'none') controls.push('<button class="btn btn-primary" onclick="pokerNew()" data-testid="op-poker-new">Uusi peli</button>');
+  if (status === 'waiting') {
+    controls.push('<button class="btn btn-primary" onclick="pokerDeal()" data-testid="op-poker-deal">Jaa kortit</button>');
+    controls.push('<button class="btn btn-ghost" onclick="pokerNew()" data-testid="op-poker-new-reset">Uusi istunto</button>');
+  }
+  if (status === 'active' && ['preflop','flop','turn','river'].includes(stage)) {
+    const lbl = {preflop:'Jaa flop',flop:'Jaa turn',turn:'Jaa river',river:'Showdown'}[stage];
+    controls.push(`<button class="btn btn-primary" onclick="pokerAdvance()" data-testid="op-poker-advance">${lbl}</button>`);
+    controls.push('<button class="btn btn-ghost" onclick="evaluatePokerHands()" data-testid="op-poker-evaluate-live">Arvioi</button>');
+  }
+  if (stage === 'showdown') controls.push('<button class="btn btn-primary" onclick="evaluatePokerHands()" data-testid="op-poker-evaluate">Näytä voittaja</button>');
+  if (status === 'active') controls.push('<button class="btn btn-danger" onclick="pokerVoid()" data-testid="op-poker-void">Mitätöi / uusi käsi</button>');
+  $('opPokerControls').innerHTML = controls.join('') || '<span class="pill">Luo uusi peli aloittaaksesi</span>';
+
+  const comm = d.community_cards || [];
+  $('opPokerCommunity').innerHTML = comm.length
+    ? comm.map(opCard).join('') + Array.from({length: Math.max(0, 5 - comm.length)}, () => '<div class="op-playing-card empty"></div>').join('')
+    : Array.from({length: 5}, () => '<div class="op-playing-card empty"></div>').join('');
+  const seats = (d.seats || []).filter(s => s.active);
+  $('opPokerSeatCount').textContent = `${seats.length} pelaajaa`;
+  $('opPokerSeats').innerHTML = seats.length ? seats.map(s => {
+    const cards = (s.hole_cards || []).length === 2
+      ? (s.show_cards ? s.hole_cards.map(opCard).join('') : opBackCard() + opBackCard())
+      : '<span class="pill">Ei kortteja</span>';
+    return `<div class="op-seat-card ${s.folded?'folded':''}" data-testid="op-poker-seat-${s.id}">
+      <div class="op-seat-top"><span class="op-seat-num">${s.seat_number}</span><span class="op-seat-name">${escapeHtml(s.player_name)}</span>${s.folded?'<span class="pill danger">Luovuttanut</span>':''}</div>
+      <div class="op-card-row" style="justify-content:flex-start">${cards}${s.show_cards?'<span class="pill green">Näkyy</span>':'<span class="pill">Piilossa</span>'}</div>
+      <div class="op-seat-actions">
+        ${!s.folded && status === 'active' ? `<button class="btn btn-ghost btn-square" onclick="pokerFold(${s.id})" data-testid="op-poker-fold-${s.id}">Luovuta</button>` : ''}
+        <button class="btn btn-danger btn-square" onclick="pokerRemove(${s.id})" data-testid="op-poker-remove-${s.id}">Poista</button>
+      </div>
+    </div>`;
+  }).join('') : '<div class="empty">Ei pelaajia pöydässä vielä.</div>';
+}
+async function pokerNew(){ try { await api('/api/poker/new', {method:'POST'}); toast('Uusi Texas Hold’em -peli luotu', 'ok'); refreshPoker(); } catch(e){ toast(e.message,'err'); } }
+async function pokerDeal(){ try { await api('/api/poker/deal', {method:'POST'}); toast('Kortit jaettu', 'ok'); refreshPoker(); } catch(e){ toast(e.message,'err'); } }
+async function pokerAdvance(){ try { const r = await api('/api/poker/advance', {method:'POST'}); toast(`Vaihe: ${OP_STAGE_FI[r.stage]}`, 'ok'); refreshPoker(); } catch(e){ toast(e.message,'err'); } }
+async function pokerVoid(){ if(!confirm('Mitätöidäänkö nykyinen käsi ja palautetaanko pöytä odotustilaan?')) return; try { await api('/api/poker/void', {method:'POST'}); $('opPokerResultsCard').style.display='none'; toast('Käsi mitätöity', 'ok'); refreshPoker(); } catch(e){ toast(e.message,'err'); } }
+async function pokerFold(id){ try { await api(`/api/poker/fold/${id}`, {method:'POST'}); refreshPoker(); } catch(e){ toast(e.message,'err'); } }
+async function pokerRemove(id){ if(!confirm('Poistetaanko pelaaja pöydästä?')) return; try { await api(`/api/poker/remove/${id}`, {method:'DELETE'}); refreshPoker(); } catch(e){ toast(e.message,'err'); } }
+async function evaluatePokerHands(){ try { const rows = await api('/api/poker/evaluate'); $('opPokerResultsCard').style.display='block'; $('opPokerResults').innerHTML = rows.length ? rows.map(r => `<div class="op-result-row ${r.is_winner?'winner':''}"><span><strong>${escapeHtml(r.player_name)}</strong> · ${escapeHtml(r.hand_name)}</span><span class="pill ${r.is_winner?'gold':''}">${r.is_winner?'Voittaja':'Sija'}</span></div>`).join('') : '<div class="empty">Ei arvioitavia käsiä.</div>'; refreshPokerHands(); } catch(e){ toast(e.message,'err'); } }
+async function refreshPokerHands(){ try { const d = await api('/api/poker/hands?limit=12&offset=0&session_id=all'); $('opPokerHands').innerHTML = (d.hands || []).length ? d.hands.map(h => `<div class="op-hand-row"><span><strong>Käsi #${h.hand_number}</strong> · ${escapeHtml(OP_STAGE_FI[h.stage_reached] || h.stage_reached || '')}</span><span class="pill">${escapeHtml(h.ended_by || '—')}</span></div>`).join('') : '<div class="empty">Kun käsi jaetaan, historia näkyy tässä.</div>'; } catch(e){ $('opPokerHands').innerHTML = '<div class="empty">Käsihistoriaa ei voitu ladata.</div>'; } }
+function copyPokerJoinUrl(){ navigator.clipboard.writeText(opPokerJoinUrl()).then(() => toast('Linkki kopioitu', 'ok')).catch(() => toast('Kopiointi ei onnistunut', 'err')); }
+window.pokerNew = pokerNew; window.pokerDeal = pokerDeal; window.pokerAdvance = pokerAdvance; window.pokerVoid = pokerVoid;
+window.pokerFold = pokerFold; window.pokerRemove = pokerRemove; window.evaluatePokerHands = evaluatePokerHands; window.copyPokerJoinUrl = copyPokerJoinUrl;
 
 /* ─── Boot ────────────────────────────────────────────────────────────── */
 (async function boot() {

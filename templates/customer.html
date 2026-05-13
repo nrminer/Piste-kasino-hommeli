@@ -212,6 +212,62 @@
   text-align: center;
   margin-bottom: .8rem;
 }
+
+/* Texas Hold'em embedded customer panel */
+.txh-panel { display: flex; flex-direction: column; gap: 1rem; }
+.txh-status {
+  padding: .85rem 1rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  color: var(--text);
+  font-size: .95rem;
+}
+.txh-table {
+  min-height: 190px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border-strong);
+  background: radial-gradient(ellipse at center, var(--felt), var(--bg) 74%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: .9rem;
+  padding: 1rem;
+}
+.txh-card-row { display: flex; gap: .55rem; flex-wrap: wrap; align-items: center; justify-content: center; }
+.txh-hole-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.txh-card {
+  width: 58px;
+  height: 82px;
+  border-radius: 10px;
+  background: #f7efe1;
+  color: #111;
+  border: 1px solid rgba(255,255,255,.7);
+  box-shadow: 0 12px 26px rgba(0,0,0,.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--f-display);
+  font-weight: 700;
+  line-height: 1;
+}
+.txh-card.lg { width: 76px; height: 108px; font-size: 1.2rem; }
+.txh-card.red { color: #b63d35; }
+.txh-card.black { color: #111; }
+.txh-card strong { font-size: 1.45em; margin-top: .2rem; }
+.txh-card-back {
+  background: repeating-linear-gradient(45deg, #151923 0 8px, var(--primary) 8px 10px, #151923 10px 18px);
+  border: 2px solid var(--primary);
+}
+.txh-card-empty { background: transparent; border: 1px dashed var(--border-strong); box-shadow: none; }
 </style>
 </head>
 <body>
@@ -303,6 +359,14 @@
             <p>Jacks-or-better · <em>vaihda 0–5</em></p>
           </div>
         </div>
+        <div class="lobby-tile" onclick="openGame('poker')" data-testid="cust-tile-poker">
+          <div class="art" style="background: radial-gradient(circle at 30% 20%, var(--primary-soft), transparent 38%), linear-gradient(135deg, #10251c, #0a0d12)"></div>
+          <div class="scrim"></div>
+          <div class="info">
+            <h3>Texas Hold'em</h3>
+            <p>Live-pöytä · <em>liity omalla asiakastilillä</em></p>
+          </div>
+        </div>
         <div class="lobby-tile" onclick="openGame('war')" data-testid="cust-tile-war">
           <div class="art" style="background: linear-gradient(135deg, #2a1a1a, #0a0d12)"></div>
           <div class="scrim"></div>
@@ -332,6 +396,44 @@
       <div class="card pop-in" style="margin-top: 1.4rem">
         <h2>Viimeisimmät kierroksesi</h2>
         <div id="historyList"></div>
+      </div>
+    </section>
+
+    <!-- TEXAS HOLD'EM -->
+    <section class="screen" id="screen-poker" data-testid="cust-screen-poker">
+      <div class="back-row">
+        <button class="btn btn-ghost btn-square" onclick="closeGame()" data-testid="cust-poker-back-btn">← Aulaan</button>
+        <h1>Texas Hold'em</h1>
+        <span class="pill" id="txhStagePill" data-testid="cust-poker-stage">Odottaa</span>
+      </div>
+      <div class="split">
+        <div>
+          <div class="scene-card txh-panel" data-testid="cust-poker-panel">
+            <div class="txh-status" id="txhStatus" data-testid="cust-poker-status">Haetaan pöytää…</div>
+            <div class="txh-table">
+              <div class="uppercase-label">Yhteiskortit</div>
+              <div class="txh-card-row" id="txhCommunity" data-testid="cust-poker-community"></div>
+            </div>
+            <div class="txh-hole-wrap">
+              <div>
+                <div class="uppercase-label">Omat kortit</div>
+                <div class="txh-card-row" id="txhHoleCards" data-testid="cust-poker-hole-cards"></div>
+              </div>
+              <button class="btn btn-ghost" id="txhShowBtn" onclick="txhToggleShowCards()" data-testid="cust-poker-showcards-btn" style="display:none">Näytä kortit</button>
+            </div>
+          </div>
+        </div>
+        <aside>
+          <div class="betpad">
+            <span class="uppercase-label">Pöytä</span>
+            <p style="color:var(--muted);font-size:.86rem;line-height:1.55;margin:.4rem 0 1rem">
+              Liity samaan Texas Hold'em -pöytään suoraan tästä asiakasnäkymästä. Operaattori ohjaa jaon omasta paneelistaan.
+            </p>
+            <button class="btn btn-primary" onclick="txhJoinTable()" id="txhJoinBtn" data-testid="cust-poker-join-btn">Liity pöytään</button>
+            <button class="btn btn-ghost" onclick="txhLeaveTable()" id="txhLeaveBtn" data-testid="cust-poker-leave-btn" style="margin-top:.6rem;display:none">Poistu pöydästä</button>
+            <button class="btn btn-ghost" onclick="txhRefresh()" data-testid="cust-poker-refresh-btn" style="margin-top:.6rem">Päivitä tila</button>
+          </div>
+        </aside>
       </div>
     </section>
 
@@ -677,6 +779,7 @@ const SESSION_KEY = 'cust_session';
 let player = null;
 let history = [];
 let theme = {};
+let activeScreen = 'lobby';
 
 // Per-game scene instances (lazy created)
 const scenes = { blackjack: null, baccarat: null, pikapokeri: null, war: null };
@@ -806,6 +909,7 @@ function updateBalance(points) {
 
 /* ─── Screen routing ──────────────────────────────────────────────────── */
 function showScreen(name) {
+  activeScreen = name;
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + name));
   // Lazy-create the appropriate 3D scene
   if (name === 'blackjack' && !scenes.blackjack) {
@@ -825,9 +929,10 @@ function showScreen(name) {
     slotsLoadJackpot();
     slotsRenderGrid(slotsPlaceholderGrid());
   }
+  if (name === 'poker') txhEnter();
 }
 function openGame(name) { showScreen(name); }
-function closeGame() { showScreen('lobby'); refreshHistory(); }
+function closeGame() { if (activeScreen === 'poker') txhStopPolling(); showScreen('lobby'); refreshHistory(); }
 window.openGame = openGame;
 window.closeGame = closeGame;
 
@@ -925,6 +1030,7 @@ function bjButtons(enabled) {
   for (const id of ['bjHitBtn','bjStandBtn','bjDoubleBtn','bjSurrenderBtn']) {
     $(id).disabled = !enabled;
   }
+  $('bjInsBtn').disabled = true;
 }
 function bjBanner(text, cls) {
   const b = $('bjBanner');
@@ -945,6 +1051,18 @@ function bjUpdateForHand(h) {
   $('bjDealerTotal').textContent = h.state.dealer_total != null ? h.state.dealer_total : '—';
   $('bjBetLabel').textContent = fmt(h.bet) + ' p';
   $('bjStatus').textContent = h.state.status;
+}
+
+function bjApplyButtonsForHand(h) {
+  bjButtons(false);
+  if (!h || h.done || h.state.status !== 'active') return;
+  const cards = h.state.player_cards || [];
+  $('bjHitBtn').disabled = false;
+  $('bjStandBtn').disabled = false;
+  $('bjDoubleBtn').disabled = cards.length !== 2;
+  $('bjSurrenderBtn').disabled = cards.length !== 2 || bjState.hands.length > 1;
+  $('bjInsBtn').style.display = h.state.insurance_available ? 'inline-flex' : 'none';
+  $('bjInsBtn').disabled = !h.state.insurance_available;
 }
 
 async function bjStart() {
@@ -968,12 +1086,13 @@ async function bjStart() {
     bjState.hands = [];
     bjState.activeIdx = 0;
 
-    // Issue /start for each hand in parallel — the shoe handles ordering.
-    const starts = await Promise.all(
-      Array.from({length: total}, () => api(`/api/points/${player.id}/blackjack/start`, {
-        method: 'POST', body: JSON.stringify({bet})
-      }))
-    );
+    // Start hands sequentially and keep earlier hands active for 2–3 hand play.
+    const starts = [];
+    for (let i = 0; i < total; i++) {
+      starts.push(await api(`/api/points/${player.id}/blackjack/start`, {
+        method: 'POST', body: JSON.stringify({bet, keep_active: total > 1})
+      }));
+    }
     updateBalance(starts[starts.length - 1].points);
 
     // Place side bets on hand 0 only (most common casino convention).
@@ -1040,8 +1159,7 @@ async function bjAdvanceToPlayable() {
     if (h.state.outcome) { h.done = true; bjState.activeIdx++; continue; }
     bjActivePill(bjState.activeIdx, total);
     bjUpdateForHand(h);
-    bjButtons(true);
-    if (h.state.player_total === 21) bjButtons(false); // auto-stand at 21
+    bjApplyButtonsForHand(h);
     return;
   }
   // All hands resolved (or were resolved on deal). Settle dealer + show banner.
@@ -1073,11 +1191,11 @@ async function bjAction(action) {
       bjState.activeIdx++;
       await bjAdvanceToPlayable();
     } else {
-      bjButtons(true);
+      bjApplyButtonsForHand(h);
     }
   } catch (e) {
     toast(e.message, 'err');
-    bjButtons(true);
+    bjApplyButtonsForHand(h);
   } finally {
     bjState.busy = false;
   }
@@ -1148,6 +1266,109 @@ function bjRenderSideResults(resolved) {
   }
   $('bjSideResults').innerHTML = rows.join('');
 }
+
+/* ============================================================================
+   GAME · TEXAS HOLD'EM (live table customer panel)
+   ========================================================================== */
+const txhState = { token: null, poll: null, last: null };
+const TXH_STAGE_FI = {waiting:'Odottaa',preflop:'Preflop',flop:'Flop',turn:'Turn',river:'River',showdown:'Showdown'};
+function txhTokenKey() { return player ? `cust_txh_token_${player.id}` : 'cust_txh_token'; }
+function txhCard(card, size='md') {
+  if (!card || !card.rank) return `<div class="txh-card txh-card-back ${size}"></div>`;
+  const red = card.suit === '♥' || card.suit === '♦';
+  return `<div class="txh-card ${red?'red':'black'} ${size}"><span>${escapeHtml(card.rank)}</span><strong>${escapeHtml(card.suit)}</strong></div>`;
+}
+function txhEmptyCard(size='md') { return `<div class="txh-card txh-card-empty ${size}"></div>`; }
+function txhSetStatus(msg) { $('txhStatus').textContent = msg; }
+function txhStage(stage) { $('txhStagePill').textContent = TXH_STAGE_FI[stage] || stage || '—'; }
+function txhStopPolling() { if (txhState.poll) clearInterval(txhState.poll); txhState.poll = null; }
+function txhStartPolling() { txhStopPolling(); txhPoll(); txhState.poll = setInterval(txhPoll, 2200); }
+function txhRenderCommunity(cards = []) {
+  $('txhCommunity').innerHTML = cards.length
+    ? cards.map(c => txhCard(c)).join('') + Array.from({length: Math.max(0, 5 - cards.length)}, () => txhEmptyCard()).join('')
+    : Array.from({length: 5}, () => txhEmptyCard()).join('');
+}
+function txhRenderHole(cards = []) {
+  $('txhHoleCards').innerHTML = cards.length
+    ? cards.map(c => txhCard(c, 'lg')).join('')
+    : txhCard(null, 'lg') + txhCard(null, 'lg');
+}
+function txhRenderPlayerState(d) {
+  txhStage(d.stage || 'waiting');
+  txhRenderCommunity(d.community_cards || []);
+  txhRenderHole(d.hole_cards || []);
+  $('txhJoinBtn').style.display = 'none';
+  $('txhLeaveBtn').style.display = 'inline-flex';
+  const showBtn = $('txhShowBtn');
+  showBtn.style.display = (d.hole_cards || []).length === 2 ? 'inline-flex' : 'none';
+  showBtn.textContent = d.show_cards ? 'Piilota kortit muilta' : 'Näytä kortit muille';
+  if (d.folded) txhSetStatus('Olet luovuttanut — seuraat jaon loppuun.');
+  else if (d.stage === 'showdown') txhSetStatus('Showdown — voit näyttää korttisi operaattorille.');
+  else if (d.status === 'active') txhSetStatus(`Paikka ${d.seat} · ${TXH_STAGE_FI[d.stage] || d.stage}`);
+  else txhSetStatus(`Paikka ${d.seat} · odotetaan jakoa.`);
+}
+async function txhRefresh() {
+  if (txhState.token) return txhPoll();
+  try {
+    const s = await api('/api/poker/state');
+    txhStage(s.stage || 'waiting');
+    txhRenderCommunity(s.community_cards || []);
+    txhRenderHole([]);
+    $('txhShowBtn').style.display = 'none';
+    $('txhLeaveBtn').style.display = 'none';
+    $('txhJoinBtn').style.display = 'inline-flex';
+    if (!s.status || s.status === 'none') txhSetStatus('Pöytää ei ole vielä avattu. Pyydä operaattoria luomaan Texas Hold’em -peli.');
+    else if (s.status === 'waiting') txhSetStatus('Pöytä on avoinna — voit liittyä mukaan.');
+    else txhSetStatus('Jako on käynnissä. Jos sinulla on paikka, liityt takaisin automaattisesti; muuten odota seuraavaa kättä.');
+  } catch (e) { txhSetStatus(e.message); }
+}
+async function txhEnter() {
+  if (!player) return;
+  txhState.token = localStorage.getItem(txhTokenKey()) || '';
+  if (txhState.token) txhStartPolling();
+  else txhRefresh();
+}
+async function txhJoinTable() {
+  if (!player) return;
+  $('txhJoinBtn').disabled = true;
+  try {
+    const d = await api('/api/poker/join', {method:'POST', body: JSON.stringify({name: player.name, player_id: player.id})});
+    txhState.token = d.token;
+    localStorage.setItem(txhTokenKey(), d.token);
+    toast('Liityit Texas Hold’em -pöytään', 'ok');
+    txhStartPolling();
+  } catch (e) { txhSetStatus(e.message); toast(e.message, 'err'); }
+  finally { $('txhJoinBtn').disabled = false; }
+}
+async function txhPoll() {
+  if (!txhState.token) return txhRefresh();
+  try {
+    const d = await api(`/api/poker/player/${txhState.token}`);
+    txhState.last = d;
+    txhRenderPlayerState(d);
+  } catch (e) {
+    localStorage.removeItem(txhTokenKey());
+    txhState.token = '';
+    txhStopPolling();
+    txhSetStatus('Pöytäpaikka ei ole enää voimassa. Liity uudelleen, kun pöytä on avoinna.');
+    txhRefresh();
+  }
+}
+async function txhToggleShowCards() {
+  if (!txhState.token) return;
+  try { await api(`/api/poker/player/${txhState.token}/showcards`, {method:'POST'}); txhPoll(); }
+  catch (e) { toast(e.message, 'err'); }
+}
+function txhLeaveTable() {
+  localStorage.removeItem(txhTokenKey());
+  txhState.token = '';
+  txhStopPolling();
+  txhRefresh();
+}
+window.txhJoinTable = txhJoinTable;
+window.txhRefresh = txhRefresh;
+window.txhToggleShowCards = txhToggleShowCards;
+window.txhLeaveTable = txhLeaveTable;
 
 /* ============================================================================
    GAME · BACCARAT

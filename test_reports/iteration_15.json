@@ -1,0 +1,47 @@
+{
+  "summary": "Executed backend + frontend regression for requested scope: customer/operator auth with requested credentials, embedded Texas Hold'em in customer and operator panels, operator poker management actions, blackjack keep_active multi-hand behavior, hit-to-21 settle regression, and legacy /poker/join + /api/poker/state availability.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Customer Blackjack multi-hand active hand indicator",
+        "issue": "In 2-hand run, active-hand pill text stayed as 'KÄSI 1' before and after first Stand click; expected visible transition to hand 2 (e.g., KÄSI 2/2) during sequential play.",
+        "selector": "#bjActiveHandPill, [data-testid='cust-bj-stand']",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter15_blackjack_poker_operator_unify.py",
+    "/app/test_reports/pytest/iter15_results.xml"
+  ],
+  "action_items": [
+    "Investigate customer blackjack 2-hand UI state progression: ensure first Stand advances the active hand indicator and controls to hand 2.",
+    "Retest UI specifically for hit-to-21 in customer blackjack to confirm no stuck-hand behavior on the visible flow (backend regression already passes).",
+    "Update /app/memory/test_credentials.md because it currently lists old credentials (Pelaaja/admin123) while active demo creds in this cycle were Test Player/operator123.",
+    "Create or restore /app/auth_testing.md if auth playbook documentation is expected by process."
+  ],
+  "critical_code_review_comments": [
+    "templates/customer.html is very large and packs multiple complex game flows into one file, making regressions in cross-game state (like blackjack multi-hand UI progression) harder to isolate and validate quickly.",
+    "Credential documentation drift exists between /app/memory/test_credentials.md and current working login accounts, which can cause false-negative auth testing in future iterations."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter15_blackjack_poker_operator_unify.py",
+    "/app/test_reports/iteration_15.json"
+  ],
+  "success_rate": {
+    "backend": "100% (6/6)",
+    "frontend": "~90% (core poker/operator/customer integrations pass; one blackjack multi-hand UI progression issue observed)"
+  },
+  "test_credentials": "Validated in this run: Customer Test Player/test123; Operator operator123. NOTE: /app/memory/test_credentials.md still shows older credentials.",
+  "seed_data_creation": "Granted points to player_id=1 only if balance <5000 via /api/players/1/points/grant (reason: TEST_iter15_topup).",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend regression file added at /app/backend/tests/test_iter15_blackjack_poker_operator_unify.py. Run with REACT_APP_BACKEND_URL from frontend/.env and check /app/test_reports/pytest/iter15_results.xml. UI evidence captured at /app/test_reports/artifacts_iter15/customer_poker_panel.jpeg, /app/test_reports/artifacts_iter15/customer_blackjack_multihand.jpeg, /app/test_reports/artifacts_iter15/operator_poker_tab.jpeg. Operator poker management actions (new/deal/advance/evaluate/void) all clicked successfully in panel with seated customer.",
+  "rca of the issue": "Observed UI symptom: blackjack active-hand pill did not visibly progress after first Stand in a 2-hand flow. Backend keep_active regression passes, so likely root cause is frontend state/render synchronization (pill text update or activeIdx advance rendering) rather than API hand lifecycle. Repro: /asiakas -> login Test Player -> Blackjack -> select 2 hands -> Jaa kortit -> Stand once -> observe #bjActiveHandPill remains 'KÄSI 1' in this run."
+}

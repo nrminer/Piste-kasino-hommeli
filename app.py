@@ -2085,8 +2085,10 @@ def _bj_state(game):
 def game_bj_start(pid):
     d = request.json or {}
     db = get_db()
-    # Cancel any stale active game
-    db.execute("UPDATE blackjack_games SET status='abandoned' WHERE player_id=? AND status='active'", (pid,))
+    # Cancel stale active games for normal single-hand starts, but keep the
+    # existing hands alive when the customer UI intentionally opens 2–3 hands.
+    if not d.get('keep_active'):
+        db.execute("UPDATE blackjack_games SET status='abandoned' WHERE player_id=? AND status='active'", (pid,))
     bet, err = _get_bet(d, pid, db)
     if err: return err
     _atomic_deduct_points(db, pid, bet, 'Blackjack panos')
@@ -2176,6 +2178,8 @@ def game_bj_action(gid):
         if total > 21:
             status  = 'done_bust'
             outcome = 'bust'
+        elif total == 21:
+            status, outcome, payout = _settle_blackjack_round(deck, pcards, dcards, bet)
         else:
             status = 'active'
     elif action == 'stand':

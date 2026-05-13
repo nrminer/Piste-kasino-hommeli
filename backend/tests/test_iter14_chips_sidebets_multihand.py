@@ -20,7 +20,7 @@ import requests
 
 BASE_URL = os.environ.get(
     'REACT_APP_BACKEND_URL',
-    'https://card-game-suite-3d.preview.emergentagent.com'
+    'https://holdem-ops-unify.preview.emergentagent.com'
 ).rstrip('/')
 PID = 1
 
