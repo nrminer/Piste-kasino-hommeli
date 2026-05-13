@@ -19,6 +19,8 @@
 
 **Session 9:** "fix blackjack as you can see \"won\" in the corner before hands been done"
 
+**Session 10:** "write an readme MD for other AIs to instruct where everythings located"
+
 ## Architecture
 - **Stack preserved**: Flask + SQLite (`/app/backend/casino.db`). NO DB removal. NO FastAPI/Mongo swap.
 - **Backend modules** (`/app/`):
@@ -109,6 +111,7 @@
 - `/app/backend/tests/test_theme_and_3d_games.py` (iter12), `/app/backend/tests/test_iter13_slots_coinflip_redirect.py` (iter13).
 - `/app/memory/PRD.md`, `/app/memory/test_credentials.md`.
 - `/app/CHANGELOG.md` — change history and rollback notes.
+- `/app/AI_README.md` — AI/developer handoff map with routes, files, APIs, DB tables, testing commands, and gotchas.
 
 ## Test status
 - **Iter12**: 15/15 backend pytest pass; 100 % frontend on 4 game flows.
