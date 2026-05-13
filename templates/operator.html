@@ -3,9 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Yksityisen kasinopöydän operaattoripaneeli: asiakkaat, pisteet, Texas Hold'em ja pelipöydät.">
 <title>Operaattori · Auditor's Ledger</title>
 <link rel="icon" href="/favicon.svg">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;800&family=Manrope:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/css/theme.css">
 <style>
 /* Operator-only adjustments */
@@ -485,7 +488,7 @@
   </div>
 </div>
 
-<div id="toast" class="toast" data-testid="op-toast"></div>
+<div id="toast" class="toast" role="status" aria-live="polite" data-testid="op-toast"></div>
 
 <script>
 /* ─────────────────────────────────────────────────────────────────────────
@@ -980,6 +983,7 @@ function renderPokerStages(stage) {
   $('opPokerStages').innerHTML = OP_STAGES.map(s => `<span class="op-stage-pill ${s===stage?'active':''}">${OP_STAGE_FI[s]}</span>`).join('');
 }
 async function refreshPoker() {
+  if (document.hidden) return;
   try {
     $('opPokerJoinUrl').textContent = opPokerJoinUrl();
     pokerState = await api('/api/poker/state');
@@ -999,6 +1003,8 @@ function renderPoker(d) {
     controls.push('<button class="btn btn-ghost" onclick="openPokerPresetModal()" data-testid="op-poker-set-next-hand">Set next hand</button>');
     controls.push('<button class="btn btn-ghost" onclick="pokerNew()" data-testid="op-poker-new-reset">Uusi istunto</button>');
   }
+  const presetCount = Object.entries(d.preset_hands || {}).filter(([key, value]) => key === 'community' ? (value || []).some(Boolean) : Array.isArray(value) && value.length === 2).length;
+  if (presetCount) controls.push(`<span class="pill gold" data-testid="op-poker-preset-armed">Preset armed · ${presetCount}</span>`);
   if (status === 'active' && ['preflop','flop','turn','river'].includes(stage)) {
     const lbl = {preflop:'Jaa flop',flop:'Jaa turn',turn:'Jaa river',river:'Showdown'}[stage];
     controls.push(`<button class="btn btn-primary" onclick="pokerAdvance()" data-testid="op-poker-advance">${lbl}</button>`);
@@ -1173,7 +1179,11 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     closeCustomerModal();
     closePointsModal();
+    closePokerPresetModal();
   }
+});
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && document.querySelector('#tab-poker.section.active')) refreshPoker();
 });
 </script>
 </body>

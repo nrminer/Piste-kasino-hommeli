@@ -4,13 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0a0d12">
+<meta name="description" content="Yksityinen pelikaverien kasinopöytä: korttipelit, pisteet ja Texas Hold'em yhdessä näkymässä.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Auditor's Ledger">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>Asiakas · Auditor's Ledger</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;800&family=Manrope:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/css/theme.css">
 <style>
 /* Customer-specific tweaks */
@@ -335,7 +338,7 @@
       </div>
 
       <div class="lobby-grid">
-        <div class="lobby-tile" onclick="openGame('blackjack')" data-testid="cust-tile-blackjack">
+        <div class="lobby-tile" role="button" tabindex="0" onclick="openGame('blackjack')" data-testid="cust-tile-blackjack" aria-label="Avaa Blackjack">
           <div class="art" style="background: linear-gradient(135deg, #1a2a22, #0a0d12)"></div>
           <div class="scrim"></div>
           <div class="info">
@@ -343,7 +346,7 @@
             <p>21 vastaan jakaja · <em>3:2 luonnollinen</em></p>
           </div>
         </div>
-        <div class="lobby-tile" onclick="openGame('baccarat')" data-testid="cust-tile-baccarat">
+        <div class="lobby-tile" role="button" tabindex="0" onclick="openGame('baccarat')" data-testid="cust-tile-baccarat" aria-label="Avaa Baccarat">
           <div class="art" style="background: linear-gradient(135deg, #221a2a, #0a0d12)"></div>
           <div class="scrim"></div>
           <div class="info">
@@ -351,7 +354,7 @@
             <p>Punto Banco · <em>tie 8:1</em></p>
           </div>
         </div>
-        <div class="lobby-tile" onclick="openGame('pikapokeri')" data-testid="cust-tile-pikapokeri">
+        <div class="lobby-tile" role="button" tabindex="0" onclick="openGame('pikapokeri')" data-testid="cust-tile-pikapokeri" aria-label="Avaa Pikapokeri">
           <div class="art" style="background: linear-gradient(135deg, #2a221a, #0a0d12)"></div>
           <div class="scrim"></div>
           <div class="info">
@@ -359,7 +362,7 @@
             <p>Jacks-or-better · <em>vaihda 0–5</em></p>
           </div>
         </div>
-        <div class="lobby-tile" onclick="openGame('poker')" data-testid="cust-tile-poker">
+        <div class="lobby-tile" role="button" tabindex="0" onclick="openGame('poker')" data-testid="cust-tile-poker" aria-label="Avaa Texas Hold'em">
           <div class="art" style="background: radial-gradient(circle at 30% 20%, var(--primary-soft), transparent 38%), linear-gradient(135deg, #10251c, #0a0d12)"></div>
           <div class="scrim"></div>
           <div class="info">
@@ -367,7 +370,7 @@
             <p>Live-pöytä · <em>liity omalla asiakastilillä</em></p>
           </div>
         </div>
-        <div class="lobby-tile" onclick="openGame('war')" data-testid="cust-tile-war">
+        <div class="lobby-tile" role="button" tabindex="0" onclick="openGame('war')" data-testid="cust-tile-war" aria-label="Avaa Casino War">
           <div class="art" style="background: linear-gradient(135deg, #2a1a1a, #0a0d12)"></div>
           <div class="scrim"></div>
           <div class="info">
@@ -375,7 +378,7 @@
             <p>Yksi kortti vs jakaja · <em>tasapelissä sota</em></p>
           </div>
         </div>
-        <div class="lobby-tile" onclick="openGame('slots')" data-testid="cust-tile-slots">
+        <div class="lobby-tile" role="button" tabindex="0" onclick="openGame('slots')" data-testid="cust-tile-slots" aria-label="Avaa Hedelmäpeli">
           <div class="art" style="background: linear-gradient(135deg, #2a2a1a, #0a0d12)"></div>
           <div class="scrim"></div>
           <div class="info">
@@ -383,7 +386,7 @@
             <p>5×3 ruudukko · <em>jättipotti · ilmaiskierroksia</em></p>
           </div>
         </div>
-        <div class="lobby-tile" onclick="openGame('coinflip')" data-testid="cust-tile-coinflip">
+        <div class="lobby-tile" role="button" tabindex="0" onclick="openGame('coinflip')" data-testid="cust-tile-coinflip" aria-label="Avaa Kolikonheitto">
           <div class="art" style="background: linear-gradient(135deg, #1a2a2a, #0a0d12)"></div>
           <div class="scrim"></div>
           <div class="info">
@@ -767,11 +770,9 @@
   </div>
 </div>
 
-<div id="toast" class="toast" data-testid="cust-toast"></div>
+<div id="toast" class="toast" role="status" aria-live="polite" data-testid="cust-toast"></div>
 
 <script type="module">
-import { createTableScene, cardLabel } from '/static/js/casino_3d.js';
-
 /* ============================================================================
    STATE
    ========================================================================== */
@@ -783,6 +784,26 @@ let activeScreen = 'lobby';
 
 // Per-game scene instances (lazy created)
 const scenes = { blackjack: null, baccarat: null, pikapokeri: null, war: null };
+let tableSceneModulePromise = null;
+
+function cardLabel(card) {
+  if (!card || !card.rank) return '—';
+  return `${card.rank}${card.suit || ''}`;
+}
+
+function getTableSceneModule() {
+  if (!tableSceneModulePromise) tableSceneModulePromise = import('/static/js/casino_3d.js');
+  return tableSceneModulePromise;
+}
+
+async function ensureTableScene(name) {
+  if (scenes[name]) return scenes[name];
+  const containers = { blackjack:'bjScene', baccarat:'bacScene', pikapokeri:'ppScene', war:'warScene' };
+  if (!containers[name]) return null;
+  const { createTableScene } = await getTableSceneModule();
+  scenes[name] = createTableScene($(containers[name]));
+  return scenes[name];
+}
 
 // Per-game state
 const bjState  = { hands: [], handsCount: 1, activeIdx: 0, busy: false };
@@ -892,6 +913,16 @@ function enterApp() {
   renderPlayerBar();
   showScreen('lobby');
   refreshHistory();
+  enhanceLobbyTiles();
+}
+
+function enhanceLobbyTiles() {
+  document.querySelectorAll('.lobby-tile').forEach(tile => {
+    if (!tile.hasAttribute('tabindex')) tile.tabIndex = 0;
+    tile.setAttribute('role', 'button');
+    const title = tile.querySelector('h3')?.textContent?.trim() || 'Peli';
+    tile.setAttribute('aria-label', `Avaa ${title}`);
+  });
 }
 
 function renderPlayerBar() {
@@ -909,22 +940,11 @@ function updateBalance(points) {
 }
 
 /* ─── Screen routing ──────────────────────────────────────────────────── */
-function showScreen(name) {
+async function showScreen(name) {
   activeScreen = name;
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + name));
-  // Lazy-create the appropriate 3D scene
-  if (name === 'blackjack' && !scenes.blackjack) {
-    scenes.blackjack = createTableScene($('bjScene'));
-  }
-  if (name === 'baccarat' && !scenes.baccarat) {
-    scenes.baccarat = createTableScene($('bacScene'));
-  }
-  if (name === 'pikapokeri' && !scenes.pikapokeri) {
-    scenes.pikapokeri = createTableScene($('ppScene'));
-  }
-  if (name === 'war' && !scenes.war) {
-    scenes.war = createTableScene($('warScene'));
-  }
+  // Lazy-load Three.js only when a 3D game is opened, making login/lobby faster.
+  if (['blackjack','baccarat','pikapokeri','war'].includes(name)) await ensureTableScene(name);
   // Slots & coinflip don't use the 3D card scene — initialize their UI once
   if (name === 'slots') {
     slotsLoadJackpot();
@@ -932,10 +952,15 @@ function showScreen(name) {
   }
   if (name === 'poker') txhEnter();
 }
-function openGame(name) { showScreen(name); }
+async function openGame(name) { await showScreen(name); }
 function closeGame() { if (activeScreen === 'poker') txhStopPolling(); showScreen('lobby'); refreshHistory(); }
 window.openGame = openGame;
 window.closeGame = closeGame;
+
+document.addEventListener('keydown', e => {
+  const tile = e.target.closest && e.target.closest('.lobby-tile[role="button"]');
+  if (tile && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); tile.click(); }
+});
 
 /* ─── Bet pad helpers (shared) ────────────────────────────────────────── */
 function betAdd(inputId, delta) {
@@ -1068,6 +1093,7 @@ function bjApplyButtonsForHand(h) {
 
 async function bjStart() {
   if (bjState.busy) return;
+  await ensureTableScene('blackjack');
   const bet      = getBet('bjBet');
   if (!bet) return;
   const total    = bjState.handsCount;
@@ -1349,6 +1375,7 @@ async function txhJoinTable() {
   finally { $('txhJoinBtn').disabled = false; }
 }
 async function txhPoll() {
+  if (document.hidden) return;
   if (!txhState.token) return txhRefresh();
   try {
     const d = await api(`/api/poker/player/${txhState.token}`);
@@ -1397,6 +1424,7 @@ function bacBanner(text, cls) {
 }
 
 async function bacDeal() {
+  await ensureTableScene('baccarat');
   const bet = getBet('bacBet');
   if (!bet) return;
   const ppBet = parseInt($('bacSidePP').value, 10) || 0;
@@ -1494,6 +1522,7 @@ function ppToggleHold(i) {
 window.ppToggleHold = ppToggleHold;
 
 async function ppDeal() {
+  await ensureTableScene('pikapokeri');
   const bet = getBet('ppBet');
   if (!bet) return;
   $('ppDealBtn').disabled = true;
@@ -1575,6 +1604,7 @@ function warBanner(text, cls) {
 }
 
 async function warDeal() {
+  await ensureTableScene('war');
   const bet = getBet('warBet');
   if (!bet) return;
   $('warDealBtn').disabled = true;
@@ -1833,6 +1863,9 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && $('splash').style.display !== 'none' && (document.activeElement === $('loginName') || document.activeElement === $('loginPw'))) {
     loginCustomer();
   }
+});
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && activeScreen === 'poker' && txhState.token) txhPoll();
 });
 </script>
 </body>
