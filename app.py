@@ -346,7 +346,8 @@ def index():
 
 @app.route('/poker/join')
 def poker_join_page():
-    return render_template('poker_player.html')
+    from flask import redirect
+    return redirect('/asiakas', code=302)
 
 @app.route('/asiakas')
 def customer_page():

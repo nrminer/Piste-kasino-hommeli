@@ -1855,7 +1855,7 @@ async function pokerVoid(){if(!confirm('Mitätöidäänkö käsi?'))return;try{a
 async function pokerFold(id){try{await api('POST',`/api/poker/fold/${id}`);loadPoker();}catch(e){toast(e.message,'error');}}
 async function pokerRemove(id){if(!confirm('Poistetaanko pelaaja pöydästä?'))return;try{await api('DELETE',`/api/poker/remove/${id}`);loadPoker();}catch(e){toast(e.message,'error');}}
 function copyJoinUrl(){navigator.clipboard.writeText($('join-url').textContent).then(()=>toast('Linkki kopioitu!','success'));}
-function setJoinUrl(){const el=$('join-url');if(el)el.textContent=window.location.origin+'/poker/join';}
+function setJoinUrl(){const el=$('join-url');if(el)el.textContent=window.location.origin+'/asiakas';}
 setJoinUrl();
 
 // ── Hand evaluation ────────────────────────────────────────────────────────

@@ -969,7 +969,7 @@ window.resetAllShoes = resetAllShoes;
 /* ─── Texas Hold'em tab ───────────────────────────────────────────────── */
 const OP_STAGES = ['waiting','preflop','flop','turn','river','showdown'];
 const OP_STAGE_FI = {waiting:'Odottaa',preflop:'Preflop',flop:'Flop',turn:'Turn',river:'River',showdown:'Showdown'};
-function opPokerJoinUrl() { return window.location.origin + '/poker/join'; }
+function opPokerJoinUrl() { return window.location.origin + '/asiakas'; }
 function opCard(card) {
   if (!card || !card.rank) return '<div class="op-playing-card empty"></div>';
   const red = card.suit === '♥' || card.suit === '♦';

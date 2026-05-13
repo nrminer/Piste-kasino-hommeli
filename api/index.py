@@ -1,6 +1,6 @@
 import os, json, random, string, hashlib, threading
 from datetime import datetime
-from flask import Flask, request, jsonify, render_template, g
+from flask import Flask, request, jsonify, render_template, g, redirect
 import redis as redis_lib
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
@@ -540,7 +540,7 @@ def index():
 
 @app.route('/poker/join')
 def poker_join_page():
-    return render_template('poker_player.html')
+    return redirect('/asiakas', code=302)
 
 @app.route('/asiakas')
 def customer_page():
